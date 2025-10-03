@@ -1,9 +1,15 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
+
+// Initialize Supabase client
+const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
 serve(async (req) => {
   // Handle CORS preflight requests
@@ -16,6 +22,24 @@ serve(async (req) => {
     
     console.log('Processing lead submission for:', business_name, city);
     console.log('Form data:', form);
+
+    // Insert into database first
+    console.log('Inserting lead into database...');
+    const { error: dbError } = await supabase
+      .from('leads')
+      .insert([{
+        business_name,
+        city,
+        source: source || 'web',
+        form
+      }]);
+
+    if (dbError) {
+      console.error('Database insert failed:', dbError);
+      throw new Error(`Database error: ${dbError.message}`);
+    }
+
+    console.log('Lead inserted into database successfully');
 
     // Get n8n webhook URL from environment
     const n8nWebhook = Deno.env.get('N8N_INTAKE_WEBHOOK');

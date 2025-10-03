@@ -75,37 +75,20 @@ export const IntakeForm = () => {
         }
       };
   
-      // Insert into Supabase
+      // Call Edge Function (handles database insert + n8n webhook)
       console.log(
         '[ENV CHECK]',
         import.meta.env.VITE_SUPABASE_URL,
         (import.meta.env.VITE_SUPABASE_ANON_KEY || '').slice(0, 12) + '…'
       );
       
-      const { error: supabaseError } = await supabase
-        .from("leads")
-        .insert([payload]);
+      const { error: functionError } = await supabase.functions.invoke("submit-lead", {
+        body: payload,
+      });
   
-      if (supabaseError) {
-        console.error("Supabase error:", supabaseError);
+      if (functionError) {
+        console.error("Edge function error:", functionError);
         throw new Error("Failed to submit form");
-      }
-  
-      // OPTIONAL: trigger your n8n webhook (ignore failures)
-      try {
-        // If you’re using Supabase Edge Functions: keep this
-        const { error: functionError } = await supabase.functions.invoke("submit-lead", {
-          body: {
-            businessName: siteConfig.name,
-            city: siteConfig.city,
-            email,
-            phone,
-            // add any non-PHI summary fields you want n8n to use
-          },
-        });
-        if (functionError) console.warn("Edge function error (non-blocking):", functionError);
-      } catch (err) {
-        console.warn("Webhook call skipped/failed (non-blocking):", err);
       }
   
       setIsSuccess(true);
