@@ -12,10 +12,10 @@ serve(async (req) => {
   }
 
   try {
-    const { form, businessName, city } = await req.json();
+    const { businessName, city, email, phone } = await req.json();
     
     console.log('Processing lead submission for:', businessName, city);
-    console.log('Form data:', form);
+    console.log('Contact info:', { email, phone });
 
     // Get n8n webhook URL from environment
     const n8nWebhook = Deno.env.get('N8N_INTAKE_WEBHOOK');
@@ -24,7 +24,10 @@ serve(async (req) => {
       console.log('Triggering n8n webhook...');
       
       const payload = {
-        form,
+        form: {
+          email,
+          phone,
+        },
         site: {
           businessName,
           city,

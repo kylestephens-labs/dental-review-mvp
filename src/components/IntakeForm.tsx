@@ -76,6 +76,12 @@ export const IntakeForm = () => {
       };
   
       // Insert into Supabase
+      console.log(
+        '[ENV CHECK]',
+        import.meta.env.VITE_SUPABASE_URL,
+        (import.meta.env.VITE_SUPABASE_ANON_KEY || '').slice(0, 12) + '…'
+      );
+      
       const { error: supabaseError } = await supabase
         .from("leads")
         .insert([payload]);
