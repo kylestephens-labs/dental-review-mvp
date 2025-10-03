@@ -47,52 +47,64 @@ export const IntakeForm = () => {
 
   const onSubmit = async (data: LeadFormData) => {
     setIsSubmitting(true);
-    console.log("Submitting form data:", data);
-
+  
     try {
+      // Enforce: at least one contact method
+      const phone = (data.phone || "").trim();
+      const email = (data.email || "").trim().toLowerCase();
+      if (!phone && !email) {
+        toast.error("Please provide a phone number or an email.");
+        setIsSubmitting(false);
+        return;
+      }
+  
+      // Build a stable dedup key (client-side; you can improve later server-side)
+      const dedup_key = [email || "noemail", phone || "nophone"]
+        .join("|")
+        .toLowerCase();
+  
+      // Minimal payload that matches your current leads schema
+      const payload: Record<string, unknown> = {
+        business_name: siteConfig.name,     // e.g. "Acme Dental"
+        city: siteConfig.city,              // e.g. "Walnut Creek, CA"
+        email: email || null,
+        phone: phone || null,
+        status: "new",
+        dedup_key,
+        // Optional if you have it available in this component:
+        // site_id: siteConfig.siteId, 
+      };
+  
       // Insert into Supabase
       const { error: supabaseError } = await supabase
         .from("leads")
-        .insert({
-          business_name: siteConfig.name,
-          city: siteConfig.city,
-          source: "web",
-          form: data,
-        });
-
+        .insert([payload]);
+  
       if (supabaseError) {
         console.error("Supabase error:", supabaseError);
         throw new Error("Failed to submit form");
       }
-
-      console.log("Lead stored in database successfully");
-
-      // Call Edge Function to trigger n8n webhook (if configured)
+  
+      // OPTIONAL: trigger your n8n webhook (ignore failures)
       try {
+        // If you’re using Supabase Edge Functions: keep this
         const { error: functionError } = await supabase.functions.invoke("submit-lead", {
           body: {
-            form: data,
             businessName: siteConfig.name,
             city: siteConfig.city,
+            email,
+            phone,
+            // add any non-PHI summary fields you want n8n to use
           },
         });
-
-        if (functionError) {
-          console.error("Edge function error:", functionError);
-          // Don't throw - webhook is optional
-        } else {
-          console.log("n8n webhook triggered successfully");
-        }
-      } catch (webhookError) {
-        console.error("Webhook error:", webhookError);
-        // Continue even if webhook fails
+        if (functionError) console.warn("Edge function error (non-blocking):", functionError);
+      } catch (err) {
+        console.warn("Webhook call skipped/failed (non-blocking):", err);
       }
-
+  
       setIsSuccess(true);
-      toast.success("Thank you! We'll contact you shortly to confirm your appointment.");
+      toast.success("Thank you! We'll contact you shortly to confirm.");
       form.reset();
-
-      // Reset success state after 5 seconds
       setTimeout(() => setIsSuccess(false), 5000);
     } catch (error) {
       console.error("Form submission error:", error);

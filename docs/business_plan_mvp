@@ -1,0 +1,108 @@
+Business plan
+
+🚀 Local Business Automation – MVP + Business Plan
+
+1. Problem / Opportunity
+	•	Thousands of small businesses (dentists, home services, cleaning companies) are missing basic digital infrastructure:
+	•	No website
+	•	No reviews
+	•	No online intake or scheduling
+	•	If you fix just those 3 things, you bring them into 2025 and unlock revenue + efficiency.
+	•	Your differentiator: turnkey landing page + intake + automation → delivered fast, cheap, and scalable.
+
+⸻
+
+2. ICPs (Ideal Customer Profiles)
+	1.	Dentists (~968 records)
+	•	Missing websites, no reviews, manual intake.
+	•	Pain point: appointment scheduling, patient flow.
+	2.	Home Services (~500+)
+	•	Missing websites, missing phone numbers.
+	•	Pain point: losing jobs because leads can’t reach them.
+	3.	Cleaning companies (~350+, clustered East Bay)
+	•	Big fragmented cluster, often missing websites/phones.
+	•	Pain point: scheduling + “never miss a job again.”
+
+⸻
+
+3. MVP Deliverables (Acceptance Criteria ✅)
+
+Landing Page Template (modeled on wcdentists.com):
+	•	Hero with headline → CTA (call or intake form).
+	•	Reviews section (stars + testimonials).
+	•	Services section (3–6 quick services).
+	•	Intake form (required fields only).
+	•	Footer with contact, hours, location.
+	•	Local SEO schema.
+	•	Mobile responsive, fast, clean design.
+
+Intake Form Requirements:
+	•	Name, phone/email (validation: at least one).
+	•	Appointment/job type.
+	•	Preferred date/time.
+	•	Optional notes.
+	•	Consent checkbox (for SMS/communication).
+	•	Submission → Supabase → triggers n8n workflow.
+
+⸻
+
+4. Completed So Far 🟢
+	•	✅ Defined ICPs and value prop.
+	•	✅ Acceptance criteria for websites (dentist, home services, cleaning).
+	•	✅ GitHub repos created (dental-landing-template, home-services-landing-template, cleaning-landing-template).
+	•	✅ Deployed first site to Vercel (live in production).
+	•	✅ Supabase DB created (scraped data + new sites table).
+	•	✅ RLS enabled, policies written.
+	•	✅ First site row inserted (Acme Dental).
+
+⸻
+
+5. In Progress / Next Steps 🟡
+	•	Database:
+	•	Add leads table tied to sites (site_id).
+	•	Ensure intake form writes leads securely.
+	•	n8n Workflows:
+	•	Build workflows to handle intake submissions → notify business (SMS/email).
+	•	Optional: push leads into CRM/Google Sheets for clients.
+	•	Branding / Templates:
+	•	Minimal customization (logo, color, copy).
+	•	Setup environment variables in Vercel (NEXT_PUBLIC_SITE_NAME, etc.).
+	•	Multi vs. Single Tenant decision:
+	•	Multi-tenant: one codebase, many sites resolved by domain/slug.
+	•	Single-tenant: new Vercel project per client.
+(Multi-tenant is cheaper + scalable. Single-tenant is simpler to sell and deploy at first.)
+	•	Compliance:
+	•	Ensure only PII (name/contact) is collected. Avoid PHI to stay out of HIPAA risk.
+
+⸻
+
+6. Pricing & Revenue Model 💵
+	•	Base Website: $750 (setup + customization).
+	•	Monthly SaaS (automation + hosting): $49–99/mo.
+	•	Upsells:
+	•	Reviews automation.
+	•	Call tracking numbers.
+	•	SEO add-ons.
+	•	Google Business Profile optimization.
+
+⸻
+
+7. Go-To-Market Plan 🎯
+	1.	Filter Supabase business dataset → target those missing websites.
+	2.	Outreach via phone/email → pitch “Get online in 48 hours for $750.”
+	3.	Deliver templated sites fast → deploy on Vercel.
+	4.	Lock in recurring revenue via automation upsells.
+
+⸻
+
+8. Risks & Mitigations ⚠️
+	•	HIPAA risk (dentists): keep intake form lightweight, no medical history.
+	•	Churn risk: make sites sticky with reviews + intake automation.
+	•	Ops risk (scaling sites): use multi-tenant design early.
+
+⸻
+
+✅ Next 3 Action Steps
+	1.	Create leads table in Supabase with site_id foreign key.
+	2.	Wire up form submissions → Supabase insert → test with n8n webhook.
+	3.	Decide multi vs. single tenant → this locks how you scale.

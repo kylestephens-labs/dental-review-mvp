@@ -8,7 +8,7 @@ export const leadFormSchema = z.object({
   
   phone: z.string()
     .trim()
-    .regex(/^[\d\s\-\+\(\)]+$/, { message: "Please enter a valid phone number" })
+    .regex(/^[\d\s\-+()]+$/, { message: "Please enter a valid phone number" })
     .min(10, { message: "Phone number must be at least 10 digits" })
     .max(20, { message: "Phone number must be less than 20 characters" })
     .optional()
