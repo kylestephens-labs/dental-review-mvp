@@ -58,21 +58,21 @@ export const IntakeForm = () => {
         return;
       }
   
-      // Build a stable dedup key (client-side; you can improve later server-side)
-      const dedup_key = [email || "noemail", phone || "nophone"]
-        .join("|")
-        .toLowerCase();
-  
-      // Minimal payload that matches your current leads schema
+      // Build payload that matches the actual database schema
       const payload: Record<string, unknown> = {
         business_name: siteConfig.name,     // e.g. "Acme Dental"
         city: siteConfig.city,              // e.g. "Walnut Creek, CA"
-        email: email || null,
-        phone: phone || null,
-        status: "new",
-        dedup_key,
-        // Optional if you have it available in this component:
-        // site_id: siteConfig.siteId, 
+        source: "web",
+        form: {
+          name: data.name,
+          email: email || null,
+          phone: phone || null,
+          service: data.service,
+          preferredDate: data.preferredDate,
+          preferredTime: data.preferredTime,
+          notes: data.notes,
+          smsOptIn: data.smsOptIn,
+        }
       };
   
       // Insert into Supabase
