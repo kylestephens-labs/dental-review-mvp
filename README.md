@@ -1,73 +1,163 @@
-# Welcome to your Lovable project
+# Landing Page Template - Client Ready 🚀
 
-## Project info
+A production-grade, Vercel-ready landing page template with intake form integration. Built with React, TypeScript, TailwindCSS, and Lovable Cloud (Supabase). Perfect for Dentists, Home Services, or Cleaning businesses.
 
-**URL**: https://lovable.dev/projects/3f7dae9c-8259-4f3c-8b7d-ed6957c6dd13
+## ✨ Features
 
-## How can I edit this code?
+- **Beautiful, responsive design** - Mobile-first with trust-centric palette
+- **Intake form** - Stores leads in database and triggers n8n webhook
+- **Easy theming** - Single `site.config.ts` for all site content
+- **SEO optimized** - JSON-LD structured data, semantic HTML, meta tags
+- **Production ready** - Deploys to Vercel in minutes
 
-There are several ways of editing your application.
+## 🚀 Quick Start
 
-**Use Lovable**
+1. **Clone and install**
+   ```bash
+   npm install
+   npm run dev
+   ```
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/3f7dae9c-8259-4f3c-8b7d-ed6957c6dd13) and start prompting.
+2. **Configure your site**
+   Edit `src/config/site.config.ts` with your business details:
+   ```typescript
+   export const siteConfig = {
+     businessType: "dentist", // or "home_service" or "cleaning"
+     name: "Your Business Name",
+     city: "Your City",
+     phone: "+1-555-123-4567",
+     // ... etc
+   }
+   ```
 
-Changes made via Lovable will be committed automatically to this repo.
+3. **Backend is already connected!**
+   This project uses Lovable Cloud for backend (database, auth, edge functions). No external setup needed.
 
-**Use your preferred IDE**
+## 🎨 Customizing Design
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+### Colors & Branding
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
-
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
+Update colors in `src/index.css`:
+```css
+:root {
+  --primary: 203 76% 20%;  /* Your primary color in HSL */
+  --accent: 176 79% 36%;   /* Your accent color in HSL */
+}
 ```
 
-**Edit a file directly in GitHub**
+### Site Content
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+All content is in `src/config/site.config.ts`:
+- Services offered
+- Business hours
+- Contact information
+- Insurance providers
+- Value propositions
+- Social media links
 
-**Use GitHub Codespaces**
+## 📋 Pages & Sections
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+- **Hero** - Headline, CTAs, rating badge, value props
+- **Services** - Service cards with descriptions
+- **Reviews** - Auto-rotating testimonials
+- **Insurers** - Optional logo strip (hide if empty)
+- **Intake Form** - Lead capture form
+- **Office Info** - Hours, address, contact, map
+- **Footer** - Navigation, contact, social
 
-## What technologies are used for this project?
+## 🔌 n8n Webhook Integration
 
-This project is built with:
+To trigger n8n workflows when forms are submitted:
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+1. Create an n8n workflow with a webhook trigger
+2. In Lovable Cloud, go to Edge Functions → Secrets
+3. Add secret: `N8N_INTAKE_WEBHOOK` with your webhook URL
+4. Forms will now trigger your n8n workflow automatically!
 
-## How can I deploy this project?
+<lov-actions>
+<lov-open-backend>Manage Secrets</lov-open-backend>
+</lov-actions>
 
-Simply open [Lovable](https://lovable.dev/projects/3f7dae9c-8259-4f3c-8b7d-ed6957c6dd13) and click on Share -> Publish.
+## 📊 View Your Leads
 
-## Can I connect a custom domain to my Lovable project?
+All form submissions are stored in the `leads` table:
 
-Yes, you can!
+<lov-actions>
+<lov-open-backend>View Database</lov-open-backend>
+</lov-actions>
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+## 🌐 Deploy to Production
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+1. Click "Publish" in the Lovable interface, or
+2. Deploy to Vercel:
+   ```bash
+   vercel --prod
+   ```
+
+## 📱 SEO & Schema
+
+The template includes:
+- Semantic HTML structure (`<header>`, `<main>`, `<section>`, etc.)
+- JSON-LD structured data for LocalBusiness/Dentist
+- Optimized meta tags (title, description, OG, Twitter)
+- Mobile-responsive with proper viewport
+- Canonical tags
+
+Update SEO in `index.html` with your business details.
+
+## 🛠 Tech Stack
+
+- **React 18** - UI framework
+- **TypeScript** - Type safety
+- **TailwindCSS** - Utility-first styling
+- **Vite** - Build tool
+- **Lovable Cloud** - Backend (Supabase under the hood)
+- **React Hook Form** - Form management
+- **Zod** - Validation
+- **Shadcn/ui** - Component library
+
+## 📝 Environment Variables
+
+The backend is auto-configured via Lovable Cloud. No `.env` file needed!
+
+Optional secrets (add in Cloud dashboard):
+- `N8N_INTAKE_WEBHOOK` - Your n8n webhook URL
+
+## 🎯 Making it Your Own
+
+### For Different Industries
+
+Change `businessType` in `site.config.ts`:
+- `"dentist"` - Dental practices
+- `"home_service"` - Plumbing, HVAC, electrical, etc.
+- `"cleaning"` - Residential/commercial cleaning
+
+The copy and CTAs adapt automatically!
+
+### Adding Services
+
+Edit the `services` array in `site.config.ts`:
+```typescript
+services: [
+  { title: "Service Name", blurb: "Short description..." },
+  // Add more...
+]
+```
+
+### Customizing Forms
+
+Edit `src/components/IntakeForm.tsx` to add/remove fields. Don't forget to update the validator in `src/lib/validators.ts`.
+
+## 📚 Learn More
+
+- [Lovable Cloud Documentation](https://docs.lovable.dev/features/cloud)
+- [TailwindCSS Docs](https://tailwindcss.com/docs)
+- [Shadcn/ui Components](https://ui.shadcn.com/)
+
+## 🤝 Support
+
+Need help? Check the [Lovable Discord community](https://discord.com/channels/1119885301872070706/1280461670979993613)
+
+---
+
+**Built with ❤️ using Lovable**
