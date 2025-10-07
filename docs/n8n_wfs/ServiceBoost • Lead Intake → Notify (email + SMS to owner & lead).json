@@ -1,0 +1,370 @@
+{
+  "name": "ServiceBoost • Lead Intake → Notify (email + SMS to owner & lead)",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "lead-intake-notify",
+        "options": {}
+      },
+      "name": "Webhook Lead Intake",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        0,
+        16
+      ],
+      "id": "b937605d-3f82-46d2-918f-466265a4b281",
+      "webhookId": "024e6984-8076-4f4d-bc07-60ec0bc0e551"
+    },
+    {
+      "parameters": {
+        "fromEmail": "ServiceBoost Lead Alerts <notify@serviceboost.co>",
+        "toEmail": "=={{$json.ownerEmail}}",
+        "subject": "New lead from {{$json.companyName || 'your website'}}",
+        "text": "New lead from {{$json.companyName}}\\nName: {{$json.leadName}}\\nEmail: {{$json.leadEmail}}\\nPhone: {{$json.leadPhone}}\\nMessage: {{$json.leadMessage}}",
+        "options": {}
+      },
+      "name": "Email Owner",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2,
+      "position": [
+        448,
+        -176
+      ],
+      "id": "8a95aea1-0606-4a43-a89c-0e72f17742e4",
+      "webhookId": "d549ecd1-af4b-4a95-a216-b7532683d87c",
+      "credentials": {
+        "smtp": {
+          "id": "Gxi1uf03VB0M1jG7",
+          "name": "SMTP account"
+        }
+      },
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "id": "21cd5418-a82d-4f57-a2ff-05928f1d531e",
+              "leftValue": "{{$json.ownerPhone}}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            },
+            {
+              "id": "284cd720-b267-492a-9610-c5e228182ac8",
+              "leftValue": "={{$json.ownerPhone}}",
+              "rightValue": "^\\+\\d{10,15}$",
+              "operator": {
+                "type": "string",
+                "operation": "regex"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "name": "If Owner Has Phone",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        672,
+        -176
+      ],
+      "id": "af15cd8a-ee00-4150-ad32-998d3d2daabe"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "id": "ae338fed-9d60-4c82-9a16-2645bbdbbdf5",
+              "leftValue": "{{$json.leadEmail}}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            },
+            {
+              "id": "c748cc73-e00e-4771-8e5c-392795ce7b7f",
+              "leftValue": "={{$json.leadEmail}}",
+              "rightValue": "^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$",
+              "operator": {
+                "type": "string",
+                "operation": "regex"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "name": "If Lead Has Email",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        448,
+        16
+      ],
+      "id": "5796de2c-295a-4500-9ff6-c71d7fc55394"
+    },
+    {
+      "parameters": {
+        "fromEmail": "ServiceBoost <notify@serviceboost.co>",
+        "toEmail": "={{$json.leadEmail}}",
+        "subject": "Thanks for reaching out to {{$json.companyName}}!",
+        "text": "Hi {{$json.leadName}},\\n\\nThanks for your interest in {{$json.companyName}}. Someone will reach out soon!\\n\\n— {{$json.companyName}} Team",
+        "options": {}
+      },
+      "name": "Email Lead",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2,
+      "position": [
+        672,
+        16
+      ],
+      "id": "09161867-f867-4f8f-8bd5-77e107e0fd7d",
+      "webhookId": "b4848b8a-79fb-4783-a3e6-003b4387785f",
+      "credentials": {
+        "smtp": {
+          "id": "Gxi1uf03VB0M1jG7",
+          "name": "SMTP account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "id": "76bbbf2b-dfba-456e-8a26-bec91c119f5d",
+              "leftValue": "{{$json.leadPhone}}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            },
+            {
+              "id": "a51973f0-3a25-44b2-b159-70d70d43942e",
+              "leftValue": "={{$json.leadPhone}}",
+              "rightValue": "\\+\\d{10,15}$",
+              "operator": {
+                "type": "string",
+                "operation": "regex"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "name": "If Lead Has Phone",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        448,
+        208
+      ],
+      "id": "0d0f8461-6e7f-418f-9de3-9ea591b85ac7"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "name": "Respond 200 OK",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        896,
+        16
+      ],
+      "id": "d36813ce-d4c5-4273-9982-c2fa4f330692"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Run Once For All Items\n\n// Source of the payload: prefer `json.body` (Webhook), else use root\nconst src = $json.body ?? $json;\n\n// helpers\nconst cleanStr = v => (v ?? '').toString().trim();\nconst cleanEmail = v => cleanStr(v).toLowerCase();\nconst cleanPhone = v => cleanStr(v).replace(/[^\\d+]/g, '');\n\n// convenience getter that tries several keys, in order\nconst first = (...keys) => {\n  for (const k of keys) {\n    if (src[k] != null && src[k] !== '') return src[k];\n  }\n  return '';\n};\n\nconst out = {\n  companyName:  cleanStr(first('companyName', 'company', 'siteName')),\n  ownerEmail:   cleanEmail(first('ownerEmail', 'businessEmail', 'email_owner')),\n  ownerPhone:   cleanPhone(first('ownerPhone', 'businessPhone', 'phone_owner')),\n  leadName:     cleanStr(first('leadName', 'name', 'fullName')),\n  leadEmail:    cleanEmail(first('leadEmail', 'email', 'customerEmail')),\n  leadPhone:    cleanPhone(first('leadPhone', 'phone', 'customerPhone')),\n  leadMessage:  cleanStr(first('leadMessage', 'message', 'notes')),\n  timestamp:    new Date().toISOString(),\n};\n\nreturn [{ json: out }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        224,
+        16
+      ],
+      "id": "e3ab0b17-e8df-4467-974d-338f223cf1b0",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "from": "+19259408412",
+        "to": "=+19282257944",
+        "message": "=New lead for {{$json.companyName}} from {{$json.leadName}}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.twilio",
+      "typeVersion": 1,
+      "position": [
+        896,
+        -176
+      ],
+      "id": "bdab7e17-a789-4d83-8fb8-3aaaca586ad3",
+      "name": "Send SMS to Owner",
+      "credentials": {
+        "twilioApi": {
+          "id": "4Mvm9XG9psRsZmD0",
+          "name": "Twilio account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "from": "+19259408412",
+        "to": "={{$json.leadPhone}}",
+        "message": "=Hi {{$json.leadName}}, thanks for contacting {{$json.companyName}}. We got your inquiry and will reach out shortly to schedule your appointment.\n\nReply STOP to opt out.",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.twilio",
+      "typeVersion": 1,
+      "position": [
+        672,
+        208
+      ],
+      "id": "6a1fdaf9-ce67-43b8-b416-cfe1bcbb7873",
+      "name": "sms to lead",
+      "credentials": {
+        "twilioApi": {
+          "id": "4Mvm9XG9psRsZmD0",
+          "name": "Twilio account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Email Owner": {
+      "main": [
+        [
+          {
+            "node": "If Owner Has Phone",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If Lead Has Email": {
+      "main": [
+        [
+          {
+            "node": "Email Lead",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Email Lead": {
+      "main": [
+        [
+          {
+            "node": "Respond 200 OK",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If Owner Has Phone": {
+      "main": [
+        [
+          {
+            "node": "Send SMS to Owner",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If Lead Has Phone": {
+      "main": [
+        [
+          {
+            "node": "sms to lead",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook Lead Intake": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Email Owner",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "If Lead Has Email",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "If Lead Has Phone",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "39a04a1d-1079-45a6-a7a0-613b170f40f6",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "7c20fa10facd7164c74b889df443cdd5f8da6fd9612d193a64579cbccd18ac11"
+  },
+  "id": "rqeNr4X0cMs5aARH",
+  "tags": []
+}
