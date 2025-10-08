@@ -47,21 +47,15 @@ serve(async (req) => {
     if (n8nWebhook) {
       console.log('Triggering n8n webhook...');
       
+      // Build payload that matches n8n workflow expectations
       const payload = {
-        form: {
-          name: form.name,
-          email: form.email,
-          phone: form.phone,
-          service: form.service,
-          preferredDate: form.preferredDate,
-          preferredTime: form.preferredTime,
-          notes: form.notes,
-          smsOptIn: form.smsOptIn,
-        },
-        site: {
-          businessName: business_name,
-          city: city,
-        },
+        companyName: business_name,
+        ownerEmail: "notify@serviceboost.co", // Default owner email - should be configurable
+        ownerPhone: "+19282257944", // Default owner phone - should be configurable
+        leadName: form.name,
+        leadEmail: form.email,
+        leadPhone: form.phone,
+        leadMessage: form.notes || `Service: ${form.service}${form.preferredDate ? `, Preferred Date: ${form.preferredDate}` : ''}${form.preferredTime ? `, Preferred Time: ${form.preferredTime}` : ''}${form.smsOptIn ? ', SMS Opt-in: Yes' : ''}`,
         timestamp: new Date().toISOString(),
         source: source || 'web',
       };
@@ -70,6 +64,7 @@ serve(async (req) => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'x-serviceboost-secret': 'sb_prod_94f1e38e_secret',
         },
         body: JSON.stringify(payload),
       });
@@ -79,7 +74,7 @@ serve(async (req) => {
         throw new Error('Failed to trigger n8n webhook');
       }
 
-      console.log('n8n webhook triggered successfully');
+      console.log('✅ Lead submitted to production webhook');
     } else {
       console.log('No N8N_INTAKE_WEBHOOK configured, skipping webhook');
     }

@@ -3,16 +3,41 @@
   "nodes": [
     {
       "parameters": {
+        "respondWith": "json",
+        "responseBody": "{ \"error\": \"unauthorized\" }",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          }
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        208,
+        208
+      ],
+      "id": "33a8d961-a132-4427-a667-807ac7a442d7",
+      "name": "401"
+    },
+    {
+      "parameters": {
         "httpMethod": "POST",
         "path": "lead-intake-notify",
+        "responseMode": "responseNode",
         "options": {}
       },
       "name": "Webhook Lead Intake",
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 1,
       "position": [
-        0,
-        16
+        -240,
+        112
       ],
       "id": "b937605d-3f82-46d2-918f-466265a4b281",
       "webhookId": "024e6984-8076-4f4d-bc07-60ec0bc0e551"
@@ -29,7 +54,7 @@
       "type": "n8n-nodes-base.emailSend",
       "typeVersion": 2,
       "position": [
-        448,
+        432,
         -176
       ],
       "id": "8a95aea1-0606-4a43-a89c-0e72f17742e4",
@@ -80,7 +105,7 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2,
       "position": [
-        672,
+        656,
         -176
       ],
       "id": "af15cd8a-ee00-4150-ad32-998d3d2daabe"
@@ -123,7 +148,7 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2,
       "position": [
-        448,
+        656,
         16
       ],
       "id": "5796de2c-295a-4500-9ff6-c71d7fc55394"
@@ -140,7 +165,7 @@
       "type": "n8n-nodes-base.emailSend",
       "typeVersion": 2,
       "position": [
-        672,
+        880,
         16
       ],
       "id": "09161867-f867-4f8f-8bd5-77e107e0fd7d",
@@ -190,48 +215,46 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2,
       "position": [
-        448,
+        656,
         208
       ],
       "id": "0d0f8461-6e7f-418f-9de3-9ea591b85ac7"
     },
     {
       "parameters": {
-        "options": {}
+        "respondWith": "json",
+        "responseBody": "{ \"status\": \"ok\", \"receivedAt\": \"{{$now}}\" }",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          }
+        }
       },
       "name": "Respond 200 OK",
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1,
       "position": [
-        896,
-        16
+        1328,
+        -80
       ],
       "id": "d36813ce-d4c5-4273-9982-c2fa4f330692"
     },
     {
       "parameters": {
-        "jsCode": "// Run Once For All Items\n\n// Source of the payload: prefer `json.body` (Webhook), else use root\nconst src = $json.body ?? $json;\n\n// helpers\nconst cleanStr = v => (v ?? '').toString().trim();\nconst cleanEmail = v => cleanStr(v).toLowerCase();\nconst cleanPhone = v => cleanStr(v).replace(/[^\\d+]/g, '');\n\n// convenience getter that tries several keys, in order\nconst first = (...keys) => {\n  for (const k of keys) {\n    if (src[k] != null && src[k] !== '') return src[k];\n  }\n  return '';\n};\n\nconst out = {\n  companyName:  cleanStr(first('companyName', 'company', 'siteName')),\n  ownerEmail:   cleanEmail(first('ownerEmail', 'businessEmail', 'email_owner')),\n  ownerPhone:   cleanPhone(first('ownerPhone', 'businessPhone', 'phone_owner')),\n  leadName:     cleanStr(first('leadName', 'name', 'fullName')),\n  leadEmail:    cleanEmail(first('leadEmail', 'email', 'customerEmail')),\n  leadPhone:    cleanPhone(first('leadPhone', 'phone', 'customerPhone')),\n  leadMessage:  cleanStr(first('leadMessage', 'message', 'notes')),\n  timestamp:    new Date().toISOString(),\n};\n\nreturn [{ json: out }];"
-      },
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        224,
-        16
-      ],
-      "id": "e3ab0b17-e8df-4467-974d-338f223cf1b0",
-      "name": "Code in JavaScript"
-    },
-    {
-      "parameters": {
         "from": "+19259408412",
-        "to": "=+19282257944",
+        "to": "=={{$json.ownerPhone}}",
         "message": "=New lead for {{$json.companyName}} from {{$json.leadName}}",
         "options": {}
       },
       "type": "n8n-nodes-base.twilio",
       "typeVersion": 1,
       "position": [
-        896,
+        880,
         -176
       ],
       "id": "bdab7e17-a789-4d83-8fb8-3aaaca586ad3",
@@ -253,7 +276,7 @@
       "type": "n8n-nodes-base.twilio",
       "typeVersion": 1,
       "position": [
-        672,
+        880,
         208
       ],
       "id": "6a1fdaf9-ce67-43b8-b416-cfe1bcbb7873",
@@ -264,6 +287,66 @@
           "name": "Twilio account"
         }
       }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Run Once For All Items\n\n// Source of the payload: prefer `json.body` (Webhook), else use root\nconst src = $json.body ?? $json;\n\n// helpers\nconst cleanStr = v => (v ?? '').toString().trim();\nconst cleanEmail = v => cleanStr(v).toLowerCase();\nconst cleanPhone = v => cleanStr(v).replace(/[^\\d+]/g, '');\n\n// convenience getter that tries several keys, in order\nconst first = (...keys) => {\n  for (const k of keys) {\n    if (src[k] != null && src[k] !== '') return src[k];\n  }\n  return '';\n};\n\nconst out = {\n  companyName:  cleanStr(first('companyName', 'company', 'siteName')),\n  ownerEmail:   cleanEmail(first('ownerEmail', 'businessEmail', 'email_owner')),\n  ownerPhone:   cleanPhone(first('ownerPhone', 'businessPhone', 'phone_owner')),\n  leadName:     cleanStr(first('leadName', 'name', 'fullName')),\n  leadEmail:    cleanEmail(first('leadEmail', 'email', 'customerEmail')),\n  leadPhone:    cleanPhone(first('leadPhone', 'phone', 'customerPhone')),\n  leadMessage:  cleanStr(first('leadMessage', 'message', 'notes')),\n  timestamp:    new Date().toISOString(),\n};\n\nreturn [{ json: out }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        208,
+        16
+      ],
+      "id": "e3ab0b17-e8df-4467-974d-338f223cf1b0",
+      "name": "normalize inputs"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "7601d4e1-1e4f-4faf-83de-3cc382dc98fa",
+              "leftValue": "={{$json.headers[\"x-serviceboost-secret\"]}}",
+              "rightValue": "={{$env.SERVICEBOOST_SECRET}}",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -16,
+        112
+      ],
+      "id": "9c40cfd4-0b12-4940-bfd6-39b33ad69263",
+      "name": "If Secret OK?"
+    },
+    {
+      "parameters": {
+        "numberInputs": 3
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        1104,
+        -96
+      ],
+      "id": "35898c7e-7685-4c74-8d36-d34de7404a93",
+      "name": "Merge"
     }
   ],
   "pinData": {},
@@ -294,9 +377,9 @@
       "main": [
         [
           {
-            "node": "Respond 200 OK",
+            "node": "Merge",
             "type": "main",
-            "index": 0
+            "index": 1
           }
         ]
       ]
@@ -327,14 +410,14 @@
       "main": [
         [
           {
-            "node": "Code in JavaScript",
+            "node": "If Secret OK?",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Code in JavaScript": {
+    "normalize inputs": {
       "main": [
         [
           {
@@ -354,13 +437,64 @@
           }
         ]
       ]
+    },
+    "If Secret OK?": {
+      "main": [
+        [
+          {
+            "node": "normalize inputs",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "401",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "Respond 200 OK",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send SMS to Owner": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "sms to lead": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 2
+          }
+        ]
+      ]
     }
   },
-  "active": false,
+  "active": true,
   "settings": {
     "executionOrder": "v1"
   },
-  "versionId": "39a04a1d-1079-45a6-a7a0-613b170f40f6",
+  "versionId": "fddc10bb-8968-40a2-8735-55ac28933154",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "7c20fa10facd7164c74b889df443cdd5f8da6fd9612d193a64579cbccd18ac11"

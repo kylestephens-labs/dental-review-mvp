@@ -271,7 +271,8 @@ export const IntakeForm = () => {
                       )}
                     />
 
-                    <FormField
+                    {/* SMS opt-in removed for MVP - no SMS functionality */}
+                    {/* <FormField
                       control={form.control}
                       name="smsOptIn"
                       render={({ field }) => (
@@ -292,7 +293,7 @@ export const IntakeForm = () => {
                           </div>
                         </FormItem>
                       )}
-                    />
+                    /> */}
 
                     <p className="text-xs text-muted-foreground">
                       * Either phone or email is required
