@@ -1,0 +1,22 @@
+{
+    "logGroups": [
+        {
+            "logGroupName": "/aws/apprunner/n8n-prod-working/814aac25e58d4707bed984ec2b3fb562/application",
+            "creationTime": 1760040370822,
+            "metricFilterCount": 0,
+            "arn": "arn:aws:logs:us-east-2:625246225347:log-group:/aws/apprunner/n8n-prod-working/814aac25e58d4707bed984ec2b3fb562/application:*",
+            "storedBytes": 0,
+            "logGroupClass": "STANDARD",
+            "logGroupArn": "arn:aws:logs:us-east-2:625246225347:log-group:/aws/apprunner/n8n-prod-working/814aac25e58d4707bed984ec2b3fb562/application"
+        },
+        {
+            "logGroupName": "/aws/apprunner/n8n-prod-working/814aac25e58d4707bed984ec2b3fb562/service",
+            "creationTime": 1760040269631,
+            "metricFilterCount": 0,
+            "arn": "arn:aws:logs:us-east-2:625246225347:log-group:/aws/apprunner/n8n-prod-working/814aac25e58d4707bed984ec2b3fb562/service:*",
+            "storedBytes": 0,
+            "logGroupClass": "STANDARD",
+            "logGroupArn": "arn:aws:logs:us-east-2:625246225347:log-group:/aws/apprunner/n8n-prod-working/814aac25e58d4707bed984ec2b3fb562/service"
+        }
+    ]
+}
