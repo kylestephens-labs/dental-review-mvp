@@ -91,6 +91,14 @@ async function main() {
         await coordinator.updateGitContext(args[0], args[1], args[2], args[3]);
         break;
 
+      case 'review-feedback':
+        if (args.length === 0) {
+          console.error('Usage: npm run mcp:review-feedback <task-id>');
+          process.exit(1);
+        }
+        await coordinator.reviewCodexFeedback(args[0]);
+        break;
+
       default:
         console.log('MCP Orchestrator - Sequential Agent Handoff Coordinator');
         console.log('');

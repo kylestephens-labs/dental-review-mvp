@@ -269,9 +269,21 @@ export async function fastCIValidation(): Promise<{
     
     // Lint
     const lintStart = Date.now();
-    execSync('npm run lint', { stdio: 'pipe' });
-    const lintDuration = Date.now() - lintStart;
-    checks.push({ name: 'Lint', status: 'pass', duration: lintDuration, details: 'npm run lint' });
+    try {
+      const lintOutput = execSync('npm run lint', { stdio: 'pipe', encoding: 'utf8' });
+      const lintDuration = Date.now() - lintStart;
+      
+      // Check for warnings in output
+      const hasWarnings = lintOutput.includes('warning') || lintOutput.includes('✖');
+      if (hasWarnings) {
+        checks.push({ name: 'Lint', status: 'fail', duration: lintDuration, details: `Warnings detected: ${lintOutput}` });
+      } else {
+        checks.push({ name: 'Lint', status: 'pass', duration: lintDuration, details: 'npm run lint' });
+      }
+    } catch (error) {
+      const lintDuration = Date.now() - lintStart;
+      checks.push({ name: 'Lint', status: 'fail', duration: lintDuration, details: error.message });
+    }
     
     // Unit Tests
     const testStart = Date.now();
@@ -501,6 +513,12 @@ if (import.meta.url === `file://${process.argv[1]}`) {
     case 'fast-ci':
       fastCIValidation().then(result => {
         console.log('Fast CI Results:', JSON.stringify(result, null, 2));
+        if (!result.passed) {
+          process.exit(1);
+        }
+      }).catch(error => {
+        console.error('Fast CI Error:', error);
+        process.exit(1);
       });
       break;
       
