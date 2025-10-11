@@ -107,6 +107,10 @@ async function main() {
         await coordinator.resolveFeedback(args[0]);
         break;
 
+      case 'audit':
+        await coordinator.auditWorkflowCompliance();
+        break;
+
       default:
         console.log('MCP Orchestrator - Sequential Agent Handoff Coordinator');
         console.log('');

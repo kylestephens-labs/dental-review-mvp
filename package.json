@@ -21,6 +21,7 @@
     "mcp:status": "npx tsx .mcp/scripts/task-handoff.ts status",
     "mcp:next": "npx tsx .mcp/scripts/task-handoff.ts next",
     "mcp:git": "npx tsx .mcp/scripts/task-handoff.ts git",
+    "mcp:audit": "npx tsx .mcp/scripts/task-handoff.ts audit",
     "mcp:error": "npx tsx .mcp/scripts/error-feedback.ts",
     "workflow:classify": "npx tsx .mcp/scripts/workflow-enforcement.ts classify",
     "workflow:conflict-check": "npx tsx .mcp/scripts/workflow-enforcement.ts conflict-check",

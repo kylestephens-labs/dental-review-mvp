@@ -100,6 +100,11 @@ export class TaskManager {
     const task = await this.getTask(taskId);
     if (!task) throw new Error(`Task ${taskId} not found`);
 
+    // WORKFLOW ENFORCEMENT: Validate state transition
+    if (!this.validateStateTransition(task.status, newStatus)) {
+      throw new Error(`Invalid state transition: ${task.status} → ${newStatus}. Use proper MCP commands for workflow compliance.`);
+    }
+
     // Remove from current directory
     const currentPath = await this.findTaskFile(taskId);
     if (currentPath) {
@@ -364,5 +369,94 @@ ${task.errorContext || '[Error context will be added here]'}
     
     const feedbackLower = reviewFeedback.toLowerCase();
     return actionableKeywords.some(keyword => feedbackLower.includes(keyword));
+  }
+
+  /**
+   * WORKFLOW ENFORCEMENT: Validate state transitions
+   */
+  validateStateTransition(currentStatus: Task['status'], newStatus: Task['status']): boolean {
+    const validTransitions: Record<Task['status'], Task['status'][]> = {
+      'pending': ['ready'],
+      'ready': ['in-progress'],
+      'in-progress': ['review', 'failed'],
+      'review': ['completed', 'ready'], // Can go back to ready if feedback needs addressing
+      'completed': [], // Terminal state
+      'failed': ['ready'] // Can retry from ready
+    };
+
+    const allowedTransitions = validTransitions[currentStatus] || [];
+    return allowedTransitions.includes(newStatus);
+  }
+
+  /**
+   * WORKFLOW ENFORCEMENT: Validate task file integrity
+   */
+  async validateTaskIntegrity(taskId: string): Promise<{ valid: boolean; issues: string[] }> {
+    const issues: string[] = [];
+    
+    try {
+      // Check if task exists in exactly one location
+      const locations = await this.findTaskLocations(taskId);
+      
+      if (locations.length === 0) {
+        issues.push(`Task ${taskId} not found in any directory`);
+      } else if (locations.length > 1) {
+        issues.push(`Task ${taskId} found in multiple locations: ${locations.join(', ')}`);
+      } else {
+        // Check if file content matches directory location
+        const task = await this.getTask(taskId);
+        if (task && task.status !== path.basename(path.dirname(locations[0]))) {
+          issues.push(`Task status '${task.status}' doesn't match directory '${path.basename(path.dirname(locations[0]))}'`);
+        }
+      }
+      
+      return { valid: issues.length === 0, issues };
+    } catch (error) {
+      issues.push(`Validation error: ${error.message}`);
+      return { valid: false, issues };
+    }
+  }
+
+  /**
+   * WORKFLOW ENFORCEMENT: Find all locations where a task file exists
+   */
+  private async findTaskLocations(taskId: string): Promise<string[]> {
+    const locations: string[] = [];
+    const statusDirs = ['pending', 'ready', 'in-progress', 'review', 'completed', 'failed'];
+    
+    for (const statusDir of statusDirs) {
+      const filePath = path.join(this.tasksDir, statusDir, `${taskId}.md`);
+      try {
+        await fs.access(filePath);
+        locations.push(filePath);
+      } catch {
+        // File doesn't exist in this directory
+      }
+    }
+    
+    return locations;
+  }
+
+  /**
+   * WORKFLOW ENFORCEMENT: Audit workflow compliance
+   */
+  async auditWorkflowCompliance(): Promise<{ compliant: boolean; violations: string[] }> {
+    const violations: string[] = [];
+    
+    try {
+      const allTasks = await this.listTasks();
+      
+      for (const task of allTasks) {
+        const integrity = await this.validateTaskIntegrity(task.id);
+        if (!integrity.valid) {
+          violations.push(`Task ${task.id}: ${integrity.issues.join(', ')}`);
+        }
+      }
+      
+      return { compliant: violations.length === 0, violations };
+    } catch (error) {
+      violations.push(`Audit error: ${error.message}`);
+      return { compliant: false, violations };
+    }
   }
 }

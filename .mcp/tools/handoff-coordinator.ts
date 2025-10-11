@@ -433,4 +433,29 @@ Ready for production deployment.`;
     
     return classification;
   }
+
+  /**
+   * WORKFLOW ENFORCEMENT: Audit workflow compliance
+   */
+  async auditWorkflowCompliance(): Promise<void> {
+    console.log('🔍 Auditing MCP Orchestrator workflow compliance...\n');
+    
+    const audit = await this.taskManager.auditWorkflowCompliance();
+    
+    if (audit.compliant) {
+      console.log('✅ Workflow compliance audit PASSED');
+      console.log('All tasks are following proper MCP Orchestrator workflow');
+    } else {
+      console.log('❌ Workflow compliance audit FAILED');
+      console.log('Violations found:');
+      audit.violations.forEach(violation => {
+        console.log(`  • ${violation}`);
+      });
+      console.log('\n💡 Use proper MCP commands to fix workflow violations:');
+      console.log('  npm run mcp:prep <task-id>');
+      console.log('  npm run mcp:claim <task-id> <agent>');
+      console.log('  npm run mcp:review <task-id>');
+      console.log('  npm run mcp:complete <task-id>');
+    }
+  }
 }
