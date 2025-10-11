@@ -4,7 +4,7 @@ import * as path from 'path';
 export interface Task {
   id: string;
   title: string;
-  status: 'pending' | 'ready' | 'in-progress' | 'review' | 'done' | 'failed';
+  status: 'pending' | 'ready' | 'in-progress' | 'review' | 'completed' | 'failed';
   priority: 'P0' | 'P1' | 'P2';
   agent: 'cursor' | 'codex' | 'chatgpt' | 'unassigned';
   created: string;
@@ -24,6 +24,8 @@ export interface Task {
     commit: string;
     pr: string;
   };
+  classification?: 'functional' | 'non_functional'; // NEW: Task classification
+  approach?: string; // NEW: Implementation approach
 }
 
 export class TaskManager {
@@ -59,7 +61,9 @@ export class TaskManager {
         branch: '',
         commit: '',
         pr: ''
-      }
+      },
+      classification: undefined,
+      approach: undefined
     };
 
     await this.saveTask(task);
@@ -200,6 +204,10 @@ export class TaskManager {
 
 ## Agent: ${task.agent}
 
+## Classification: ${task.classification || '[Classification to be determined]'}
+
+## Approach: ${task.approach || '[Approach to be determined]'}
+
 ## Created: ${task.created}
 ## Last Updated: ${task.lastUpdated}
 
@@ -265,6 +273,16 @@ ${task.errorContext || '[Error context will be added here]'}
         task.priority = line.replace('## Priority:', '').trim() as Task['priority'];
       } else if (line.startsWith('## Agent:')) {
         task.agent = line.replace('## Agent:', '').trim() as Task['agent'];
+      } else if (line.startsWith('## Classification:')) {
+        const classification = line.replace('## Classification:', '').trim();
+        if (classification !== '[Classification to be determined]') {
+          task.classification = classification as 'functional' | 'non_functional';
+        }
+      } else if (line.startsWith('## Approach:')) {
+        const approach = line.replace('## Approach:', '').trim();
+        if (approach !== '[Approach to be determined]') {
+          task.approach = approach;
+        }
       } else if (line.startsWith('## Created:')) {
         task.created = line.replace('## Created:', '').trim();
       } else if (line.startsWith('## Last Updated:')) {

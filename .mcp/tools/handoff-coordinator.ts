@@ -32,15 +32,30 @@ export class HandoffCoordinator {
       throw new Error(`Task ${taskId} is not in pending status`);
     }
 
-    // Move to ready status first
+    // Step 1: Automatic Task Classification (100x Workflow)
+    console.log(`🔍 Step 1: Automatic task classification...`);
+    const classification = await this.classifyTask(task.title, task.acceptanceCriteria || []);
+    console.log(`📋 Task classification: ${classification}`);
+    
+    // Step 2: Move to ready status
     await this.taskManager.moveTask(taskId, 'ready');
     console.log(`✅ Task ${taskId} moved to ready queue`);
     console.log(`📁 Location: .mcp/tasks/ready/${taskId}.md`);
     
-    // ChatGPT Integration: Automatically fill out task details
-    console.log(`🤖 ChatGPT Integration: Analyzing project context and filling out task details...`);
+    // Step 3: ChatGPT Integration: Automatically fill out task details
+    console.log(`🤖 Step 3: ChatGPT Integration - Analyzing project context and filling out task details...`);
     await this.chatgptIntegration.fillOutTaskDetails(taskId);
     console.log(`✅ Task ${taskId} details filled out by ChatGPT`);
+    
+    // Step 4: Update task with classification
+    await this.taskManager.updateTask(taskId, { 
+      classification,
+      approach: classification === 'functional' 
+        ? 'TDD: RED → GREEN → REFACTOR' 
+        : 'Problem Analysis: Analyze → Identify root cause → Fix directly → Validate'
+    });
+    
+    console.log(`🎯 Approach determined: ${classification === 'functional' ? 'TDD' : 'Problem Analysis'}`);
     console.log(`🚀 Ready for implementation`);
   }
 
@@ -380,16 +395,42 @@ Ready for production deployment.`;
   }
 
   /**
-   * Mark Codex feedback as resolved
+   * Automatic Task Classification (100x Workflow)
    */
-  async resolveFeedback(taskId: string): Promise<void> {
-    const task = await this.taskManager.getTask(taskId);
-    if (!task) {
-      throw new Error(`Task ${taskId} not found`);
+  private async classifyTask(title: string, acceptanceCriteria: string[]): Promise<'functional' | 'non_functional'> {
+    // Decision rule: "Does this require writing *testable* business logic?"
+    const functionalKeywords = [
+      'validation', 'logic', 'algorithm', 'calculation', 'processing',
+      'integration', 'api', 'database', 'workflow', 'business',
+      'authentication', 'authorization', 'payment', 'booking', 'scheduling',
+      'form', 'submit', 'validate', 'calculate', 'process'
+    ];
+    
+    const nonFunctionalKeywords = [
+      'config', 'setup', 'documentation', 'deployment', 'environment',
+      'build', 'dependencies', 'fix', 'update', 'migration',
+      'styling', 'css', 'layout', 'responsive', 'ui', 'design',
+      'performance', 'optimization', 'security', 'monitoring'
+    ];
+    
+    const titleLower = title.toLowerCase();
+    const criteriaText = acceptanceCriteria.join(' ').toLowerCase();
+    const fullText = `${titleLower} ${criteriaText}`;
+    
+    const hasFunctionalKeywords = functionalKeywords.some(keyword => fullText.includes(keyword));
+    const hasNonFunctionalKeywords = nonFunctionalKeywords.some(keyword => fullText.includes(keyword));
+    
+    let classification: 'functional' | 'non_functional';
+    
+    if (hasFunctionalKeywords && !hasNonFunctionalKeywords) {
+      classification = 'functional';
+    } else if (hasNonFunctionalKeywords && !hasFunctionalKeywords) {
+      classification = 'non_functional';
+    } else {
+      // Default to functional for ambiguous cases
+      classification = 'functional';
     }
-
-    await this.taskManager.updateTask(taskId, { feedbackResolved: true });
-    console.log(`✅ Codex feedback marked as resolved for task ${taskId}`);
-    console.log(`🚀 Task is now ready for GitHub push`);
+    
+    return classification;
   }
 }
