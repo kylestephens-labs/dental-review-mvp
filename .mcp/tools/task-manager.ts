@@ -9,6 +9,7 @@ export interface Task {
   agent: 'cursor' | 'codex' | 'chatgpt' | 'unassigned';
   created: string;
   lastUpdated: string;
+  overview: string;
   goal: string;
   acceptanceCriteria: string[];
   definitionOfReady: string[];
@@ -43,6 +44,7 @@ export class TaskManager {
       agent: 'unassigned',
       created: now,
       lastUpdated: now,
+      overview: '',
       goal: '',
       acceptanceCriteria: [],
       definitionOfReady: [],
@@ -199,6 +201,9 @@ export class TaskManager {
 ## Created: ${task.created}
 ## Last Updated: ${task.lastUpdated}
 
+## Overview
+${task.overview || '[Overview to be defined]'}
+
 ## Goal
 ${task.goal || '[Goal to be defined]'}
 
@@ -259,6 +264,8 @@ ${task.errorContext || '[Error context will be added here]'}
         task.created = line.replace('## Created:', '').trim();
       } else if (line.startsWith('## Last Updated:')) {
         task.lastUpdated = line.replace('## Last Updated:', '').trim();
+      } else if (line.startsWith('## Overview')) {
+        task.overview = this.extractSectionContent(lines, i);
       } else if (line.startsWith('## Goal')) {
         task.goal = this.extractSectionContent(lines, i);
       } else if (line.startsWith('## Implementation Notes')) {

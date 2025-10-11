@@ -1,12 +1,15 @@
 import { TaskManager, Task } from './task-manager.js';
+import { ChatGPTIntegration } from './chatgpt-integration.js';
 import * as fs from 'fs/promises';
 import * as path from 'path';
 
 export class HandoffCoordinator {
   private taskManager: TaskManager;
+  private chatgptIntegration: ChatGPTIntegration;
 
   constructor(tasksDir: string = '.mcp/tasks') {
     this.taskManager = new TaskManager(path.resolve(tasksDir));
+    this.chatgptIntegration = new ChatGPTIntegration(path.resolve(tasksDir));
   }
 
   async createTask(title: string, priority: 'P0' | 'P1' | 'P2' = 'P1'): Promise<string> {
@@ -28,11 +31,16 @@ export class HandoffCoordinator {
       throw new Error(`Task ${taskId} is not in pending status`);
     }
 
-    // Move to ready status
+    // Move to ready status first
     await this.taskManager.moveTask(taskId, 'ready');
     console.log(`✅ Task ${taskId} moved to ready queue`);
     console.log(`📁 Location: .mcp/tasks/ready/${taskId}.md`);
-    console.log(`🤖 Ready for ChatGPT to flesh out with DoR/DoD`);
+    
+    // ChatGPT Integration: Automatically fill out task details
+    console.log(`🤖 ChatGPT Integration: Analyzing project context and filling out task details...`);
+    await this.chatgptIntegration.fillOutTaskDetails(taskId);
+    console.log(`✅ Task ${taskId} details filled out by ChatGPT`);
+    console.log(`🚀 Ready for implementation`);
   }
 
   async claimTask(taskId: string, agent: 'cursor' | 'codex' | 'chatgpt'): Promise<void> {
