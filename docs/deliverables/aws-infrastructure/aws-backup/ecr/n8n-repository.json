@@ -1,0 +1,18 @@
+{
+    "repositories": [
+        {
+            "repositoryArn": "arn:aws:ecr:us-east-2:625246225347:repository/n8n",
+            "registryId": "625246225347",
+            "repositoryName": "n8n",
+            "repositoryUri": "625246225347.dkr.ecr.us-east-2.amazonaws.com/n8n",
+            "createdAt": "2025-10-09T11:11:53.704000-07:00",
+            "imageTagMutability": "IMMUTABLE",
+            "imageScanningConfiguration": {
+                "scanOnPush": true
+            },
+            "encryptionConfiguration": {
+                "encryptionType": "AES256"
+            }
+        }
+    ]
+}

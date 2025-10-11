@@ -1,0 +1,75 @@
+{
+    "Service": {
+        "ServiceName": "n8n-prod-working",
+        "ServiceId": "814aac25e58d4707bed984ec2b3fb562",
+        "ServiceArn": "arn:aws:apprunner:us-east-2:625246225347:service/n8n-prod-working/814aac25e58d4707bed984ec2b3fb562",
+        "ServiceUrl": "uncqyimekm.us-east-2.awsapprunner.com",
+        "CreatedAt": "2025-10-09T13:04:27-07:00",
+        "UpdatedAt": "2025-10-09T16:02:43-07:00",
+        "Status": "RUNNING",
+        "SourceConfiguration": {
+            "ImageRepository": {
+                "ImageIdentifier": "625246225347.dkr.ecr.us-east-2.amazonaws.com/n8n:1.61.0",
+                "ImageConfiguration": {
+                    "RuntimeEnvironmentVariables": {
+                        "DB_POSTGRESDB_CONNECTION_TIMEOUT": "60000",
+                        "DB_POSTGRESDB_DATABASE": "postgres",
+                        "DB_POSTGRESDB_HOST": "n8n-database.cb0ys2yimzmc.us-east-2.rds.amazonaws.com",
+                        "DB_POSTGRESDB_PASSWORD": "TempPassword123!",
+                        "DB_POSTGRESDB_PORT": "5432",
+                        "DB_POSTGRESDB_SSL": "true",
+                        "DB_POSTGRESDB_SSL_REJECT_UNAUTHORIZED": "false",
+                        "DB_POSTGRESDB_USER": "n8nadmin",
+                        "DB_TYPE": "postgresdb",
+                        "EXECUTIONS_MODE": "regular",
+                        "N8N_ENCRYPTION_KEY": "n8n-encryption-key-2024",
+                        "N8N_HOST": "automation.serviceboost.co",
+                        "N8N_LOG_LEVEL": "debug",
+                        "N8N_LOG_OUTPUT": "console",
+                        "N8N_PROTOCOL": "https",
+                        "N8N_SKIP_WEBHOOK_DEREGISTRATION": "true",
+                        "NODE_OPTIONS": "--max-old-space-size=1536",
+                        "WEBHOOK_URL": "https://automation.serviceboost.co"
+                    },
+                    "Port": "5678"
+                },
+                "ImageRepositoryType": "ECR"
+            },
+            "AutoDeploymentsEnabled": false,
+            "AuthenticationConfiguration": {
+                "AccessRoleArn": "arn:aws:iam::625246225347:role/AppRunnerECRAccessRole"
+            }
+        },
+        "InstanceConfiguration": {
+            "Cpu": "1024",
+            "Memory": "2048"
+        },
+        "HealthCheckConfiguration": {
+            "Protocol": "TCP",
+            "Path": "/",
+            "Interval": 5,
+            "Timeout": 2,
+            "HealthyThreshold": 1,
+            "UnhealthyThreshold": 5
+        },
+        "AutoScalingConfigurationSummary": {
+            "AutoScalingConfigurationArn": "arn:aws:apprunner:us-east-2:625246225347:autoscalingconfiguration/DefaultConfiguration/1/00000000000000000000000000000001",
+            "AutoScalingConfigurationName": "DefaultConfiguration",
+            "AutoScalingConfigurationRevision": 1
+        },
+        "NetworkConfiguration": {
+            "EgressConfiguration": {
+                "EgressType": "VPC",
+                "VpcConnectorArn": "arn:aws:apprunner:us-east-2:625246225347:vpcconnector/n8n-vpc-connector/1/66c2ddbd153f4ebd9e0d2fbd4708e0fd"
+            },
+            "IngressConfiguration": {
+                "IsPubliclyAccessible": true
+            },
+            "IpAddressType": "IPV4"
+        },
+        "ObservabilityConfiguration": {
+            "ObservabilityEnabled": true,
+            "ObservabilityConfigurationArn": "arn:aws:apprunner:us-east-2:625246225347:observabilityconfiguration/n8n-observability/1/63bf599a06f94e45ad8286c0e01f7060"
+        }
+    }
+}

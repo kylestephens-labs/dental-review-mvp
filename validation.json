@@ -1,0 +1,22 @@
+[
+    [
+        {
+            "Name": "_e895ca58aef524639f4f0a0b13190a66.automation.serviceboost.co.",
+            "Type": "CNAME",
+            "Value": "_a3178018ce8695c986e29b63ed0dfeb6.xlfgrmvvlj.acm-validations.aws.",
+            "Status": "PENDING_VALIDATION"
+        },
+        {
+            "Name": "_79d673f8acdaf527b1c87bd1a7b5d058.www.automation.serviceboost.co.",
+            "Type": "CNAME",
+            "Value": "_5d27a3a5b9511f872b5f5ce5d0efd3f3.xlfgrmvvlj.acm-validations.aws.",
+            "Status": "PENDING_VALIDATION"
+        },
+        {
+            "Name": "_f17b84fde78369e8981f20b77ee3154f.2a57j780olh9y9xqbb05rfdkozihhcw.automation.serviceboost.co.",
+            "Type": "CNAME",
+            "Value": "_226b48ab580308b7e26dc8fb18568954.xlfgrmvvlj.acm-validations.aws.",
+            "Status": "PENDING_VALIDATION"
+        }
+    ]
+]

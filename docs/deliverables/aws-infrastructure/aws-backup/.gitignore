@@ -1,0 +1,24 @@
+# AWS Configuration Backup - Sensitive Files
+# Never commit these files to version control
+
+# Environment variables with secrets
+environment-variables.env
+*-secrets.json
+*-credentials.json
+
+# AWS access keys and secrets
+*access-key*
+*secret-key*
+*password*
+
+# Database credentials
+*db-password*
+*db-credentials*
+
+# Encryption keys
+*encryption-key*
+*private-key*
+
+# Backup files with sensitive data
+*-sensitive.json
+*-private.json

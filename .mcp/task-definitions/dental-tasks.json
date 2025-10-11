@@ -1,0 +1,185 @@
+{
+  "tasks": {
+    "stripe-integration": {
+      "id": "stripe-integration",
+      "type": "P0",
+      "goal": "Implement Stripe checkout integration for dental review engine",
+      "acceptance_criteria": [
+        "Stripe SKU created with $249/month pricing",
+        "Webhook endpoint handles checkout.session.completed",
+        "Practice and settings created in database",
+        "Magic link onboarding flow initiated",
+        "Billing metadata properly stored"
+      ],
+      "estimated_duration": 120,
+      "risk_level": "critical",
+      "files_affected": [
+        "src/api/webhooks/stripe.ts",
+        "src/lib/stripe.ts",
+        "supabase/migrations/001_stripe_integration.sql"
+      ],
+      "components_affected": [
+        "StripeCheckout",
+        "OnboardingFlow",
+        "BillingService"
+      ],
+      "integration_points": [
+        "Supabase database",
+        "Stripe API",
+        "Email service"
+      ]
+    },
+    "twilio-sms-setup": {
+      "id": "twilio-sms-setup",
+      "type": "P0",
+      "goal": "Set up Twilio SMS with A2P registration and EN/ES templates",
+      "acceptance_criteria": [
+        "A2P brand and campaign registered",
+        "EN and ES SMS templates approved",
+        "Template library implemented",
+        "STOP handling configured",
+        "Delivery status tracking enabled"
+      ],
+      "estimated_duration": 90,
+      "risk_level": "critical",
+      "files_affected": [
+        "src/lib/twilio.ts",
+        "src/api/webhooks/twilio.ts",
+        "src/templates/sms/",
+        "supabase/migrations/002_twilio_setup.sql"
+      ],
+      "components_affected": [
+        "SMSService",
+        "TemplateManager",
+        "OptOutHandler"
+      ],
+      "integration_points": [
+        "Twilio API",
+        "Database",
+        "Template storage"
+      ]
+    },
+    "onboarding-portal": {
+      "id": "onboarding-portal",
+      "type": "P1",
+      "goal": "Create 2-minute onboarding portal with proof SMS",
+      "acceptance_criteria": [
+        "Magic link authentication working",
+        "Practice details pre-filled",
+        "Quiet hours and daily caps configurable",
+        "Proof SMS button functional",
+        "GBP review link resolver integrated"
+      ],
+      "estimated_duration": 180,
+      "risk_level": "standard",
+      "files_affected": [
+        "src/pages/onboard/[token].tsx",
+        "src/components/OnboardingForm.tsx",
+        "src/api/onboard/",
+        "src/lib/gbp-resolver.ts"
+      ],
+      "components_affected": [
+        "OnboardingPortal",
+        "SettingsForm",
+        "ProofSMSButton",
+        "GBPResolver"
+      ],
+      "integration_points": [
+        "Database",
+        "Twilio SMS",
+        "Google Places API"
+      ]
+    },
+    "calendar-connectors": {
+      "id": "calendar-connectors",
+      "type": "P1",
+      "goal": "Implement Google Calendar and Outlook connectors",
+      "acceptance_criteria": [
+        "Google Calendar OAuth flow working",
+        "Outlook/Graph OAuth flow working",
+        "Calendar event watching configured",
+        "Visit data extraction and storage",
+        "Idempotency handling implemented"
+      ],
+      "estimated_duration": 240,
+      "risk_level": "standard",
+      "files_affected": [
+        "src/api/connectors/gcal/",
+        "src/api/connectors/outlook/",
+        "src/lib/calendar/",
+        "supabase/migrations/003_calendar_connectors.sql"
+      ],
+      "components_affected": [
+        "GoogleCalendarConnector",
+        "OutlookConnector",
+        "VisitExtractor",
+        "OAuthManager"
+      ],
+      "integration_points": [
+        "Google Calendar API",
+        "Microsoft Graph API",
+        "Database",
+        "OAuth services"
+      ]
+    },
+    "review-fulfillment-flow": {
+      "id": "review-fulfillment-flow",
+      "type": "P1",
+      "goal": "Implement n8n Flow A for review request fulfillment",
+      "acceptance_criteria": [
+        "Queue system for review requests",
+        "Quiet hours and daily caps enforcement",
+        "Template selection (EN/ES)",
+        "SMS sending with fallback to email",
+        "48-hour reminder scheduling"
+      ],
+      "estimated_duration": 200,
+      "risk_level": "standard",
+      "files_affected": [
+        "workflows/flowA_fulfillment.json",
+        "src/lib/queue/",
+        "src/lib/templates/",
+        "src/api/queue/"
+      ],
+      "components_affected": [
+        "ReviewFulfillmentFlow",
+        "QueueManager",
+        "TemplateSelector",
+        "ReminderScheduler"
+      ],
+      "integration_points": [
+        "n8n workflows",
+        "Twilio SMS",
+        "Email service",
+        "Database queue"
+      ]
+    }
+  },
+  "workflows": {
+    "mvp-phase-1": {
+      "name": "MVP Phase 1 - Core Loop",
+      "description": "Essential features for first practice onboarding and review sending",
+      "tasks": [
+        "stripe-integration",
+        "twilio-sms-setup",
+        "onboarding-portal"
+      ],
+      "dependencies": {
+        "onboarding-portal": ["stripe-integration"],
+        "twilio-sms-setup": []
+      }
+    },
+    "mvp-phase-2": {
+      "name": "MVP Phase 2 - Data Connectors",
+      "description": "Calendar integration and automation features",
+      "tasks": [
+        "calendar-connectors",
+        "review-fulfillment-flow"
+      ],
+      "dependencies": {
+        "review-fulfillment-flow": ["twilio-sms-setup"],
+        "calendar-connectors": []
+      }
+    }
+  }
+}

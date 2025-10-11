@@ -56,6 +56,9 @@ serve(async (req) => {
         leadEmail: form.email,
         leadPhone: form.phone,
         leadMessage: form.notes || `Service: ${form.service}${form.preferredDate ? `, Preferred Date: ${form.preferredDate}` : ''}${form.preferredTime ? `, Preferred Time: ${form.preferredTime}` : ''}${form.smsOptIn ? ', SMS Opt-in: Yes' : ''}`,
+        serviceNeeded: form.service ?? '',
+        preferredDate: form.preferredDate ?? '',
+        preferredTime: form.preferredTime ?? '',
         timestamp: new Date().toISOString(),
         source: source || 'web',
       };

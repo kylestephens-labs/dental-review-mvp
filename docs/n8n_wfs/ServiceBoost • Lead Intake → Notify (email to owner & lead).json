@@ -1,0 +1,546 @@
+{
+  "name": "ServiceBoost • Lead Intake → Notify (email to owner & lead)",
+  "nodes": [
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "{ \"error\": \"unauthorized\" }",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          }
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        192,
+        112
+      ],
+      "id": "33a8d961-a132-4427-a667-807ac7a442d7",
+      "name": "401"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "lead-intake-notify",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "name": "Webhook Lead Intake",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        -256,
+        16
+      ],
+      "id": "b937605d-3f82-46d2-918f-466265a4b281",
+      "webhookId": "024e6984-8076-4f4d-bc07-60ec0bc0e551"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "id": "21cd5418-a82d-4f57-a2ff-05928f1d531e",
+              "leftValue": "{{$json.ownerPhone}}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            },
+            {
+              "id": "284cd720-b267-492a-9610-c5e228182ac8",
+              "leftValue": "={{$json.ownerPhone}}",
+              "rightValue": "^\\+\\d{10,15}$",
+              "operator": {
+                "type": "string",
+                "operation": "regex"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "name": "If Owner Has Phone",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        -256,
+        784
+      ],
+      "id": "af15cd8a-ee00-4150-ad32-998d3d2daabe",
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "id": "ae338fed-9d60-4c82-9a16-2645bbdbbdf5",
+              "leftValue": "{{$json.leadEmail}}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            },
+            {
+              "id": "c748cc73-e00e-4771-8e5c-392795ce7b7f",
+              "leftValue": "={{$json.leadEmail}}",
+              "rightValue": "^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$",
+              "operator": {
+                "type": "string",
+                "operation": "regex"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "name": "If Lead Has Email",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        416,
+        16
+      ],
+      "id": "5796de2c-295a-4500-9ff6-c71d7fc55394"
+    },
+    {
+      "parameters": {
+        "fromEmail": "ServiceBoost <notify@serviceboost.co>",
+        "toEmail": "={{$json.leadEmail}}",
+        "subject": "==Thanks for reaching out to {{$json.companyName}}!",
+        "text": "==Hi {{$json.leadName}},\\n\\nThanks for your interest in {{$json.companyName}}. Someone will reach out soon!\\n\\n— {{$json.companyName}} Team",
+        "options": {}
+      },
+      "name": "Email Lead",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2,
+      "position": [
+        224,
+        336
+      ],
+      "id": "09161867-f867-4f8f-8bd5-77e107e0fd7d",
+      "webhookId": "b4848b8a-79fb-4783-a3e6-003b4387785f",
+      "credentials": {
+        "smtp": {
+          "id": "Gxi1uf03VB0M1jG7",
+          "name": "SMTP account"
+        }
+      },
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "id": "76bbbf2b-dfba-456e-8a26-bec91c119f5d",
+              "leftValue": "{{$json.leadPhone}}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            },
+            {
+              "id": "a51973f0-3a25-44b2-b159-70d70d43942e",
+              "leftValue": "={{$json.leadPhone}}",
+              "rightValue": "^\\+\\d{10,15}$",
+              "operator": {
+                "type": "string",
+                "operation": "regex"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "name": "If Lead Has Phone",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        -256,
+        336
+      ],
+      "id": "0d0f8461-6e7f-418f-9de3-9ea591b85ac7",
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={ \"status\":\"ok\", \"leadId\":\"{{$json.leadId || ''}}\", \"receivedAt\":\"{{$now}}\" }",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          }
+        }
+      },
+      "name": "Respond 200 OK",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        1088,
+        -80
+      ],
+      "id": "d36813ce-d4c5-4273-9982-c2fa4f330692"
+    },
+    {
+      "parameters": {
+        "from": "+19259408412",
+        "to": "=+19282257944",
+        "message": "=test",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.twilio",
+      "typeVersion": 1,
+      "position": [
+        -32,
+        336
+      ],
+      "id": "6a1fdaf9-ce67-43b8-b416-cfe1bcbb7873",
+      "name": "sms to lead",
+      "credentials": {
+        "twilioApi": {
+          "id": "4Mvm9XG9psRsZmD0",
+          "name": "Twilio account"
+        }
+      },
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "jsCode": "const src = $json.body ?? $json;\nconst form = (typeof src.form === 'object' && src.form !== null) ? src.form : {};\nconst sources = [src, form];\n\nconst cleanStr = v => (v ?? '').toString().trim();\nconst cleanEmail = v => cleanStr(v).toLowerCase();\nconst cleanPhone = v => cleanStr(v).replace(/[^\\d+]/g, '');\n\nconst pick = (...keys) => {\n  for (const obj of sources) {\n    for (const key of keys) {\n      const val = obj?.[key];\n      if (val != null && !(typeof val === 'string' && val.trim() === '')) {\n        return val;\n      }\n    }\n  }\n  return '';\n};\n\nconst out = {\n  companyName:   cleanStr(pick('companyName', 'company', 'siteName')),\n  ownerEmail:    cleanEmail(pick('ownerEmail', 'businessEmail', 'email_owner')),\n  ownerPhone:    cleanPhone(pick('ownerPhone', 'businessPhone', 'phone_owner')),\n  leadName:      cleanStr(pick('leadName', 'name', 'fullName')),\n  leadEmail:     cleanEmail(pick('leadEmail', 'email', 'customerEmail')),\n  leadPhone:     cleanPhone(pick('leadPhone', 'phone', 'customerPhone')),\n  leadMessage:   cleanStr(pick('leadMessage', 'message', 'notes')),\n  serviceNeeded: cleanStr(pick('serviceNeeded', 'service', 'selectedService')),\n  preferredDate: cleanStr(pick('preferredDate', 'preferred_date', 'preferredDate', 'appointmentDate')),\n  preferredTime: cleanStr(pick('preferredTime', 'preferred_time', 'preferredTime', 'appointmentTime')),\n  timestamp:     new Date().toISOString(),\n  leadId:        'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {\n    const r = (Math.random() * 16) | 0;\n    return (c === 'x' ? r : (r & 0x3) | 0x8).toString(16);\n  }),\n};\n\nreturn [{ json: out }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        192,
+        -80
+      ],
+      "id": "e3ab0b17-e8df-4467-974d-338f223cf1b0",
+      "name": "normalize inputs"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "7601d4e1-1e4f-4faf-83de-3cc382dc98fa",
+              "leftValue": "={{$headers[\"x-serviceboost-secret\"]}}",
+              "rightValue": "={{$env.SERVICEBOOST_SECRET}}",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -32,
+        16
+      ],
+      "id": "9c40cfd4-0b12-4940-bfd6-39b33ad69263",
+      "name": "If Secret OK?"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        864,
+        -80
+      ],
+      "id": "35898c7e-7685-4c74-8d36-d34de7404a93",
+      "name": "Merge"
+    },
+    {
+      "parameters": {
+        "from": "+19259408412",
+        "to": "=={{$json.ownerPhone}}",
+        "message": "=New lead for {{$json.companyName}} from {{$json.leadName}}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.twilio",
+      "typeVersion": 1,
+      "position": [
+        -256,
+        560
+      ],
+      "id": "bdab7e17-a789-4d83-8fb8-3aaaca586ad3",
+      "name": "Send SMS to Owner",
+      "credentials": {
+        "twilioApi": {
+          "id": "4Mvm9XG9psRsZmD0",
+          "name": "Twilio account"
+        }
+      },
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "sendTo": "={{$json.leadEmail}}",
+        "subject": "=Thanks for reaching out to {{$json.companyName}}!",
+        "emailType": "text",
+        "message": "=Hi {{$json.leadName}}, thanks for your interest in {{$json.companyName}}. Someone will be reaching out soon!\n-{{$json.companyName}} Team",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        640,
+        16
+      ],
+      "id": "7733f6f6-cd8e-48ad-b235-0d0fae989a6a",
+      "name": "email lead",
+      "webhookId": "41b55dfa-336d-4d44-8462-6a8131695abe",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "Q9yaXntBDe38ionr",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "={{$json.ownerEmail}}",
+        "subject": "=New lead for {{$json.companyName || 'your website'}}",
+        "emailType": "text",
+        "message": "=You have a new lead.\n\nBusiness: {{$json.companyName}}\nReceived: {{$json.timestamp}}\n\nContact\n- Name:  {{$json.leadName || '—'}}\n- Email: {{$json.leadEmail || '—'}}\n- Phone: {{$json.leadPhone || '—'}}\n\nRequest Details\n- Service Needed: {{$json.serviceNeeded || '—'}}\n- Preferred Date: {{$json.preferredDate || '—'}}\n- Preferred Time: {{$json.preferredTime || '—'}}\n- Notes: {{$json.leadMessage || '—'}}\n\nTip: reply directly to this email to contact the lead.",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        640,
+        -160
+      ],
+      "id": "bf75136c-1299-4d69-9474-bd8dc19e7676",
+      "name": "email owner",
+      "webhookId": "41b55dfa-336d-4d44-8462-6a8131695abe",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "Q9yaXntBDe38ionr",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "fromEmail": "ServiceBoost Lead Alerts <notify@serviceboost.co>",
+        "toEmail": "=={{$json.ownerEmail}}",
+        "subject": "==New lead from {{$json.companyName || 'your website'}}",
+        "emailFormat": "both",
+        "text": "==You have a new lead.\n\nBusiness: {{$json.companyName}}\nReceived: {{$json.timestamp}}\nLead ID: {{$json.leadId}}\n\nContact\n- Name:  {{$json.leadName || '—'}}\n- Email: {{$json.leadEmail || '—'}}\n- Phone: {{$json.leadPhone || '—'}}\n\nRequest Details\n- Service Needed: {{$json.serviceNeeded || '—'}}\n- Preferred Date: {{$json.preferredDate || '—'}}\n- Preferred Time: {{$json.preferredTime || '—'}}\n- Notes: {{$json.leadMessage || '—'}}\n\nTip: reply directly to this email to contact the lead.",
+        "html": "==New lead for {{$json.companyName || 'your website'}} — {{$json.leadName || 'Unknown'}}",
+        "options": {
+          "replyTo": "=={{$json.leadEmail}}"
+        }
+      },
+      "name": "Email Owner",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2,
+      "position": [
+        464,
+        320
+      ],
+      "id": "8a95aea1-0606-4a43-a89c-0e72f17742e4",
+      "webhookId": "d549ecd1-af4b-4a95-a216-b7532683d87c",
+      "credentials": {
+        "smtp": {
+          "id": "Gxi1uf03VB0M1jG7",
+          "name": "SMTP account"
+        }
+      },
+      "disabled": true,
+      "continueOnFail": true
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "If Lead Has Email": {
+      "main": [
+        [
+          {
+            "node": "email lead",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Email Lead": {
+      "main": [
+        []
+      ]
+    },
+    "If Owner Has Phone": {
+      "main": [
+        []
+      ]
+    },
+    "If Lead Has Phone": {
+      "main": [
+        [
+          {
+            "node": "sms to lead",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook Lead Intake": {
+      "main": [
+        [
+          {
+            "node": "If Secret OK?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "normalize inputs": {
+      "main": [
+        [
+          {
+            "node": "If Lead Has Email",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "email owner",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If Secret OK?": {
+      "main": [
+        [
+          {
+            "node": "normalize inputs",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "401",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "Respond 200 OK",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "sms to lead": {
+      "main": [
+        []
+      ]
+    },
+    "email lead": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Email Owner": {
+      "main": [
+        []
+      ]
+    },
+    "email owner": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "80277153-7b03-4806-94d1-9fbab9f8db83",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "7c20fa10facd7164c74b889df443cdd5f8da6fd9612d193a64579cbccd18ac11"
+  },
+  "id": "rqeNr4X0cMs5aARH",
+  "tags": []
+}

@@ -1,0 +1,154 @@
+Love this direction. Here’s a tightened dual-user version of the plan with #1 rewritten and the key downstream sections updated to operationalize “better experience at lower cost.”
+
+⸻
+
+#1 Executive Positioning (how we win)
+
+Category: “Review Engine for Local Practices” — starting East Bay dentists.
+Promise: “The happiest patients. The least work for owners. For less.”
+Why we win: Because you’re a lean solo operator with near-zero overhead, you pass savings through while out-experiencing agencies and DIY tools on both sides of the interaction.
+
+The Dual-UX Advantage
+
+Owner (dentist/office manager): Zero-Effort
+	•	2-minute activation: prefilled onboarding, instant “proof SMS,” and one-click data connect (GCal/Outlook/CSV/Front Desk Mode).
+	•	No new software to learn: magic links, weekly email digest, optional dashboard later.
+	•	We do it for you: concierge fallback if setup stalls; A2P + template compliance handled end-to-end.
+
+Patient: Frictionless & delightful
+	•	Single-tap review flow: no app, no login, deep-links to Google with pre-suggested copy.
+	•	Respectful by default: local quiet hours, low-frequency, opt-out in one word (STOP).
+	•	Brand-right & human: warm, practice-branded tone; ADA-friendly, mobile-first.
+
+Differentiators vs. Agencies/DIY
+	1.	Experience > Features
+	•	Owners feel “already set up.” Patients feel “that was easy.”
+	2.	Outcome > Overhead
+	•	Contract-free, month-to-month; goaled on review velocity & rating.
+	3.	Lean-cost operator
+	•	Minimal fixed costs → price leadership without cutting quality.
+	4.	Time-to-Live
+	•	Checkout → live review requests in ≤48h, A2P templates approved.
+	5.	Compliance & Deliverability baked-in
+	•	TCPA quiet hours, STOP logic, DKIM/SPF, link-reputation tracking.
+
+Guarantees
+	•	Live in 48 hours or first month free.
+	•	Beat your current vendor by 20% on cost or +10 reviews/30d or next month comped.
+
+⸻
+
+What changes elsewhere to lean into Dual-UX
+
+#3 Product by Phase (updated highlights)
+
+Phase 1 — Core Review Engine (MVP)
+	•	Owner UX: prefilled onboarding, “Send me a test” first, then choose data source.
+	•	Patient UX: short, friendly SMS → prefilled Google review; 48-hour gentle reminder; bilingual option (EN/ES) copy on day one.
+	•	Accessibility & trust: ADA-friendly templates, practice logo lock-up, plain-language consent line in footer.
+
+Phase 2 — Connectors & Automation
+	•	Owner niceties: weekly “at-a-glance” email (reviews gained, CTR, 3 best quotes to copy into socials).
+	•	Patient niceties: micro-personalization (first name, dentist name), smart send-time around visit end time.
+
+Phase 3 — Reporting & Self-serve (lightweight)
+	•	Owner: “No-login” shareable monthly PDF; optional portal for multi-location rollups.
+	•	Patient: desk QR cards + NFC stickers mailed on request (no extra software).
+
+⸻
+
+#4 Pricing & Unit Economics (reframed for price leadership)
+
+One simple plan to start (price-leader):
+	•	Dental Review Engine — $249/mo (founder pricing; month-to-month).
+Includes: SMS+email review requests, 48-hour reminder, quiet hours, click tracking, GCal/Outlook/CSV/Front Desk Mode, weekly digest, concierge onboarding.
+
+Why this works: solo overhead + shared infra keeps COGS low; typical SMS ~$10–$30; infra amortized ~$25–$45 → 65–80% margin even at $249.
+
+Add-ons:
+	•	Extra SMS at $0.02–$0.03/SMS.
+	•	Additional location +$79/mo.
+	•	Optional QR mailer pack at cost + small margin (nice patient UX win).
+
+Price-match pledge: If they show a lower comparable quote, match it and keep your guarantees.
+
+⸻
+
+#5 Go-to-Market (dual-UX storytelling)
+	•	Owner-first messaging: “2-minute setup. No new software. Month-to-month.”
+	•	Patient-experience proof: Loom shows the actual SMS → Google tap in 6 seconds; include an EN/ES split example.
+	•	Sequence tweaks:
+	•	Day 1 email subject: “Make reviews effortless (for you and your patients).”
+	•	Day 2 SMS: “Can I text you the 6-sec review flow your patients will see?”
+	•	Day 5 Loom: show their GBP, your prefilled SMS, and the one-tap link.
+	•	Offer: founder pricing $249/mo for first 25 practices; no contract; “live in 48h or free.”
+
+⸻
+
+#7 Operations & SLAs (experience-backed)
+	•	Owner SLA:
+	•	Go-live ≤48h from checkout; if A2P approval lags, auto-switch to email until SMS clears.
+	•	Support: same-day (biz hours), <24h for non-urgent.
+	•	Patient SLA:
+	•	Send within 15 minutes of visit end (or nightly batch for CSV), quiet hours enforced by practice timezone.
+	•	STOP honored instantly; reminder suppressed if reviewed.
+
+Onboarding checklist gains explicit UX checks:
+	1.	Prefill success (name/phone/email/review link).
+	2.	Proof SMS received by owner.
+	3.	Data source connected (or Front Desk Mode issued).
+	4.	Quiet hours & cap confirmed.
+	5.	First 10 sends queued (dry run visible in digest).
+
+⸻
+
+#8 Metrics & Reviews (dual-UX KPIs)
+	•	Owner experience KPIs:
+	•	Onboarding completion ≤ 2 minutes (median).
+	•	% practices live in ≤48h.
+	•	Support touches per practice per month.
+	•	Patient experience KPIs:
+	•	SMS CTR ≥ 45%, opt-out < 1%, reminder lift +8–12%, EN/ES template CTR delta.
+	•	Outcome KPIs:
+	•	+15–30 reviews / 30 days; rating drift toward ≥4.8★; churn < 3%/mo.
+
+Weekly ritual adds:
+	•	Template A/B by tone/length (patient CTR & review completion).
+	•	Onboarding drop-off heatmap (owner friction removal).
+
+⸻
+
+#10 14-Day Launch Plan (experience-first adjustments)
+
+Week 1
+	1.	Stripe SKU + metadata prefill → onboarding portal with “proof SMS first”.
+	2.	Twilio A2P registration + template library (EN/ES).
+	3.	GBP link resolver + click-tracking redirect.
+	4.	n8n Flows A/B/C with quiet hours & STOP.
+	5.	Ship weekly digest v1 with 3 best patient quotes surfaced.
+
+Week 2
+	1.	GCal + Outlook connectors; CSV import polish with “looks like 86 patients—start tonight?” microcopy.
+	2.	Front Desk Mode (2 fields, no login).
+	3.	Founder-pricing landing section + “beat your vendor by 20%” badge.
+	4.	Outreach sequence swap to dual-UX proof (owner + patient Loom).
+	5.	First 5 pilots live; collect NPS from owners and thumbs-up/down from patients on message tone.
+
+⸻
+
+Optional copy blocks you can drop in
+
+Homepage hero:
+“More 5-star reviews. Less staff time. For less money.”
+Sub: Live in 48 hours. Pay monthly. See the patient flow in 6 seconds → [Text me the demo]
+
+Pricing tile:
+$249/mo founder pricing • month-to-month
+Includes concierge setup, SMS+email, quiet hours, auto-reminder, weekly digest, GCal/Outlook/CSV, Front Desk Mode.
+
+Guarantee ribbon:
+Live in 48 hours or your first month is free. Beat your current vendor by 20% or get +10 reviews in 30 days or we comp the next month.
+
+⸻
+
+If you want, I can fold these changes directly into your full doc (swapping #1, and patching #3/#4/#5/#7/#8/#10 exactly), or draft the pricing page + founder-offer section next.

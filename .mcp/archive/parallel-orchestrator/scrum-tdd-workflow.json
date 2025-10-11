@@ -1,0 +1,159 @@
+{
+  "workflow": {
+    "name": "ServiceBoost Continuous Delivery + TDD + Trunk-Based Development",
+    "version": "1.0.0",
+    "description": "Streamlined continuous delivery workflow with MCP orchestration, TDD, and trunk-based development",
+    "phases": {
+      "development_cycle": {
+        "name": "TDD Development Cycle",
+        "duration": "Continuous",
+        "frequency": "Per task",
+        "agents": ["cursor", "codex"],
+        "tasks": [
+          "write_failing_test",
+          "implement_minimal_code",
+          "refactor_and_optimize",
+          "commit_to_main",
+          "deploy_automatically"
+        ]
+      },
+      "code_review": {
+        "name": "Code Review",
+        "duration": "30 minutes",
+        "frequency": "Per commit",
+        "agents": ["chatgpt"],
+        "tasks": [
+          "review_code_changes",
+          "check_tdd_compliance",
+          "validate_architecture",
+          "suggest_improvements"
+        ]
+      },
+      "retrospective": {
+        "name": "Retrospective",
+        "duration": "30 minutes",
+        "frequency": "Every 3 completed tasks",
+        "agents": ["cursor", "codex", "chatgpt"],
+        "tasks": [
+          "review_completed_tasks",
+          "identify_what_went_well",
+          "identify_improvements",
+          "update_processes",
+          "plan_next_3_tasks"
+        ]
+      }
+    }
+  },
+  "tdd_cycle": {
+    "red_phase": {
+      "name": "Red - Write Failing Test",
+      "duration": "5-15 minutes",
+      "agent": "cursor",
+      "tasks": [
+        "analyze_requirement",
+        "write_failing_test",
+        "run_test_confirm_failure",
+        "commit_red_test"
+      ]
+    },
+    "green_phase": {
+      "name": "Green - Make Test Pass",
+      "duration": "10-30 minutes",
+      "agent": "cursor",
+      "tasks": [
+        "write_minimal_code",
+        "run_test_confirm_pass",
+        "commit_green_code"
+      ]
+    },
+    "refactor_phase": {
+      "name": "Refactor - Improve Code",
+      "duration": "5-20 minutes",
+      "agent": "codex",
+      "tasks": [
+        "improve_code_structure",
+        "optimize_performance",
+        "ensure_tests_still_pass",
+        "commit_refactored_code"
+      ]
+    }
+  },
+  "trunk_based_development": {
+    "direct_commits": {
+      "enabled": true,
+      "branch_strategy": "main_only",
+      "commit_frequency": "multiple_per_day",
+      "safety_measures": [
+        "comprehensive_tests",
+        "feature_flags",
+        "automatic_rollback",
+        "continuous_integration"
+      ]
+    },
+    "feature_flags": {
+      "enabled": true,
+      "strategy": "progressive_rollout",
+      "rollout_percentage": "0% → 10% → 50% → 100%",
+      "monitoring": "real_time_metrics"
+    }
+  },
+  "quality_gates": {
+    "conflict_first_gate": {
+      "command": "git fetch origin main && git merge origin/main --no-commit",
+      "description": "Always run first to check for conflicts",
+      "required": true
+    },
+    "fast_ci": {
+      "duration": "2-3 minutes max",
+      "checks": [
+        "npm run typecheck",
+        "npm run lint",
+        "npm run test -- --run --reporter=basic",
+        "npm run build"
+      ],
+      "deploy_on_success": true
+    },
+    "pre_commit": [
+      "git merge origin/main --no-commit",
+      "npm run typecheck",
+      "npm run lint", 
+      "npm run test",
+      "npm run build"
+    ],
+    "post_deploy": [
+      "health_checks_pass",
+      "monitoring_alerts_clear",
+      "feature_flag_rollout_monitoring"
+    ]
+  },
+  "task_classification": {
+    "functional": {
+      "description": "Requires testable business logic (clear inputs/outputs)",
+      "approach": "TDD: RED → GREEN → REFACTOR",
+      "examples": [
+        "Form validation logic",
+        "Database operations", 
+        "API endpoints",
+        "Business logic functions"
+      ]
+    },
+    "non_functional": {
+      "description": "Conflicts, config/env, one-time fixes, file edits",
+      "approach": "Problem Analysis: Analyze → Identify root cause → Fix directly → Validate",
+      "examples": [
+        "Build configuration",
+        "Environment setup",
+        "Documentation updates",
+        "Dependency updates"
+      ]
+    }
+  },
+  "velocity_targets": {
+    "commits_per_day": ">5",
+    "deployments_per_day": ">3", 
+    "lead_time": "<1 hour",
+    "cycle_time": "<2 hours",
+    "ci_success_rate": ">95%",
+    "rollback_rate": "<5%"
+  }
+}

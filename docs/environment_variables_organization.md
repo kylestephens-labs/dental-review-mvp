@@ -12,27 +12,73 @@ This document outlines the reorganization of environment variables across the n8
 ├── social_media_scraping.env # Social media data collection
 ├── local_bus_auto.env        # Local business automation
 └── n8n-extra.env            # Legacy file (to be deprecated)
+
+/Users/kylestephens/Desktop/business_auto/Dental/dental-landing-template/
+├── aws-config.sh             # AWS infrastructure configuration
+├── n8n-core.env             # AWS App Runner n8n configuration
+└── n8n-local.env            # Local testing configuration
 ```
 
 ## Environment Files
 
-### 1. n8n-core.env
-**Purpose**: Core n8n functionality and shared services
+### 1. aws-config.sh (NEW - AWS Infrastructure)
+**Purpose**: AWS infrastructure configuration and management
 
 **Key Components**:
-- n8n core configuration (host, port, database, etc.)
-- Shared AI configuration
-- Database settings (PostgreSQL)
-- Authentication and security settings
-- Rate limiting and performance settings
+- AWS account and region configuration
+- App Runner service configuration
+- RDS database settings
+- ECR repository configuration
+- VPC and security group settings
+- CloudWatch monitoring configuration
+- Environment-specific overrides (dev/staging/production)
 
 **Notable Variables**:
-- `N8N_HOST=localhost`
-- `N8N_PORT=5678`
-- `N8N_DATABASE_TYPE=postgresdb`
-- `OPENAI_API_KEY=sk-REPLACE_ME_WITH_CORE_OPENAI_KEY`
+- `ACCOUNT_ID="625246225347"`
+- `REGION="us-east-2"`
+- `APPRUNNER_SERVICE_ARN="arn:aws:apprunner:us-east-2:625246225347:service/n8n-prod-working/814aac25e58d4707bed984ec2b3fb562"`
+- `APPRUNNER_CUSTOM_DOMAIN="automation.serviceboost.co"`
+- `RDS_ID="n8n-database"`
+- `ECR_IMAGE="${ACCOUNT_ID}.dkr.ecr.${REGION}.amazonaws.com/n8n:1.61.0"`
 
-### 2. social_media_scraping.env
+### 2. n8n-core.env (AWS App Runner)
+**Purpose**: Core n8n functionality for AWS App Runner deployment
+
+**Key Components**:
+- n8n core configuration for AWS environment
+- PostgreSQL database connection (RDS)
+- SSL configuration for secure connections
+- Webhook configuration for automation.serviceboost.co
+- Performance and logging settings
+
+**Notable Variables**:
+- `N8N_HOST=automation.serviceboost.co`
+- `N8N_PROTOCOL=https`
+- `WEBHOOK_URL=https://automation.serviceboost.co`
+- `DB_TYPE=postgresdb`
+- `DB_POSTGRESDB_HOST=n8n-database.cb0ys2yimzmc.us-east-2.rds.amazonaws.com`
+- `N8N_ENCRYPTION_KEY=n8n-encryption-key-2024`
+- `N8N_LOG_LEVEL=debug`
+- `EXECUTIONS_MODE=regular`
+
+### 3. n8n-local.env (Local Testing)
+**Purpose**: Local n8n testing without database configuration
+
+**Key Components**:
+- Basic n8n configuration for local testing
+- No database configuration (uses SQLite by default)
+- Local webhook configuration
+- Debug logging settings
+
+**Notable Variables**:
+- `WEBHOOK_URL=https://automation.serviceboost.co`
+- `N8N_PROTOCOL=https`
+- `N8N_HOST=automation.serviceboost.co`
+- `N8N_ENCRYPTION_KEY=n8n-encryption-key-2024`
+- `N8N_LOG_LEVEL=debug`
+- `N8N_LOG_OUTPUT=console`
+
+### 4. social_media_scraping.env
 **Purpose**: Social media data collection and processing
 
 **Supabase Project**: `nbhuojgyyeoeecccpxtw`
@@ -51,7 +97,7 @@ This document outlines the reorganization of environment variables across the n8
 - Rate limiting: `DC_CAP=20`, `REDDIT_CAP=60`, `YT_CAP=50`, `X_CAP=1666`
 - `OPENAI_API_KEY=sk-REPLACE_ME_WITH_SOCIAL_MEDIA_OPENAI_KEY`
 
-### 3. local_bus_auto.env
+### 5. local_bus_auto.env
 **Purpose**: Local business automation (Dental Landing Page)
 
 **Supabase Project**: `aeznfrekdipwhhpntvue`
@@ -69,6 +115,54 @@ This document outlines the reorganization of environment variables across the n8
 - `N8N_INTAKE_WEBHOOK=http://localhost:5678/webhook/lead-intake-notify`
 - `STRIPE_SECRET_KEY=sk_live_YOUR_STRIPE_SECRET_KEY_HERE`
 - `DEMO_API_KEY=my-secret-api-key-123`
+
+## AWS Configuration Usage
+
+### Loading AWS Configuration
+The AWS configuration file provides centralized management of all AWS infrastructure settings:
+
+```bash
+# Load AWS configuration
+source aws-config.sh
+
+# Validate configuration
+validate_aws_config
+
+# Export variables for use
+export_aws_vars
+export_n8n_vars
+
+# Use in AWS CLI commands
+aws apprunner describe-service --service-arn "$APPRUNNER_SERVICE_ARN" --region "$REGION"
+```
+
+### Environment-Specific Configuration
+The AWS configuration supports multiple environments:
+
+```bash
+# Production (default)
+ENVIRONMENT=production source aws-config.sh
+
+# Staging
+ENVIRONMENT=staging source aws-config.sh
+
+# Development
+ENVIRONMENT=development source aws-config.sh
+```
+
+### Docker/Container Usage with AWS
+When using with Docker or containers for AWS deployment:
+
+```bash
+# Load AWS configuration first
+source aws-config.sh
+
+# Export n8n variables
+export_n8n_vars
+
+# Use with Docker
+docker run --env-file <(env | grep -E '^(DB_|N8N_|WEBHOOK_)') your-image
+```
 
 ## Decision Rationale
 
@@ -154,12 +248,14 @@ docker run --env-file /Users/kylestephens/N8N/local_bus_auto.env your-image
 
 ## File Locations
 
-- **Environment Files**: `/Users/kylestephens/N8N/`
+- **AWS Configuration**: `/Users/kylestephens/Desktop/business_auto/Dental/dental-landing-template/aws-config.sh`
+- **AWS Environment Files**: `/Users/kylestephens/Desktop/business_auto/Dental/dental-landing-template/`
+- **Local Environment Files**: `/Users/kylestephens/N8N/`
 - **Documentation**: `/Users/kylestephens/Desktop/business_auto/Dental/dental-landing-template/docs/`
 - **Legacy File**: `/Users/kylestephens/N8N/n8n-extra.env` (to be deprecated)
 
 ---
 
-**Last Updated**: October 7, 2024  
-**Version**: 1.0  
-**Status**: Complete
+**Last Updated**: October 9, 2025  
+**Version**: 2.0  
+**Status**: Complete (AWS Infrastructure Added)

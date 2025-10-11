@@ -1,0 +1,8 @@
+{
+    "AttachedPolicies": [
+        {
+            "PolicyName": "AppRunnerECRAccess",
+            "PolicyArn": "arn:aws:iam::625246225347:policy/AppRunnerECRAccess"
+        }
+    ]
+}

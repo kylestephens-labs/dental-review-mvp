@@ -1,0 +1,207 @@
+{
+  "tdd_tasks": {
+    "stripe-integration-tdd": {
+      "id": "stripe-integration-tdd",
+      "type": "P0",
+      "classification": "functional",
+      "goal": "Implement Stripe integration using TDD methodology",
+      "acceptance_criteria": [
+        "All tests pass (unit, integration, e2e)",
+        "Code coverage > 80%",
+        "Stripe webhook handles checkout.session.completed",
+        "Practice and settings created in database",
+        "Magic link onboarding flow initiated",
+        "Billing metadata properly stored",
+        "Feature flag controls rollout"
+      ],
+      "estimated_duration": 180,
+      "risk_level": "critical",
+      "tdd_phases": {
+        "red": {
+          "duration": 30,
+          "tasks": [
+            "Write failing test for Stripe webhook endpoint",
+            "Write failing test for practice creation",
+            "Write failing test for billing metadata storage",
+            "Write failing test for magic link generation"
+          ],
+          "files_affected": [
+            "src/__tests__/api/stripe.test.ts",
+            "src/__tests__/lib/stripe.test.ts",
+            "src/__tests__/models/practice.test.ts"
+          ]
+        },
+        "green": {
+          "duration": 120,
+          "tasks": [
+            "Implement minimal Stripe webhook handler",
+            "Implement practice creation logic",
+            "Implement billing metadata storage",
+            "Implement magic link generation",
+            "Make all tests pass"
+          ],
+          "files_affected": [
+            "src/api/webhooks/stripe.ts",
+            "src/lib/stripe.ts",
+            "src/models/practice.ts",
+            "src/lib/magic-link.ts"
+          ]
+        },
+        "refactor": {
+          "duration": 30,
+          "tasks": [
+            "Improve error handling",
+            "Optimize database queries",
+            "Add input validation",
+            "Improve code structure",
+            "Ensure tests still pass"
+          ],
+          "files_affected": [
+            "src/api/webhooks/stripe.ts",
+            "src/lib/stripe.ts",
+            "src/models/practice.ts"
+          ]
+        }
+      },
+      "trunk_based_development": {
+        "feature_flag": "STRIPE_INTEGRATION_ENABLED",
+        "rollout_strategy": "progressive",
+        "commit_strategy": "small_frequent_commits",
+        "safety_measures": [
+          "comprehensive_tests",
+          "automatic_rollback",
+          "monitoring_alerts"
+        ]
+      },
+      "continuous_delivery": {
+        "assignee": "cursor",
+        "reviewer": "chatgpt",
+        "definition_of_done": [
+          "All tests pass",
+          "Code reviewed",
+          "Feature flag enabled",
+          "Deployed to production",
+          "Monitoring configured"
+        ],
+        "retrospective_trigger": "After 3 tasks completed"
+      }
+    },
+    "twilio-sms-tdd": {
+      "id": "twilio-sms-tdd",
+      "type": "P0",
+      "classification": "functional",
+      "goal": "Implement Twilio SMS with A2P registration using TDD",
+      "acceptance_criteria": [
+        "All tests pass (unit, integration, e2e)",
+        "Code coverage > 80%",
+        "A2P brand and campaign registered",
+        "EN and ES SMS templates approved",
+        "Template library implemented",
+        "STOP handling configured",
+        "Delivery status tracking enabled"
+      ],
+      "estimated_duration": 150,
+      "risk_level": "critical",
+      "tdd_phases": {
+        "red": {
+          "duration": 25,
+          "tasks": [
+            "Write failing test for SMS sending",
+            "Write failing test for template selection",
+            "Write failing test for STOP handling",
+            "Write failing test for delivery tracking"
+          ],
+          "files_affected": [
+            "src/__tests__/lib/twilio.test.ts",
+            "src/__tests__/api/sms.test.ts",
+            "src/__tests__/lib/templates.test.ts"
+          ]
+        },
+        "green": {
+          "duration": 100,
+          "tasks": [
+            "Implement SMS sending service",
+            "Implement template selection logic",
+            "Implement STOP handling",
+            "Implement delivery tracking",
+            "Make all tests pass"
+          ],
+          "files_affected": [
+            "src/lib/twilio.ts",
+            "src/api/sms.ts",
+            "src/lib/templates.ts",
+            "src/lib/opt-out.ts"
+          ]
+        },
+        "refactor": {
+          "duration": 25,
+          "tasks": [
+            "Improve error handling",
+            "Optimize template caching",
+            "Add rate limiting",
+            "Improve code structure",
+            "Ensure tests still pass"
+          ],
+          "files_affected": [
+            "src/lib/twilio.ts",
+            "src/api/sms.ts",
+            "src/lib/templates.ts"
+          ]
+        }
+      },
+      "trunk_based_development": {
+        "feature_flag": "TWILIO_SMS_ENABLED",
+        "rollout_strategy": "progressive",
+        "commit_strategy": "small_frequent_commits",
+        "safety_measures": [
+          "comprehensive_tests",
+          "automatic_rollback",
+          "monitoring_alerts"
+        ]
+      },
+      "continuous_delivery": {
+        "assignee": "cursor",
+        "reviewer": "chatgpt",
+        "definition_of_done": [
+          "All tests pass",
+          "Code reviewed",
+          "Feature flag enabled",
+          "Deployed to production",
+          "Monitoring configured"
+        ],
+        "retrospective_trigger": "After 3 tasks completed"
+      }
+    }
+  },
+  "continuous_delivery_ceremonies": {
+    "retrospective": {
+      "frequency": "Every 3 completed tasks",
+      "duration": "30 minutes",
+      "participants": ["cursor", "codex", "chatgpt"],
+      "agenda": [
+        "Review 3 completed tasks",
+        "What went well?",
+        "What could be improved?",
+        "What will we do differently?",
+        "Update processes and workflows",
+        "Plan next 3 tasks"
+      ],
+      "outputs": [
+        "Process improvements",
+        "Workflow optimizations",
+        "Agent coordination improvements",
+        "Next 3 task priorities"
+      ],
+      "triggers": [
+        "Task 3 completed",
+        "Task 6 completed", 
+        "Task 9 completed",
+        "Task 12 completed",
+        "Task 15 completed",
+        "Task 18 completed",
+        "Task 21 completed",
+        "Task 24 completed (MVP complete)"
+      ]
+    }
+  }
+}

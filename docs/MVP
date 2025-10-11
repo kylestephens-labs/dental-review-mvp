@@ -1,0 +1,150 @@
+Got it — I applied your Fit Check + Gaps + Optimization to the MVP. Here’s the updated, dual-UX–tightened MVP (only what changed or needs to be precise is modified; everything else remains as-is).
+
+⸻
+
+🧠 Vision (unchanged)
+
+Become the “Review Engine for East Bay Dentists” — help every local practice reach 4.8★+ with zero staff effort by automating post-visit review requests.
+
+⸻
+
+🎯 Goal (90 days) — updated for founder pricing
+	•	15–25 paying practices × $249 MRR = $3.7k–$6.2k MRR.
+	•	< 48 h from checkout → live reviews sending.
+	•	< 45 min daily ops.
+
+⸻
+
+📊 KPIs — make dual-UX measurable from day one
+
+Metric	Target
+Time-to-live after checkout	≤ 48 h
+Owner onboarding completion time (median)	≤ 2 min
+SMS click-through	≥ 45 %
+Reviews added / 30 d	+15 to +30
+Opt-out rate (STOP)	< 1 %
+Churn	< 3 % / mo
+
+
+⸻
+
+👩‍⚕️ ICP (unchanged)
+
+East Bay general/pediatric/ortho dentists with ≥ 40 reviews, rating 3.8–4.6★, no booking link, review-velocity gap, reachable (contactable email/phone).
+
+⸻
+
+✅ Current Foundation (Status Audit) — pricing + billing aligned
+
+Layer	Status	Notes
+AWS App Runner + RDS/Postgres	✅ Done	Production ready.
+Supabase DB + API	✅ Done	Reuse for practice settings + leads.
+n8n cloud instance	✅ Done	Live prod environment with email flows.
+Email notification WF	✅ Done	Owner/lead emails pattern.
+Landing page + intake form	✅ Done	Repurpose for Stripe checkout + onboarding portal.
+Stripe account	🧩 Copy / tweak	Create new SKU “Dental Review Engine — Founder $249/mo” + add-on metadata (extra SMS, extra location) + guarantees in metadata.
+Outbound email infra (SES/Postmark)	✅ Done	Extend for weekly digest v1 (top quotes) in Week 1.
+Outreach & approvals UI	🧩 Copy	Adapt for practice approval/status.
+Places/Yelp ingest + scoring	✅ Done	Build dentist ICP list.
+
+
+⸻
+
+⚙️ Ruthless MVP Build Plan (Phase + Priority) — key moves: STOP + EN/ES + ADA + instrumentation into Phase 1; weekly digest v1 pulls forward
+
+PHASE 1 — Core Loop / “Can we send a review request?” (strengthened)
+
+Priority	Item	Status / Notes
+1	🧩 Repurpose landing → Stripe checkout	SKU at $249; checkout.session webhook → create practice row + defaults (guarantees metadata).
+2	🔴 n8n Flow C – Onboarding	Stripe webhook → create practice + welcome email + magic-link onboarding.
+3	🧩 Onboarding portal (Next.js)	Prefill practice name/email/phone; Places API review link. Add instrumentation: write onboarding_started_at, onboarding_completed_at, proof_sms_sent event rows for SLA tracking.
+4	🔴 Twilio + A2P registration	Set up SMS sender, register brand/campaign. Include template library: EN/ES variants, ADA-checked microcopy, practice logo lock-up.
+5	🔴 Send Test SMS (Proof of Life)	Button → n8n → Twilio SendMessage → owner; log success/failure events.
+6	🧩 Quiet hours + daily caps defaults	Settings columns + enforcement.
+7	🔴 STOP/opt-out handling (moved from P2)	n8n function node + Twilio webhook to capture STOP/UNSUB; immediate suppression + event audit.
+8	🔴 GBP review link resolver	Places API → store google_review_link per practice.
+9	🔴 Data model extensions	Add patients, visits, review_requests, settings, events (+ unique indices). Events table powers KPI instrumentation.
+10	🔴 n8n Flow A – Fulfillment	Webhook → Normalize → Throttle → Send SMS/Email (EN/ES) → 48 h reminder (suppressed if reviewed/STOP).
+11	🔴 Click tracking redirect	Log clicked_at in events → forward to Google review URL.
+12	🔴 Weekly Digest v1 (pulled into P1)	SES template: sent/CTR/reviews added + top 3 quotes. Uses events aggregates.
+
+✅ Output of Phase 1: First practice can pay (at $249), complete a 2-minute onboarding, receive proof SMS, connect calendar/CSV or use Front Desk Mode (if available), start sending review asks with quiet hours + STOP from the very first send, receive weekly digest v1.
+
+⸻
+
+PHASE 2 — Data Connectors & Automation (unchanged scope minus moved items)
+
+Priority	Item	Status / Notes
+1	🔴 Google Calendar OAuth connect	n8n Google Calendar → Watch Events → enqueue review asks.
+2	🔴 Outlook Calendar OAuth connect	n8n Microsoft Graph → Watch Events.
+3	🧩 CSV upload	Reuse upload code → patients.csv import.
+4	🔴 Front Desk Mode	Tiny form (name + mobile/email) → n8n webhook → send SMS; per-practice token.
+5	🔴 Reminder + STOP handling	(moved to Phase 1).
+6	🧩 Weekly Digest Email v2	Expand metrics (peer deltas, template A/B), but v1 already live.
+
+✅ Output of Phase 2: Fully hands-off engine running for 1–2 pilots with connectors and manual fallback.
+
+⸻
+
+PHASE 3 — Sales Machine & Reporting (unchanged)
+
+Priority	Item	Notes
+1	🧩 Outreach engine update	Dentist ICP + “try the demo” links showing patient flow.
+2	🔴 Demo microsite	Shows current rating + leaderboard + “text me demo.”
+3	🔴 Benchmark email cron	Monthly peer velocity report.
+4	🧩 Decision Pack update	Review engine metrics + lead responses.
+5	🔴 Stripe Customer Portal link	Self-serve upgrade/cancel.
+
+
+⸻
+
+🚀 14-Day Ruthless Timeline — re-ordered for day-one patient protections + founder pricing + digest v1
+
+Week 1
+	1.	Stripe SKU + Webhook (Founder $249, guarantees in metadata)
+	2.	Onboarding portal (prefill + proof SMS first) with instrumentation
+	3.	Twilio A2P + template library (EN/ES, ADA-checked, logo lock-up)
+	4.	GBP link resolver
+	5.	n8n Flow A/B/C (MVP) with quiet hours + STOP from day one
+	6.	Weekly digest v1 live (sent/CTR/reviews + top quotes)
+	7.	First pilot practice live → review messages sent
+
+Week 2
+	1.	Add GCal connector
+	2.	Add CSV import + Front Desk Mode
+	3.	Hardening: reminder suppression, link-reputation checks
+	4.	Outreach (300 emails/day) with dual-UX proof Looms
+	5.	Prep benchmark email cron scaffolding
+
+⸻
+
+✅ Summary by Status — reflecting moves
+
+Category	✅ Done	🧩 Copy/Tweak	🔴 Start
+Infra / RDS / n8n prod	✅		
+Email notify WF	✅		
+Landing → Stripe onboard portal		🧩 (prefill + instrumentation)	
+Stripe products + webhook ($249)			🔴
+EN/ES template library + ADA copy			🔴
+Twilio SMS + A2P + STOP			🔴
+GBP review link resolver			🔴
+Data model (tables + events)			🔴
+n8n Flows A/B/C (with STOP + quiet hours)			🔴
+GCal/Outlook connectors			🔴
+CSV upload + Front Desk		🧩 reuse upload logic	
+Weekly digest v1 (Week 1)		🧩 reuse SES flow	
+Benchmark emails			🔴
+Outreach engine update		🧩 new copy	
+Demo microsite			🔴
+
+
+⸻
+
+Notes on the changes (why this works)
+	•	Promise kept from day one: Quiet hours + STOP in Phase 1 ensures “respectful by default” from first send.
+	•	Patient-first polish early: EN/ES + ADA-checked microcopy + brand lock-up make the SMS feel warm, human, and accessible.
+	•	Measure what we guarantee: Events instrumentation enables onboarding time, CTR, opt-out, reminder effectiveness, and digest aggregation — powering your weekly ritual and guarantees.
+	•	Positioning consistency: Stripe SKU and copy aligned to $249 founder pricing and cost leadership narrative.
+	•	Experience cadence: Shipping digest v1 in Week 1 gives owners visible value immediately, while v2 detail lands in Phase 2.
+
+If you want, I can now generate the exact Phase 1 build spec (DB schema for events, settings, review_requests; n8n node graph with STOP webhook; Twilio/A2P template set EN/ES; onboarding API endpoints; digest v1 SQL) to drop straight into implementation.
