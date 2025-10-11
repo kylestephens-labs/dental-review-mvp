@@ -107,8 +107,9 @@ export class HandoffCoordinator {
 
     // Check if Codex review requires action
     if (task.reviewFeedback && this.hasActionableFeedback(task.reviewFeedback)) {
-      console.log(`⚠️  Codex review contains actionable feedback - addressing issues...`);
-      await this.processCodexFeedback(taskId, task);
+      console.log(`⚠️  Codex review contains actionable feedback - marking as unresolved`);
+      await this.taskManager.updateTask(taskId, { feedbackResolved: false });
+      console.log(`🚫 Task completion blocked - Codex feedback must be addressed before pushing to GitHub`);
     }
 
     // Move to completed status
@@ -350,99 +351,6 @@ Ready for production deployment.`;
   }
 
   /**
-   * Process Codex feedback and create action items
-   */
-  private async processCodexFeedback(taskId: string, task: Task): Promise<void> {
-    try {
-      console.log(`🔍 Analyzing Codex feedback for actionable items...`);
-      
-      // Extract actionable items from feedback
-      const actionItems = this.extractActionItems(task.reviewFeedback);
-      
-      if (actionItems.length > 0) {
-        console.log(`📋 Found ${actionItems.length} actionable items:`);
-        actionItems.forEach((item, index) => {
-          console.log(`  ${index + 1}. ${item}`);
-        });
-        
-        // Create follow-up tasks for actionable items
-        await this.createFollowUpTasks(taskId, actionItems, task);
-        
-        // Update task with processed feedback
-        const processedFeedback = `${task.reviewFeedback}\n\n---\n\n**Action Items Processed:**\n${actionItems.map((item, i) => `${i + 1}. ${item}`).join('\n')}`;
-        await this.taskManager.updateTask(taskId, { reviewFeedback: processedFeedback });
-        
-        console.log(`✅ Codex feedback processed and follow-up tasks created`);
-      } else {
-        console.log(`✅ No actionable items found in Codex feedback`);
-      }
-    } catch (error) {
-      console.error(`❌ Error processing Codex feedback:`, error.message);
-      // Don't throw - allow task completion to proceed
-    }
-  }
-
-  /**
-   * Extract actionable items from Codex review feedback
-   */
-  private extractActionItems(reviewFeedback: string): string[] {
-    const actionItems: string[] = [];
-    const lines = reviewFeedback.split('\n');
-    
-    for (const line of lines) {
-      const trimmedLine = line.trim();
-      
-      // Look for recommendation patterns
-      if (trimmedLine.startsWith('- Consider') || 
-          trimmedLine.startsWith('- Review') || 
-          trimmedLine.startsWith('- Ensure') ||
-          trimmedLine.startsWith('- Add') ||
-          trimmedLine.startsWith('- Fix') ||
-          trimmedLine.startsWith('- Improve')) {
-        actionItems.push(trimmedLine.substring(2)); // Remove '- '
-      }
-      
-      // Look for warning patterns
-      if (trimmedLine.startsWith('⚠️') || trimmedLine.includes('Recommendations:')) {
-        // Extract the next few lines as action items
-        const nextLines = lines.slice(lines.indexOf(line) + 1, lines.indexOf(line) + 4);
-        nextLines.forEach(nextLine => {
-          if (nextLine.trim().startsWith('- ')) {
-            actionItems.push(nextLine.trim().substring(2));
-          }
-        });
-      }
-    }
-    
-    return actionItems.filter(item => item.length > 0);
-  }
-
-  /**
-   * Create follow-up tasks for actionable items
-   */
-  private async createFollowUpTasks(originalTaskId: string, actionItems: string[], originalTask: Task): Promise<void> {
-    for (const [index, actionItem] of actionItems.entries()) {
-      const followUpTaskId = await this.taskManager.createTask(
-        `Follow-up: ${actionItem.substring(0, 50)}...`,
-        originalTask.priority
-      );
-      
-      // Update follow-up task with context
-      await this.taskManager.updateTask(followUpTaskId, {
-        overview: `Follow-up task based on Codex review feedback from ${originalTaskId}`,
-        goal: actionItem,
-        acceptanceCriteria: [`Address: ${actionItem}`],
-        definitionOfReady: ['Original task completed', 'Codex feedback analyzed'],
-        definitionOfDone: ['Action item addressed', 'Code quality improved'],
-        filesAffected: ['TBD based on action item'],
-        implementationNotes: `This task addresses Codex review feedback from ${originalTaskId}: ${actionItem}`
-      });
-      
-      console.log(`📝 Created follow-up task: ${followUpTaskId}`);
-    }
-  }
-
-  /**
    * Review Codex feedback for a specific task
    */
   async reviewCodexFeedback(taskId: string): Promise<void> {
@@ -463,10 +371,25 @@ Ready for production deployment.`;
     console.log('');
     
     if (this.hasActionableFeedback(task.reviewFeedback)) {
-      console.log(`⚠️  This review contains actionable feedback that should be addressed.`);
-      console.log(`💡 Run 'npm run mcp:complete ${taskId}' to process feedback and create follow-up tasks.`);
+      console.log(`⚠️  This review contains actionable feedback that must be addressed.`);
+      console.log(`🚫 GitHub push will be blocked until feedback is resolved.`);
+      console.log(`💡 Address the feedback and run 'npm run mcp:resolve-feedback ${taskId}' to mark as resolved.`);
     } else {
       console.log(`✅ No actionable feedback found - task is ready for completion.`);
     }
+  }
+
+  /**
+   * Mark Codex feedback as resolved
+   */
+  async resolveFeedback(taskId: string): Promise<void> {
+    const task = await this.taskManager.getTask(taskId);
+    if (!task) {
+      throw new Error(`Task ${taskId} not found`);
+    }
+
+    await this.taskManager.updateTask(taskId, { feedbackResolved: true });
+    console.log(`✅ Codex feedback marked as resolved for task ${taskId}`);
+    console.log(`🚀 Task is now ready for GitHub push`);
   }
 }

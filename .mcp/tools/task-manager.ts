@@ -17,6 +17,7 @@ export interface Task {
   filesAffected: string[];
   implementationNotes: string;
   reviewFeedback: string;
+  feedbackResolved: boolean; // NEW: Track if Codex feedback has been addressed
   errorContext: string;
   gitContext: {
     branch: string;
@@ -52,6 +53,7 @@ export class TaskManager {
       filesAffected: [],
       implementationNotes: '',
       reviewFeedback: '',
+      feedbackResolved: true, // Default to true (no feedback to resolve)
       errorContext: '',
       gitContext: {
         branch: '',
@@ -225,6 +227,9 @@ ${task.implementationNotes || '[Implementation notes will be added here]'}
 ## Review Feedback
 ${task.reviewFeedback || '[Review feedback will be added here]'}
 
+## Feedback Resolution Status
+${task.feedbackResolved ? '✅ Resolved' : '⚠️ Action Required'}
+
 ## Error Context
 ${task.errorContext || '[Error context will be added here]'}
 
@@ -272,6 +277,11 @@ ${task.errorContext || '[Error context will be added here]'}
         task.implementationNotes = this.extractSectionContent(lines, i);
       } else if (line.startsWith('## Review Feedback')) {
         task.reviewFeedback = this.extractSectionContent(lines, i);
+        // Check if feedback has been resolved
+        task.feedbackResolved = !this.hasActionableFeedback(task.reviewFeedback);
+      } else if (line.startsWith('## Feedback Resolution Status')) {
+        const nextLine = lines[i + 1];
+        task.feedbackResolved = nextLine && nextLine.includes('✅ Resolved');
       } else if (line.startsWith('## Error Context')) {
         task.errorContext = this.extractSectionContent(lines, i);
       } else if (line.startsWith('- Branch:')) {
@@ -294,5 +304,47 @@ ${task.errorContext || '[Error context will be added here]'}
       content.push(line);
     }
     return content.join('\n').trim();
+  }
+
+  /**
+   * Get all tasks by status
+   */
+  async getTasksByStatus(status: string): Promise<Task[]> {
+    const statusDir = path.join(this.tasksDir, status);
+    try {
+      const files = await fs.readdir(statusDir);
+      const tasks: Task[] = [];
+      
+      for (const file of files) {
+        if (file.endsWith('.md')) {
+          const taskId = file.replace('.md', '');
+          const task = await this.getTask(taskId);
+          if (task) {
+            tasks.push(task);
+          }
+        }
+      }
+      
+      return tasks;
+    } catch (error) {
+      return [];
+    }
+  }
+
+  /**
+   * Check if review feedback contains actionable items
+   */
+  private hasActionableFeedback(reviewFeedback: string): boolean {
+    if (!reviewFeedback || reviewFeedback.trim() === '') {
+      return false;
+    }
+    
+    const actionableKeywords = [
+      'consider', 'recommend', 'suggest', 'improve', 'fix', 'address',
+      'warning', 'issue', 'problem', 'concern', 'better', 'enhance'
+    ];
+    
+    const feedbackLower = reviewFeedback.toLowerCase();
+    return actionableKeywords.some(keyword => feedbackLower.includes(keyword));
   }
 }
