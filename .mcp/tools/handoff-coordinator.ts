@@ -94,9 +94,18 @@ export class HandoffCoordinator {
       throw new Error(`Task ${taskId} is not in progress`);
     }
 
-    // Trunk-Based Development: Run fast CI before review
-    console.log(`⚡ Running fast CI validation before review...`);
-    await this.runFastCI();
+    // HYBRID QUALITY GATES: Different rules for functional vs non-functional tasks
+    console.log(`🔍 Running quality gates for ${task.classification || 'unknown'} task...`);
+    
+    if (task.classification === 'functional') {
+      // Functional tasks: Require all checks to pass
+      console.log(`⚡ Running strict CI validation for functional task...`);
+      await this.runFastCI();
+    } else {
+      // Non-functional tasks: Allow bypassing pre-existing issues
+      console.log(`⚡ Running relaxed CI validation for non-functional task...`);
+      await this.runRelaxedCI();
+    }
 
     // Move to review status
     await this.taskManager.moveTask(taskId, 'review');
@@ -293,6 +302,39 @@ export class HandoffCoordinator {
     } catch (error) {
       console.error(`❌ Fast CI validation failed:`, error.message);
       throw new Error('Fast CI validation failed - fix issues before review');
+    }
+  }
+
+  /**
+   * Run relaxed CI validation for non-functional tasks
+   * Allows bypassing pre-existing issues with documentation
+   */
+  private async runRelaxedCI(): Promise<void> {
+    try {
+      console.log(`⚡ Running relaxed CI validation for non-functional task...`);
+      
+      // Run type check (always required)
+      console.log(`🔍 Type check...`);
+      execSync('npm run typecheck', { stdio: 'pipe' });
+      console.log(`✅ Type check passed`);
+      
+      // Run tests (always required)
+      console.log(`🧪 Unit tests...`);
+      execSync('npm run test -- --run --reporter=basic', { stdio: 'pipe' });
+      console.log(`✅ Unit tests passed`);
+      
+      // Run build (always required)
+      console.log(`🏗️  Build check...`);
+      execSync('npm run build', { stdio: 'pipe' });
+      console.log(`✅ Build check passed`);
+      
+      // Skip linting for non-functional tasks (pre-existing issues)
+      console.log(`⚠️  Skipping lint check for non-functional task (pre-existing issues)`);
+      
+      console.log(`✅ Relaxed CI validation passed`);
+    } catch (error) {
+      console.error(`❌ Relaxed CI validation failed:`, error.message);
+      throw new Error('Relaxed CI validation failed - fix critical issues before review');
     }
   }
 

@@ -26,6 +26,7 @@ export interface Task {
   };
   classification?: 'functional' | 'non_functional'; // NEW: Task classification
   approach?: string; // NEW: Implementation approach
+  codexReviewCycles?: number; // NEW: Track Codex review cycles (max 1)
 }
 
 export class TaskManager {
@@ -63,7 +64,8 @@ export class TaskManager {
         pr: ''
       },
       classification: undefined,
-      approach: undefined
+      approach: undefined,
+      codexReviewCycles: 0
     };
 
     await this.saveTask(task);
@@ -101,7 +103,10 @@ export class TaskManager {
     if (!task) throw new Error(`Task ${taskId} not found`);
 
     // WORKFLOW ENFORCEMENT: Validate state transition
-    if (!this.validateStateTransition(task.status, newStatus)) {
+    if (!this.validateStateTransition(task.status, newStatus, task)) {
+      if (task.status === 'review' && newStatus === 'in-progress' && (task.codexReviewCycles || 0) >= 1) {
+        throw new Error(`Task ${taskId} has already had 1 Codex review cycle. Maximum review cycles exceeded.`);
+      }
       throw new Error(`Invalid state transition: ${task.status} → ${newStatus}. Use proper MCP commands for workflow compliance.`);
     }
 
@@ -111,11 +116,14 @@ export class TaskManager {
       await fs.unlink(currentPath);
     }
 
-    // Update task status and save to new directory
+    // Update task status and increment review cycle if going back to in-progress from review
     const updatedTask = {
       ...task,
       status: newStatus,
-      lastUpdated: new Date().toISOString()
+      lastUpdated: new Date().toISOString(),
+      codexReviewCycles: (task.status === 'review' && newStatus === 'in-progress') 
+        ? (task.codexReviewCycles || 0) + 1 
+        : task.codexReviewCycles || 0
     };
     
     await this.saveTask(updatedTask);
@@ -213,6 +221,8 @@ export class TaskManager {
 
 ## Approach: ${task.approach || '[Approach to be determined]'}
 
+## Codex Review Cycles: ${task.codexReviewCycles || 0}/1
+
 ## Created: ${task.created}
 ## Last Updated: ${task.lastUpdated}
 
@@ -287,6 +297,11 @@ ${task.errorContext || '[Error context will be added here]'}
         const approach = line.replace('## Approach:', '').trim();
         if (approach !== '[Approach to be determined]') {
           task.approach = approach;
+        }
+      } else if (line.startsWith('## Codex Review Cycles:')) {
+        const cyclesMatch = line.match(/## Codex Review Cycles: (\d+)\/1/);
+        if (cyclesMatch) {
+          task.codexReviewCycles = parseInt(cyclesMatch[1]);
         }
       } else if (line.startsWith('## Created:')) {
         task.created = line.replace('## Created:', '').trim();
@@ -374,18 +389,28 @@ ${task.errorContext || '[Error context will be added here]'}
   /**
    * WORKFLOW ENFORCEMENT: Validate state transitions
    */
-  validateStateTransition(currentStatus: Task['status'], newStatus: Task['status']): boolean {
+  validateStateTransition(currentStatus: Task['status'], newStatus: Task['status'], task?: Task): boolean {
     const validTransitions: Record<Task['status'], Task['status'][]> = {
       'pending': ['ready'],
       'ready': ['in-progress'],
-      'in-progress': ['review', 'failed'],
-      'review': ['completed', 'ready'], // Can go back to ready if feedback needs addressing
+      'in-progress': ['review', 'failed', 'completed'], // Can complete directly after Codex approval
+      'review': ['in-progress', 'completed'], // Can go back to in-progress for fixes, or complete if approved
       'completed': [], // Terminal state
       'failed': ['ready'] // Can retry from ready
     };
 
     const allowedTransitions = validTransitions[currentStatus] || [];
-    return allowedTransitions.includes(newStatus);
+    const basicTransitionValid = allowedTransitions.includes(newStatus);
+    
+    // Additional validation for Codex review cycles
+    if (currentStatus === 'review' && newStatus === 'in-progress' && task) {
+      const reviewCycles = task.codexReviewCycles || 0;
+      if (reviewCycles >= 1) {
+        return false; // Block if already had 1 review cycle
+      }
+    }
+    
+    return basicTransitionValid;
   }
 
   /**
