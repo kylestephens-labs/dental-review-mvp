@@ -47,7 +47,6 @@
     "rds:endpoint": "aws rds describe-db-instances --db-instance-identifier dental-core-db --query 'DBInstances[0].Endpoint.Address' --output text",
     "app:update-rds": "./scripts/update-app-for-rds.sh",
     "supabase:cleanup": "./scripts/cleanup-supabase.sh",
-    "pre-push": "npx tsx .mcp/scripts/pre-push-guardrails.ts",
     "chatgpt:fill-task": "npx tsx .mcp/tools/chatgpt-integration.ts",
     "env:check": "npx tsx src/env-check.ts",
     "test": "vitest run",
