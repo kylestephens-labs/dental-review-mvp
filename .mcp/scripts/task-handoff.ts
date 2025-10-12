@@ -111,6 +111,30 @@ async function main() {
         await coordinator.auditWorkflowCompliance();
         break;
 
+      case 'tdd-red':
+        if (args.length < 2) {
+          console.error('Usage: npm run mcp:tdd-red <task-id> "test description"');
+          process.exit(1);
+        }
+        await coordinator.startTDDRedPhase(args[0], args[1]);
+        break;
+
+      case 'tdd-green':
+        if (args.length === 0) {
+          console.error('Usage: npm run mcp:tdd-green <task-id>');
+          process.exit(1);
+        }
+        await coordinator.startTDDGreenPhase(args[0]);
+        break;
+
+      case 'tdd-refactor':
+        if (args.length === 0) {
+          console.error('Usage: npm run mcp:tdd-refactor <task-id>');
+          process.exit(1);
+        }
+        await coordinator.startTDDRefactorPhase(args[0]);
+        break;
+
       default:
         console.log('MCP Orchestrator - Sequential Agent Handoff Coordinator');
         console.log('');
@@ -125,6 +149,11 @@ async function main() {
         console.log('  status                    - Show task status');
         console.log('  next <agent>              - Get next task for agent');
         console.log('  git <task-id> <branch> <commit> [pr] - Update git context');
+        console.log('');
+        console.log('TDD Commands (for functional tasks):');
+        console.log('  tdd-red <task-id> "description" - Start TDD RED phase');
+        console.log('  tdd-green <task-id>             - Start TDD GREEN phase');
+        console.log('  tdd-refactor <task-id>          - Start TDD REFACTOR phase');
         console.log('');
         console.log('Agents: cursor, codex, chatgpt');
         console.log('Priorities: P0 (critical), P1 (normal), P2 (low)');

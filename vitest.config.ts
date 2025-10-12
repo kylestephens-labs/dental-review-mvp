@@ -4,7 +4,14 @@ import { resolve } from 'path';
 export default defineConfig({
   test: {
     globals: true,
-    environment: 'node',
+    environment: 'jsdom',
+    setupFiles: ['./src/test-setup.ts'],
+    exclude: [
+      '**/node_modules/**',
+      '**/dist/**',
+      '**/tests/playwright/**',
+      '**/playwright.config.ts'
+    ],
   },
   resolve: {
     alias: {

@@ -1,0 +1,190 @@
+<testsuites id="" name="" tests="7" failures="4" skipped="0" errors="0" time="8.887456">
+<testsuite name="main-page.spec.ts" timestamp="2025-10-12T05:03:10.129Z" hostname="chromium" tests="7" failures="4" skipped="0" time="23.585" errors="0">
+<testcase name="Main Page Components › should render the main page correctly" classname="main-page.spec.ts" time="1.73">
+</testcase>
+<testcase name="Main Page Components › should render header component" classname="main-page.spec.ts" time="3.73">
+</testcase>
+<testcase name="Main Page Components › should render hero section" classname="main-page.spec.ts" time="1.457">
+<failure message="main-page.spec.ts:46:3 should render hero section" type="FAILURE">
+<![CDATA[  [chromium] › main-page.spec.ts:46:3 › Main Page Components › should render hero section ──────────
+
+    Error: expect(locator).toBeVisible() failed
+
+    Locator: locator('section').first().or(locator('[class*="hero"]'))
+    Expected: visible
+    Error: strict mode violation: locator('section').first().or(locator('[class*="hero"]')) resolved to 2 elements:
+        1) <section tabindex="-1" aria-live="polite" aria-atomic="false" aria-relevant="additions text" aria-label="Notifications alt+T"></section> aka getByRole('region', { name: 'Notifications alt+T' })
+        2) <section class="relative pt-24 pb-16 md:pt-32 md:pb-24 bg-hero-gradient overflow-hidden">…</section> aka locator('section').filter({ hasText: 'Same-week appointments in' })
+
+    Call log:
+      - Expect "toBeVisible" with timeout 5000ms
+      - waiting for locator('section').first().or(locator('[class*="hero"]'))
+
+
+      48 |     const hero = page.locator('section').first().or(page.locator('[class*="hero"]'));
+      49 |     
+    > 50 |     await expect(hero).toBeVisible();
+         |                        ^
+      51 |     
+      52 |     // Check for hero content
+      53 |     await testUtils.checkElementVisibility('h1');
+        at /Users/kylestephens/Desktop/business_auto/Dental/dental-landing-template/tests/playwright/main-page.spec.ts:50:24
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ../../test-results/main-page-Main-Page-Components-should-render-hero-section-chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    ../../test-results/main-page-Main-Page-Components-should-render-hero-section-chromium/video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: ../../test-results/main-page-Main-Page-Components-should-render-hero-section-chromium/error-context.md
+]]>
+</failure>
+<system-out>
+<![CDATA[
+[[ATTACHMENT|main-page-Main-Page-Components-should-render-hero-section-chromium/test-failed-1.png]]
+
+[[ATTACHMENT|main-page-Main-Page-Components-should-render-hero-section-chromium/video.webm]]
+
+[[ATTACHMENT|main-page-Main-Page-Components-should-render-hero-section-chromium/error-context.md]]
+]]>
+</system-out>
+</testcase>
+<testcase name="Main Page Components › should render services section" classname="main-page.spec.ts" time="6.605">
+<failure message="main-page.spec.ts:59:3 should render services section" type="FAILURE">
+<![CDATA[  [chromium] › main-page.spec.ts:59:3 › Main Page Components › should render services section ──────
+
+    Error: expect(locator).toBeVisible() failed
+
+    Locator: locator('[class*="service"], .service-item, .card').first()
+    Expected: visible
+    Timeout: 5000ms
+    Error: element(s) not found
+
+    Call log:
+      - Expect "toBeVisible" with timeout 5000ms
+      - waiting for locator('[class*="service"], .service-item, .card').first()
+
+
+      65 |     // Check for service items
+      66 |     const serviceItems = page.locator('[class*="service"], .service-item, .card');
+    > 67 |     await expect(serviceItems.first()).toBeVisible();
+         |                                        ^
+      68 |     
+      69 |     // Take services screenshot
+      70 |     await testUtils.takeElementScreenshot('section', 'services-section');
+        at /Users/kylestephens/Desktop/business_auto/Dental/dental-landing-template/tests/playwright/main-page.spec.ts:67:40
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ../../test-results/main-page-Main-Page-Compon-117c5-uld-render-services-section-chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    ../../test-results/main-page-Main-Page-Compon-117c5-uld-render-services-section-chromium/video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: ../../test-results/main-page-Main-Page-Compon-117c5-uld-render-services-section-chromium/error-context.md
+]]>
+</failure>
+<system-out>
+<![CDATA[
+[[ATTACHMENT|main-page-Main-Page-Compon-117c5-uld-render-services-section-chromium/test-failed-1.png]]
+
+[[ATTACHMENT|main-page-Main-Page-Compon-117c5-uld-render-services-section-chromium/video.webm]]
+
+[[ATTACHMENT|main-page-Main-Page-Compon-117c5-uld-render-services-section-chromium/error-context.md]]
+]]>
+</system-out>
+</testcase>
+<testcase name="Main Page Components › should render footer component" classname="main-page.spec.ts" time="1.457">
+</testcase>
+<testcase name="Main Page Components › should be accessible" classname="main-page.spec.ts" time="1.499">
+<failure message="main-page.spec.ts:85:3 should be accessible" type="FAILURE">
+<![CDATA[  [chromium] › main-page.spec.ts:85:3 › Main Page Components › should be accessible ────────────────
+
+    Error: expect(received).toBeTruthy()
+
+    Received: ""
+
+       at utils/test-utils.ts:105
+
+      103 |     for (const button of buttons) {
+      104 |       const text = await button.textContent();
+    > 105 |       expect(text?.trim()).toBeTruthy();
+          |                            ^
+      106 |     }
+      107 |   }
+      108 | }
+        at TestUtils.checkAccessibility (/Users/kylestephens/Desktop/business_auto/Dental/dental-landing-template/tests/playwright/utils/test-utils.ts:105:28)
+        at /Users/kylestephens/Desktop/business_auto/Dental/dental-landing-template/tests/playwright/main-page.spec.ts:86:5
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ../../test-results/main-page-Main-Page-Components-should-be-accessible-chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    ../../test-results/main-page-Main-Page-Components-should-be-accessible-chromium/video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: ../../test-results/main-page-Main-Page-Components-should-be-accessible-chromium/error-context.md
+]]>
+</failure>
+<system-out>
+<![CDATA[
+[[ATTACHMENT|main-page-Main-Page-Components-should-be-accessible-chromium/test-failed-1.png]]
+
+[[ATTACHMENT|main-page-Main-Page-Components-should-be-accessible-chromium/video.webm]]
+
+[[ATTACHMENT|main-page-Main-Page-Components-should-be-accessible-chromium/error-context.md]]
+]]>
+</system-out>
+</testcase>
+<testcase name="Main Page Components › should handle mobile navigation" classname="main-page.spec.ts" time="7.107">
+<failure message="main-page.spec.ts:92:3 should handle mobile navigation" type="FAILURE">
+<![CDATA[  [chromium] › main-page.spec.ts:92:3 › Main Page Components › should handle mobile navigation ─────
+
+    Error: expect(locator).toBeVisible() failed
+
+    Locator: locator('[class*="mobile-menu"], [class*="nav-menu"]')
+    Expected: visible
+    Timeout: 5000ms
+    Error: element(s) not found
+
+    Call log:
+      - Expect "toBeVisible" with timeout 5000ms
+      - waiting for locator('[class*="mobile-menu"], [class*="nav-menu"]')
+
+
+      104 |       // Check if mobile menu is open
+      105 |       const mobileMenu = page.locator('[class*="mobile-menu"], [class*="nav-menu"]');
+    > 106 |       await expect(mobileMenu).toBeVisible();
+          |                                ^
+      107 |       
+      108 |       await testUtils.takeScreenshot('mobile-menu-open');
+      109 |     }
+        at /Users/kylestephens/Desktop/business_auto/Dental/dental-landing-template/tests/playwright/main-page.spec.ts:106:32
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ../../test-results/main-page-Main-Page-Compon-15dc0-ld-handle-mobile-navigation-chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    ../../test-results/main-page-Main-Page-Compon-15dc0-ld-handle-mobile-navigation-chromium/video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: ../../test-results/main-page-Main-Page-Compon-15dc0-ld-handle-mobile-navigation-chromium/error-context.md
+]]>
+</failure>
+<system-out>
+<![CDATA[
+[[ATTACHMENT|main-page-Main-Page-Compon-15dc0-ld-handle-mobile-navigation-chromium/test-failed-1.png]]
+
+[[ATTACHMENT|main-page-Main-Page-Compon-15dc0-ld-handle-mobile-navigation-chromium/video.webm]]
+
+[[ATTACHMENT|main-page-Main-Page-Compon-15dc0-ld-handle-mobile-navigation-chromium/error-context.md]]
+]]>
+</system-out>
+</testcase>
+</testsuite>
+</testsuites>

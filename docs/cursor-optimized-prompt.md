@@ -79,6 +79,7 @@ npm run mcp:complete <task-id> # Complete task
 - **Maps:** Google Places API
 - **Calendar:** Google Calendar API
 - **Social:** Facebook Graph API
+- **Infrastructure:** AWS (App Runner, RDS, SES, Secrets Manager, CloudWatch)
 
 ### **Key Integrations:**
 - Stripe payment processing

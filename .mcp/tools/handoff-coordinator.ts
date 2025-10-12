@@ -75,6 +75,11 @@ export class HandoffCoordinator {
       throw new Error(`Task ${taskId} is not ready for claiming`);
     }
 
+    // WORKFLOW VALIDATION: Ensure task was created through MCP workflow
+    console.log(`🔍 Validating task creation...`);
+    await this.validateTaskCreation(taskId);
+    console.log(`✅ Task creation validation passed`);
+
     // PROMPT COMPLIANCE ENFORCEMENT: Check context files and architecture compliance
     console.log(`🔍 Enforcing prompt compliance...`);
     await this.enforcePromptCompliance(taskId);
@@ -83,6 +88,15 @@ export class HandoffCoordinator {
     // Trunk-Based Development: Run conflict-first gate before claiming
     console.log(`🔍 Running trunk-based development checks...`);
     await this.runTrunkBasedChecks();
+
+    // TDD ENFORCEMENT: Enforce TDD cycle for functional tasks
+    if (task.classification === 'functional') {
+      console.log(`🔴 Enforcing TDD cycle for functional task...`);
+      await this.enforceTDDCycle(taskId);
+      console.log(`✅ TDD cycle enforcement passed`);
+    } else {
+      console.log(`📋 Non-functional task - skipping TDD enforcement`);
+    }
 
     // Update task with agent assignment and move to in-progress
     await this.taskManager.updateTask(taskId, { agent });
@@ -364,6 +378,74 @@ export class HandoffCoordinator {
   }
 
   /**
+   * Enforce TDD cycle for functional tasks
+   */
+  private async enforceTDDCycle(taskId: string): Promise<void> {
+    console.log(`🔴 Enforcing TDD cycle for functional task ${taskId}`);
+    
+    try {
+      // Check if TDD cycle was followed in recent commits
+      const commits = execSync('git log --oneline -10', { encoding: 'utf8' });
+      const hasRed = commits.includes('[TDD:RED]');
+      const hasGreen = commits.includes('[TDD:GREEN]');
+      const hasRefactor = commits.includes('[TDD:REFACTOR]');
+      
+      console.log(`📊 TDD Cycle Status:`);
+      console.log(`  🔴 RED phase: ${hasRed ? '✅ Found' : '❌ Missing'}`);
+      console.log(`  🟢 GREEN phase: ${hasGreen ? '✅ Found' : '❌ Missing'}`);
+      console.log(`  🔵 REFACTOR phase: ${hasRefactor ? '✅ Found' : '⚠️  Optional'}`);
+      
+      if (!hasRed || !hasGreen) {
+        const missingPhases = [];
+        if (!hasRed) missingPhases.push('RED');
+        if (!hasGreen) missingPhases.push('GREEN');
+        
+        throw new Error(`TDD cycle incomplete - missing phases: ${missingPhases.join(', ')}. Must have [TDD:RED] and [TDD:GREEN] commits before claiming functional task.`);
+      }
+      
+      console.log(`✅ TDD cycle validation passed`);
+    } catch (error) {
+      console.error(`❌ TDD cycle enforcement failed:`, error.message);
+      throw new Error(`TDD cycle enforcement failed: ${error.message}`);
+    }
+  }
+
+  /**
+   * Validate that task was created through MCP workflow
+   */
+  private async validateTaskCreation(taskId: string): Promise<void> {
+    console.log(`🔍 Validating task creation for ${taskId}`);
+    
+    try {
+      // Check if task has proper MCP workflow metadata
+      const task = await this.taskManager.getTask(taskId);
+      if (!task) {
+        throw new Error(`Task ${taskId} not found`);
+      }
+      
+      // Check for required MCP workflow fields
+      const requiredFields = ['classification', 'approach', 'codexReviewCycles'];
+      const missingFields = requiredFields.filter(field => {
+        const value = task[field as keyof typeof task];
+        // codexReviewCycles can be 0, which is valid
+        if (field === 'codexReviewCycles') {
+          return value === undefined || value === null;
+        }
+        return !value;
+      });
+      
+      if (missingFields.length > 0) {
+        throw new Error(`Task ${taskId} missing MCP workflow fields: ${missingFields.join(', ')}. Task must be created through 'npm run mcp:create' and prepared with 'npm run mcp:prep'.`);
+      }
+      
+      console.log(`✅ Task creation validation passed`);
+    } catch (error) {
+      console.error(`❌ Task creation validation failed:`, error.message);
+      throw new Error(`Task creation validation failed: ${error.message}`);
+    }
+  }
+
+  /**
    * Run fast CI validation before review
    */
   private async runFastCI(): Promise<void> {
@@ -571,6 +653,72 @@ Ready for production deployment.`;
       console.log('  npm run mcp:review <task-id>');
       console.log('  npm run mcp:complete <task-id>');
     }
+  }
+
+  /**
+   * Start TDD RED phase for a task
+   */
+  async startTDDRedPhase(taskId: string, testDescription: string): Promise<void> {
+    console.log(`🔴 Starting TDD RED phase for task ${taskId}: ${testDescription}`);
+    
+    const task = await this.taskManager.getTask(taskId);
+    if (!task) {
+      throw new Error(`Task ${taskId} not found`);
+    }
+
+    if (task.classification !== 'functional') {
+      throw new Error(`TDD RED phase only available for functional tasks. Task ${taskId} is classified as ${task.classification}`);
+    }
+
+    console.log(`📝 Write a failing test for: ${testDescription}`);
+    console.log(`💡 Test should fail because implementation doesn't exist yet`);
+    console.log(`📁 Create test file in src/__tests__/`);
+    console.log(`🔴 Commit with: git commit -m "test: ${testDescription} [TDD:RED] [TRUNK]"`);
+    console.log(`✅ Then run: npm run mcp:tdd-green ${taskId}`);
+  }
+
+  /**
+   * Start TDD GREEN phase for a task
+   */
+  async startTDDGreenPhase(taskId: string): Promise<void> {
+    console.log(`🟢 Starting TDD GREEN phase for task ${taskId}`);
+    
+    const task = await this.taskManager.getTask(taskId);
+    if (!task) {
+      throw new Error(`Task ${taskId} not found`);
+    }
+
+    if (task.classification !== 'functional') {
+      throw new Error(`TDD GREEN phase only available for functional tasks. Task ${taskId} is classified as ${task.classification}`);
+    }
+
+    console.log(`⚡ Write minimal code to make the test pass`);
+    console.log(`💡 Don't worry about code quality - just make it work`);
+    console.log(`🧪 Run tests: npm run test`);
+    console.log(`🟢 Commit with: git commit -m "feat: implement ${task.title} [TDD:GREEN] [TRUNK] [CONFLICT-CLEAR]"`);
+    console.log(`✅ Then run: npm run mcp:tdd-refactor ${taskId} (optional)`);
+  }
+
+  /**
+   * Start TDD REFACTOR phase for a task
+   */
+  async startTDDRefactorPhase(taskId: string): Promise<void> {
+    console.log(`🔵 Starting TDD REFACTOR phase for task ${taskId}`);
+    
+    const task = await this.taskManager.getTask(taskId);
+    if (!task) {
+      throw new Error(`Task ${taskId} not found`);
+    }
+
+    if (task.classification !== 'functional') {
+      throw new Error(`TDD REFACTOR phase only available for functional tasks. Task ${taskId} is classified as ${task.classification}`);
+    }
+
+    console.log(`🔧 Improve code quality while keeping tests green`);
+    console.log(`💡 Focus on: readability, performance, maintainability`);
+    console.log(`🧪 Ensure tests still pass: npm run test`);
+    console.log(`🔵 Commit with: git commit -m "refactor: improve ${task.title} [TDD:REFACTOR] [TRUNK]"`);
+    console.log(`✅ Ready for review: npm run mcp:review ${taskId}`);
   }
 
   async enforcePromptCompliance(taskId: string): Promise<void> {

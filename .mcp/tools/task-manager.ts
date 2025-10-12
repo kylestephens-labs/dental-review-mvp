@@ -194,10 +194,21 @@ export class TaskManager {
     const statusDirs = ['pending', 'ready', 'in-progress', 'review', 'feedback', 'completed', 'failed'];
     
     for (const statusDir of statusDirs) {
-      const filePath = path.join(this.tasksDir, statusDir, `${taskId}.md`);
+      const dirPath = path.join(this.tasksDir, statusDir);
       try {
-        await fs.access(filePath);
-        return filePath;
+        const files = await fs.readdir(dirPath);
+        
+        // Look for exact match first
+        const exactMatch = files.find(file => file === `${taskId}.md`);
+        if (exactMatch) {
+          return path.join(dirPath, exactMatch);
+        }
+        
+        // Look for files that start with taskId
+        const prefixMatch = files.find(file => file.startsWith(`${taskId} `) && file.endsWith('.md'));
+        if (prefixMatch) {
+          return path.join(dirPath, prefixMatch);
+        }
       } catch {
         continue;
       }

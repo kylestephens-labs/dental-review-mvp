@@ -111,7 +111,14 @@ Update SEO in `index.html` with your business details.
 - **TypeScript** - Type safety
 - **TailwindCSS** - Utility-first styling
 - **Vite** - Build tool
-- **Lovable Cloud** - Backend (Supabase under the hood)
+- **Supabase** - Backend (PostgreSQL + Auth + Real-time) for lead generation
+- **AWS RDS** - Core business data (PostgreSQL)
+- **AWS SES** - Email service
+- **Twilio** - SMS communications
+- **Stripe** - Payment processing
+- **Google Places API** - Maps integration
+- **Google Calendar API** - Calendar integration
+- **Facebook Graph API** - Social integration
 - **React Hook Form** - Form management
 - **Zod** - Validation
 - **Shadcn/ui** - Component library
@@ -156,7 +163,7 @@ Edit `src/components/IntakeForm.tsx` to add/remove fields. Don't forget to updat
 
 ## 🤝 Support
 
-Need help? Check the [Lovable Discord community](https://discord.com/channels/1119885301872070706/1280461670979993613)
+Need help? Check the [Lovable Discord community](https://discord.gg/lovable)
 
 ---
 
