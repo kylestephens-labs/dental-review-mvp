@@ -1,0 +1,15 @@
+{
+  "name": "review-request",
+  "locale": "en",
+  "channel": "sms",
+  "body": "Hi {{patient_name}}, thanks for visiting {{practice_name}} today. Please leave us a review: {{review_link}} Reply stop to opt out.",
+  "status": "active",
+  "description": "English SMS template for requesting reviews from patients after dental visits",
+  "ada_compliant": true,
+  "character_count": 156,
+  "placeholder_tokens": [
+    "{{practice_name}}",
+    "{{review_link}}",
+    "{{patient_name}}"
+  ]
+}

@@ -89,11 +89,15 @@ export class TaskManager {
     const task = await this.getTask(taskId);
     if (!task) throw new Error(`Task ${taskId} not found`);
 
+    console.log(`🔍 Updating task ${taskId} with:`, JSON.stringify(updates, null, 2));
+
     const updatedTask = {
       ...task,
       ...updates,
       lastUpdated: new Date().toISOString()
     };
+
+    console.log(`📝 Updated task:`, JSON.stringify(updatedTask, null, 2));
 
     await this.saveTask(updatedTask);
   }
@@ -233,16 +237,16 @@ ${task.overview || '[Overview to be defined]'}
 ${task.goal || '[Goal to be defined]'}
 
 ## Acceptance Criteria
-${task.acceptanceCriteria.map(criteria => `- [ ] ${criteria}`).join('\n') || '- [ ] [Criteria to be defined]'}
+${task.acceptanceCriteria && task.acceptanceCriteria.length > 0 ? task.acceptanceCriteria.map(criteria => `- [ ] ${criteria}`).join('\n') : '- [ ] [Criteria to be defined]'}
 
 ## Definition of Ready
-${task.definitionOfReady.map(item => `- [ ] ${item}`).join('\n') || '- [ ] [DoR to be defined]'}
+${task.definitionOfReady && task.definitionOfReady.length > 0 ? task.definitionOfReady.map(item => `- [ ] ${item}`).join('\n') : '- [ ] [DoR to be defined]'}
 
 ## Definition of Done
-${task.definitionOfDone.map(item => `- [ ] ${item}`).join('\n') || '- [ ] [DoD to be defined]'}
+${task.definitionOfDone && task.definitionOfDone.length > 0 ? task.definitionOfDone.map(item => `- [ ] ${item}`).join('\n') : '- [ ] [DoD to be defined]'}
 
 ## Files Affected
-${task.filesAffected.map(file => `- ${file}`).join('\n') || '- [Files to be identified]'}
+${task.filesAffected && task.filesAffected.length > 0 ? task.filesAffected.map(file => `- ${file}`).join('\n') : '- [Files to be identified]'}
 
 ## Implementation Notes
 ${task.implementationNotes || '[Implementation notes will be added here]'}
@@ -311,6 +315,14 @@ ${task.errorContext || '[Error context will be added here]'}
         task.overview = this.extractSectionContent(lines, i);
       } else if (line.startsWith('## Goal')) {
         task.goal = this.extractSectionContent(lines, i);
+      } else if (line.startsWith('## Acceptance Criteria')) {
+        task.acceptanceCriteria = this.extractArrayContent(lines, i);
+      } else if (line.startsWith('## Definition of Ready')) {
+        task.definitionOfReady = this.extractArrayContent(lines, i);
+      } else if (line.startsWith('## Definition of Done')) {
+        task.definitionOfDone = this.extractArrayContent(lines, i);
+      } else if (line.startsWith('## Files Affected')) {
+        task.filesAffected = this.extractArrayContent(lines, i);
       } else if (line.startsWith('## Implementation Notes')) {
         task.implementationNotes = this.extractSectionContent(lines, i);
       } else if (line.startsWith('## Review Feedback')) {
@@ -342,6 +354,28 @@ ${task.errorContext || '[Error context will be added here]'}
       content.push(line);
     }
     return content.join('\n').trim();
+  }
+
+  private extractArrayContent(lines: string[], startIndex: number): string[] {
+    const items: string[] = [];
+    for (let i = startIndex + 1; i < lines.length; i++) {
+      const line = lines[i];
+      if (line.startsWith('## ')) break;
+      
+      // Handle both "- [ ] item" and "- item" formats
+      if (line.startsWith('- [ ] ')) {
+        const item = line.replace('- [ ] ', '').trim();
+        if (item && !item.includes('[Criteria to be defined]') && !item.includes('[DoR to be defined]') && !item.includes('[DoD to be defined]') && !item.includes('[Files to be identified]')) {
+          items.push(item);
+        }
+      } else if (line.startsWith('- ') && !line.startsWith('- [ ]')) {
+        const item = line.replace('- ', '').trim();
+        if (item && !item.includes('[Files to be identified]')) {
+          items.push(item);
+        }
+      }
+    }
+    return items;
   }
 
   /**

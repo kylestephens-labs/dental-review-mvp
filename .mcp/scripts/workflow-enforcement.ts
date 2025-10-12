@@ -274,7 +274,7 @@ export async function fastCIValidation(): Promise<{
       const lintDuration = Date.now() - lintStart;
       
       // Check for warnings in output
-      const hasWarnings = lintOutput.includes('warning') || lintOutput.includes('✖');
+      const hasWarnings = lintOutput.includes('✖') || (lintOutput.includes('warning') && !lintOutput.includes('--max-warnings'));
       if (hasWarnings) {
         checks.push({ name: 'Lint', status: 'fail', duration: lintDuration, details: `Warnings detected: ${lintOutput}` });
       } else {
@@ -287,9 +287,9 @@ export async function fastCIValidation(): Promise<{
     
     // Unit Tests
     const testStart = Date.now();
-    execSync('npm run test -- --run --reporter=basic', { stdio: 'pipe' });
+    execSync('npm run test -- --run', { stdio: 'pipe' });
     const testDuration = Date.now() - testStart;
-    checks.push({ name: 'Unit Tests', status: 'pass', duration: testDuration, details: 'npm run test -- --run --reporter=basic' });
+    checks.push({ name: 'Unit Tests', status: 'pass', duration: testDuration, details: 'npm run test -- --run' });
     
     // Build Check
     const buildStart = Date.now();

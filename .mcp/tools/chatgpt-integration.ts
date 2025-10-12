@@ -94,10 +94,20 @@ export class ChatGPTIntegration {
       architecture: this.extractArchitectureInfo(context),
       businessGoals: this.extractBusinessGoals(context),
       technicalRequirements: this.extractTechnicalRequirements(context),
-      mvpFeatures: this.extractMVPFeatures(context)
+      mvpFeatures: this.extractMVPFeatures(context),
+      tasksContext: this.extractTasksContext(context)
     };
     
     return summary;
+  }
+
+  /**
+   * Extract tasks.md content for parsing specific task requirements
+   */
+  private extractTasksContext(context: string): string {
+    // Look for tasks.md section in the context
+    const tasksMatch = context.match(/=== docs\/dentist_project\/tasks\.md ===\n([\s\S]*?)(?=\n===|\n\n===|$)/);
+    return tasksMatch ? tasksMatch[1] : '';
   }
 
   /**
@@ -195,7 +205,112 @@ export class ChatGPTIntegration {
   }
 
   /**
-   * Analyze task and generate specific details
+   * Parse specific task requirements from project context (tasks.md)
+   */
+  private parseTaskRequirementsFromContext(taskTitle: string, contextSummary: any): any {
+    // Look for the specific task in the context
+    const tasksContext = contextSummary.tasksContext || '';
+    
+    // Extract task number and description from title
+    const taskMatch = taskTitle.match(/(\d+)\.?\s*(.+)/);
+    if (!taskMatch) return null;
+    
+    const taskNumber = taskMatch[1];
+    const taskDescription = taskMatch[2].toLowerCase();
+    
+    console.log(`🔍 Parsing task ${taskNumber}: "${taskDescription}"`);
+    console.log(`📄 Tasks context length: ${tasksContext.length}`);
+    
+    // Look for the specific task in tasks.md content
+    // Handle both tab-separated and newline-separated formats
+    const taskPattern = new RegExp(`${taskNumber}\\.\\s*([^\\n]+)[\\s\\n]+Start: ([^\\n]+)[\\s\\n]+End: ([^\\n]+)`, 'i');
+    const match = tasksContext.match(taskPattern);
+    
+    if (!match) {
+      console.log(`❌ No match found for task ${taskNumber}`);
+      console.log(`🔍 Pattern: ${taskPattern}`);
+      // Try a more flexible pattern
+      const flexiblePattern = new RegExp(`${taskNumber}\\.\\s*([^\\n]+).*?Start: ([^\\n]+).*?End: ([^\\n]+)`, 'is');
+      const flexibleMatch = tasksContext.match(flexiblePattern);
+      if (flexibleMatch) {
+        console.log(`✅ Flexible pattern matched`);
+        const [, fullDescription, startRequirement, endRequirement] = flexibleMatch;
+        return this.generateTaskDetailsFromRequirements(fullDescription, startRequirement, endRequirement);
+      }
+      return null;
+    }
+    
+    console.log(`✅ Pattern matched for task ${taskNumber}`);
+    const [, fullDescription, startRequirement, endRequirement] = match;
+    
+    console.log(`📝 Full description: "${fullDescription}"`);
+    console.log(`🚀 Start requirement: "${startRequirement}"`);
+    console.log(`🏁 End requirement: "${endRequirement}"`);
+    
+    const result = this.generateTaskDetailsFromRequirements(fullDescription, startRequirement, endRequirement);
+    console.log(`📋 Generated details:`, JSON.stringify(result, null, 2));
+    
+    return result;
+  }
+
+  /**
+   * Generate task details from Start/End requirements
+   */
+  private generateTaskDetailsFromRequirements(fullDescription: string, startRequirement: string, endRequirement: string): any {
+    // Generate task details based on Start/End requirements
+    const overview = fullDescription.trim();
+    const goal = `Implement ${fullDescription.trim()} as specified in tasks.md`;
+    
+    // Parse Start requirement for files affected
+    const filesAffected = [];
+    if (startRequirement.includes('/')) {
+      const filePath = startRequirement.trim();
+      filesAffected.push(filePath);
+    }
+    
+    // Parse End requirement for acceptance criteria
+    const acceptanceCriteria = [];
+    const endParts = endRequirement.split(';');
+    
+    for (const part of endParts) {
+      const trimmed = part.trim();
+      if (trimmed) {
+        acceptanceCriteria.push(trimmed);
+      }
+    }
+    
+    // Add common acceptance criteria
+    acceptanceCriteria.push('Implementation follows architecture specifications');
+    acceptanceCriteria.push('Code is tested and working');
+    acceptanceCriteria.push('Documentation updated if needed');
+    
+    const definitionOfReady = [
+      'Task requirements are clear from docs/dentist_project/tasks.md',
+      'Architecture context is understood',
+      'Start and End requirements are parsed',
+      'Implementation approach is determined'
+    ];
+    
+    const definitionOfDone = [
+      'All Start/End requirements from tasks.md are met',
+      'Implementation follows project architecture',
+      'Code compiles and passes tests',
+      'Files are created/modified as specified',
+      'Documentation updated if needed'
+    ];
+    
+    return {
+      overview,
+      goal,
+      acceptanceCriteria,
+      definitionOfReady,
+      definitionOfDone,
+      filesAffected
+    };
+  }
+
+  /**
+   * Analyze task and generate specific details based on project context
    */
   private analyzeTaskAndGenerateDetails(taskTitle: string, contextSummary: any): Partial<Task> {
     const title = taskTitle.toLowerCase();
@@ -208,7 +323,18 @@ export class ChatGPTIntegration {
     let definitionOfDone: string[] = [];
     let filesAffected: string[] = [];
     
-    if (title.includes('env') || title.includes('environment')) {
+    // Parse task requirements from project context
+    const taskRequirements = this.parseTaskRequirementsFromContext(taskTitle, contextSummary);
+    
+    // If we have parsed requirements, use them
+    if (taskRequirements) {
+      overview = taskRequirements.overview;
+      goal = taskRequirements.goal;
+      acceptanceCriteria = taskRequirements.acceptanceCriteria;
+      definitionOfReady = taskRequirements.definitionOfReady;
+      definitionOfDone = taskRequirements.definitionOfDone;
+      filesAffected = taskRequirements.filesAffected;
+    } else if (title.includes('env') || title.includes('environment')) {
       overview = 'Set up environment variable management system with validation and fail-fast boot checks';
       goal = 'Create a robust environment variable system that ensures all required API keys and configuration are present before the application starts';
       
@@ -241,54 +367,6 @@ export class ChatGPTIntegration {
         'src/env-check.ts',
         'package.json (scripts)',
         'src/__tests__/env-validation.test.ts'
-      ];
-    } else if (title.includes('sql') && title.includes('migration')) {
-      overview = 'Create SQL migration 001 with core database tables for dental practice management system';
-      goal = 'Establish the foundational database schema with all core tables, indexes, constraints, and RLS policies needed for the dental MVP';
-      
-      acceptanceCriteria = [
-        'Create practices table with id, name, phone, email, city, tz, status, created_at, stripe_checkout_at, first_review_request_sent_at',
-        'Create settings table with practice_id FK, review_link, quiet_hours_start/end, daily_cap, sms_sender, email_sender, default_locale, brand_assets_json, billing_json',
-        'Create templates table with id, name, locale, channel, body, status, created_at and unique constraint on (name, locale, channel)',
-        'Create patients table with id, practice_id FK, first_name, mobile_e164 (encrypted), email, opted_out, first_seen_at',
-        'Create visits table with id, practice_id FK, patient_id FK, occurred_at and unique constraint on (practice_id, patient_id, occurred_at::date)',
-        'Create review_requests table with id, practice_id FK, patient_id FK, visit_id FK, channel, template_id FK, locale, variant, sent_at, status, provider_msg_id, provider_status, send_error_code, send_error_msg',
-        'Create engagements table with id, review_request_id FK, event, occurred_at, meta_json',
-        'Create events table with id, practice_id FK, type, actor, payload_json, occurred_at, ip_hash, ua_hash',
-        'Create jobs table with id, type, payload_json, status, attempts, available_at, last_error, created_at',
-        'Create reviews table with id, practice_id FK, source, source_place_id, external_review_id, author_name, rating, text, url, published_at, fetched_at and unique constraint on (practice_id, source, external_review_id)',
-        'Create review_snapshots table with id, practice_id FK, snapshot_date, total_reviews, average_rating, five_star, four_star, three_star, two_star, one_star, fetched_at and unique constraint on (practice_id, snapshot_date)',
-        'Create practice_baselines table with practice_id PK FK, baseline_date, baseline_total, baseline_average, created_at',
-        'Add all required indexes for performance (practice_id, patient_id, sent_at DESC, etc.)',
-        'Enable RLS on all tables',
-        'Add triggers for updated_at timestamps',
-        'Migration runs successfully with psql -f scripts/migrations/001_init.sql'
-      ];
-      
-      definitionOfReady = [
-        'Database architecture is understood from docs/dentist_project/architecture.md',
-        'Core table requirements are clear from architecture document',
-        'Indexing strategy is defined for performance',
-        'RLS policies are understood',
-        'Migration file location is established'
-      ];
-      
-      definitionOfDone = [
-        'All 12 core tables created with proper structure',
-        'All foreign key relationships established',
-        'All unique constraints and indexes created',
-        'RLS enabled on all tables',
-        'Triggers for updated_at timestamps working',
-        'Migration file created at scripts/migrations/001_init.sql',
-        'Migration runs successfully with psql -f',
-        'All tests pass',
-        'Documentation updated'
-      ];
-      
-      filesAffected = [
-        'scripts/migrations/001_init.sql',
-        'docs/dentist_project/architecture.md (reference)',
-        'supabase/migrations/ (if using Supabase migrations)'
       ];
     }
     

@@ -1,0 +1,15 @@
+{
+  "name": "review-request",
+  "locale": "es",
+  "channel": "sms",
+  "body": "Hola {{patient_name}}, gracias por visitar {{practice_name}} hoy. Por favor déjenos una reseña: {{review_link}} Responda alto para cancelar.",
+  "status": "active",
+  "description": "Spanish SMS template for requesting reviews from patients after dental visits",
+  "ada_compliant": true,
+  "character_count": 158,
+  "placeholder_tokens": [
+    "{{practice_name}}",
+    "{{review_link}}",
+    "{{patient_name}}"
+  ]
+}

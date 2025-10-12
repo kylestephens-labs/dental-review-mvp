@@ -47,6 +47,11 @@ export class HandoffCoordinator {
     await this.chatgptIntegration.fillOutTaskDetails(taskId);
     console.log(`✅ Task ${taskId} details filled out by ChatGPT`);
     
+    // Step 3.5: Validate task details completeness (Guardrail)
+    console.log(`🔍 Step 3.5: Validating task details completeness...`);
+    await this.validateTaskDetailsCompleteness(taskId);
+    console.log(`✅ Task details validation passed`);
+    
     // Step 4: Update task with classification
     await this.taskManager.updateTask(taskId, { 
       classification,
@@ -69,6 +74,11 @@ export class HandoffCoordinator {
     if (task.status !== 'ready') {
       throw new Error(`Task ${taskId} is not ready for claiming`);
     }
+
+    // PROMPT COMPLIANCE ENFORCEMENT: Check context files and architecture compliance
+    console.log(`🔍 Enforcing prompt compliance...`);
+    await this.enforcePromptCompliance(taskId);
+    console.log(`✅ Prompt compliance enforcement passed`);
 
     // Trunk-Based Development: Run conflict-first gate before claiming
     console.log(`🔍 Running trunk-based development checks...`);
@@ -274,6 +284,68 @@ export class HandoffCoordinator {
     console.log(`  Branch: ${branch}`);
     console.log(`  Commit: ${commit}`);
     if (pr) console.log(`  PR: ${pr}`);
+  }
+
+  /**
+   * Validate that task details are completely filled out (Guardrail)
+   */
+  private async validateTaskDetailsCompleteness(taskId: string): Promise<void> {
+    const task = await this.taskManager.getTask(taskId);
+    if (!task) {
+      throw new Error(`Task ${taskId} not found`);
+    }
+
+    const missingFields = [];
+    
+    // Check required fields
+    if (!task.overview || task.overview.trim() === '') {
+      missingFields.push('Overview');
+    }
+    if (!task.goal || task.goal.trim() === '') {
+      missingFields.push('Goal');
+    }
+    if (!task.acceptanceCriteria || task.acceptanceCriteria.length === 0) {
+      missingFields.push('Acceptance Criteria');
+    }
+    if (!task.definitionOfReady || task.definitionOfReady.length === 0) {
+      missingFields.push('Definition of Ready');
+    }
+    if (!task.definitionOfDone || task.definitionOfDone.length === 0) {
+      missingFields.push('Definition of Done');
+    }
+    if (!task.filesAffected || task.filesAffected.length === 0) {
+      // Files Affected can be empty if no specific files are mentioned in Start requirement
+      // This is acceptable for tasks that don't involve specific file creation/modification
+      console.log(`⚠️  Files Affected is empty - this may be acceptable for this task type`);
+    }
+    
+    // Check for placeholder text
+    const placeholderPatterns = [
+      '[Criteria to be defined]',
+      '[DoR to be defined]',
+      '[DoD to be defined]',
+      '[Files to be identified]',
+      '[Implementation notes to be added]'
+    ];
+    
+    const taskContent = JSON.stringify(task);
+    for (const placeholder of placeholderPatterns) {
+      if (taskContent.includes(placeholder)) {
+        missingFields.push(`Contains placeholder: ${placeholder}`);
+      }
+    }
+    
+    if (missingFields.length > 0) {
+      const errorMessage = `Task details incomplete. Missing or incomplete fields: ${missingFields.join(', ')}`;
+      console.error(`❌ ${errorMessage}`);
+      
+      // Add error context but don't change status - let the caller handle it
+      await this.taskManager.updateTask(taskId, {
+        errorContext: errorMessage
+      });
+      
+      throw new Error(errorMessage);
+    }
   }
 
   /**
@@ -499,5 +571,74 @@ Ready for production deployment.`;
       console.log('  npm run mcp:review <task-id>');
       console.log('  npm run mcp:complete <task-id>');
     }
+  }
+
+  async enforcePromptCompliance(taskId: string): Promise<void> {
+    console.log(`🔍 Enforcing prompt compliance for task: ${taskId}`);
+    
+    // Check if required context files exist
+    const requiredFiles = [
+      'docs/dentist_project/architecture.md',
+      'docs/dentist_project/business_plan',
+      'docs/dentist_project/MVP',
+      'docs/dentist_project/tasks.md',
+      'docs/ mcp/mcp-orchestrator-spec.md',
+      '.mcp/README.md',
+      '.rules/00-100x-workflow.md',
+      '.rules/02-trunk-based-development.md',
+      'docs/mvp-working-agreement.md'
+    ];
+    
+    const missingFiles = [];
+    for (const file of requiredFiles) {
+      try {
+        await fs.access(file);
+      } catch {
+        missingFiles.push(file);
+      }
+    }
+    
+    if (missingFiles.length > 0) {
+      throw new Error(`Missing required context files: ${missingFiles.join(', ')}`);
+    }
+    
+    // Check architecture compliance for database-related tasks
+    const task = await this.taskManager.getTask(taskId);
+    if (task && this.isDatabaseTask(task)) {
+      await this.checkArchitectureCompliance(task);
+    }
+    
+    console.log(`✅ Prompt compliance enforcement passed`);
+  }
+
+  private isDatabaseTask(task: Task): boolean {
+    const dbKeywords = ['database', 'sql', 'table', 'migration', 'rds', 'supabase'];
+    const taskContent = `${task.title} ${task.overview || ''} ${task.goal || ''}`.toLowerCase();
+    return dbKeywords.some(keyword => taskContent.includes(keyword));
+  }
+
+  private async checkArchitectureCompliance(task: Task): Promise<void> {
+    console.log(`🔍 Checking architecture compliance for database task...`);
+    
+    // Read architecture.md to understand the correct database architecture
+    try {
+      const architectureContent = await fs.readFile('docs/dentist_project/architecture.md', 'utf-8');
+      
+      // Check if task violates architecture (e.g., using Supabase for core business data)
+      if (architectureContent.includes('RDS authoritative for runtime') && 
+          architectureContent.includes('Supabase (existing) - Lead-gen/outreach only')) {
+        
+        const taskContent = `${task.title} ${task.overview || ''} ${task.goal || ''}`.toLowerCase();
+        
+        // If task mentions Supabase but not lead generation, it's likely a violation
+        if (taskContent.includes('supabase') && !taskContent.includes('lead') && !taskContent.includes('outreach')) {
+          throw new Error(`ARCHITECTURE VIOLATION: Task appears to use Supabase for core business data. According to architecture.md, Supabase should only contain lead generation data. Core business data should be in AWS RDS.`);
+        }
+      }
+    } catch (error) {
+      console.warn(`⚠️  Could not read architecture.md: ${error.message}`);
+    }
+    
+    console.log(`✅ Architecture compliance check passed`);
   }
 }
