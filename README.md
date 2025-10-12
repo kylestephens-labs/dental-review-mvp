@@ -155,6 +155,25 @@ services: [
 
 Edit `src/components/IntakeForm.tsx` to add/remove fields. Don't forget to update the validator in `src/lib/validators.ts`.
 
+## 📚 Documentation
+
+### **Core Project**
+- [Architecture Overview](docs/dentist_project/architecture.md)
+- [Business Plan](docs/dentist_project/business_plan)
+- [MVP Specification](docs/dentist_project/MVP)
+- [Task List](docs/dentist_project/tasks.md)
+
+### **Development**
+- [Workflow Guide](docs/WORKFLOW.md) - Development practices and TDD
+- [Task Management](docs/MCP_ORCHESTRATOR.md) - Simple task tracking system
+- [Feature Flags](docs/FEATURE_FLAGS.md) - Safe feature rollouts
+- [Testing Strategy](docs/TESTING.md) - Unit, integration, and E2E tests
+
+### **Operations**
+- [Infrastructure](docs/INFRASTRUCTURE.md) - AWS services and architecture
+- [API Documentation](docs/API.md) - REST API endpoints and examples
+- [Deployment](docs/DEPLOYMENT.md) - Deployment and operational procedures
+
 ## 📚 Learn More
 
 - [Lovable Cloud Documentation](https://docs.lovable.dev/features/cloud)

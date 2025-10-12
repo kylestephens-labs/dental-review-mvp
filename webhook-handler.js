@@ -5,7 +5,7 @@ exports.handler = async (event) => {
     const body = event.body ? JSON.parse(event.body) : {};
     
     // Forward to your automation system
-    const webhookUrl = process.env.WEBHOOK_URL || 'https://automation.serviceboost.co';
+    const webhookUrl = process.env.N8N_WEBHOOK_URL || 'https://automation.serviceboost.co';
     
     try {
         const response = await fetch(webhookUrl, {

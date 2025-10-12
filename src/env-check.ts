@@ -9,8 +9,10 @@ interface EnvConfig {
 
 const envConfig: EnvConfig = {
   requiredVars: [
+    // Core application
     'STRIPE_SECRET_KEY',
     'STRIPE_PUBLISHABLE_KEY',
+    'STRIPE_WEBHOOK_SECRET',
     'TWILIO_ACCOUNT_SID',
     'TWILIO_AUTH_TOKEN',
     'AWS_SES_ACCESS_KEY_ID',
@@ -20,18 +22,48 @@ const envConfig: EnvConfig = {
     'GOOGLE_CALENDAR_CLIENT_SECRET',
     'FACEBOOK_GRAPH_ACCESS_TOKEN',
     'DATABASE_URL',
-    'HMAC_SECRET_KEY'
+    'HMAC_SECRET_KEY',
+    // N8N configuration
+    'N8N_WEBHOOK_URL',
+    'N8N_PROTOCOL',
+    'N8N_HOST',
+    'N8N_ENCRYPTION_KEY',
+    'N8N_DB_HOST',
+    'N8N_DB_USER',
+    'N8N_DB_PASSWORD',
+    // Supabase configuration
+    'SUPABASE_URL',
+    'SUPABASE_SERVICE_ROLE_KEY',
+    'N8N_INTAKE_WEBHOOK'
   ],
   optionalVars: [
     'NODE_ENV',
     'PORT',
-    'LOG_LEVEL'
+    'LOG_LEVEL',
+    'AWS_REGION',
+    'N8N_LOG_LEVEL',
+    'N8N_SKIP_WEBHOOK_DEREGISTRATION',
+    'N8N_DB_TYPE',
+    'N8N_DB_PORT',
+    'N8N_DB_DATABASE',
+    'MCP_AGENT_HEARTBEAT_INTERVAL',
+    'MCP_TASK_TIMEOUT',
+    'MCP_MAX_CONCURRENT_TASKS',
+    'SENTRY_DSN',
+    'GIT_SHA',
+    'JWT_SECRET'
   ],
   validationRules: {
     'STRIPE_SECRET_KEY': (value: string) => value.startsWith('sk_'),
     'STRIPE_PUBLISHABLE_KEY': (value: string) => value.startsWith('pk_'),
-    'TWILIO_ACCOUNT_SID': (value: string) => value.length > 0,
-    'DATABASE_URL': (value: string) => value.startsWith('postgres://') || value.startsWith('postgresql://')
+    'STRIPE_WEBHOOK_SECRET': (value: string) => value.startsWith('whsec_'),
+    'TWILIO_ACCOUNT_SID': (value: string) => value.startsWith('AC'),
+    'DATABASE_URL': (value: string) => value.startsWith('postgres://') || value.startsWith('postgresql://'),
+    'N8N_WEBHOOK_URL': (value: string) => value.startsWith('https://'),
+    'N8N_PROTOCOL': (value: string) => ['http', 'https'].includes(value),
+    'N8N_HOST': (value: string) => value.length > 0,
+    'SUPABASE_URL': (value: string) => value.startsWith('https://'),
+    'N8N_INTAKE_WEBHOOK': (value: string) => value.startsWith('https://')
   }
 };
 

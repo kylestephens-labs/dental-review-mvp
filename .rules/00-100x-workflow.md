@@ -1,7 +1,7 @@
 # 100x Workflow (Operational Index)
 > **Dental Landing Template Development Workflow - Optimized for fast iteration and delivery**
 
-## 1) Classification
+## 1) Task Classification
 - **Functional** → needs testable business logic (clear inputs/outputs)
 - **Non-Functional** → conflicts, config/env, one-time fixes, file edits
 - **Decision rule:** "Does this require writing *testable* business logic?" If **yes → Functional**
