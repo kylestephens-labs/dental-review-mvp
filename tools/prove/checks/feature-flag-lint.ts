@@ -126,13 +126,22 @@ export async function checkFeatureFlagLint(context: ProveContext): Promise<Featu
  */
 async function findFeatureFlagUsages(workingDirectory: string): Promise<string[]> {
   try {
-    // Search for isEnabled('FLAG_NAME') patterns
+    // Search for isEnabled('FLAG_NAME') patterns, excluding test files and comments
     const result = await exec('grep', [
       '-r',
       '--include=*.ts',
       '--include=*.tsx',
       '--include=*.js',
       '--include=*.jsx',
+      '--exclude-dir=node_modules',
+      '--exclude-dir=.git',
+      '--exclude-dir=dist',
+      '--exclude-dir=build',
+      '--exclude-dir=__tests__',
+      '--exclude=*.test.*',
+      '--exclude=*.spec.*',
+      '-v', // Exclude lines that start with comment markers
+      '^\\s*//',
       '-E',
       "isEnabled\\s*\\(\\s*['\"`]([^'\"`]+)['\"`]",
       '.'
@@ -212,7 +221,7 @@ async function findFeatureFlagUsagesAlternative(workingDirectory: string): Promi
             }
           }
         }
-      } catch (fileError) {
+      } catch {
         // Skip files that can't be read
         continue;
       }
@@ -231,7 +240,7 @@ async function findFeatureFlagUsagesAlternative(workingDirectory: string): Promi
 /**
  * Load frontend flags from frontend/src/flags.ts
  */
-async function loadFrontendFlags(workingDirectory: string): Promise<Record<string, any>> {
+async function loadFrontendFlags(workingDirectory: string): Promise<Record<string, unknown>> {
   try {
     const flagsPath = join(workingDirectory, 'frontend', 'src', 'flags.ts');
     const content = await readFile(flagsPath, 'utf-8');
@@ -244,7 +253,7 @@ async function loadFrontendFlags(workingDirectory: string): Promise<Record<strin
 
     // This is a simplified parser - in a real implementation, you'd want to use
     // a proper TypeScript parser to extract the object
-    const flags: Record<string, any> = {};
+    const flags: Record<string, unknown> = {};
     
     // Look for flag definitions in the content
     const flagMatches = content.matchAll(/(\w+):\s*{[\s\S]*?name:\s*['"`](\w+)['"`][\s\S]*?owner:\s*['"`]([^'"`]+)['"`][\s\S]*?expiry:\s*['"`]([^'"`]+)['"`][\s\S]*?default:\s*(true|false)/g);
@@ -272,7 +281,7 @@ async function loadFrontendFlags(workingDirectory: string): Promise<Record<strin
 /**
  * Load backend flags from backend/src/flags.ts
  */
-async function loadBackendFlags(workingDirectory: string): Promise<Record<string, any>> {
+async function loadBackendFlags(workingDirectory: string): Promise<Record<string, unknown>> {
   try {
     const flagsPath = join(workingDirectory, 'backend', 'src', 'flags.ts');
     const content = await readFile(flagsPath, 'utf-8');
@@ -285,7 +294,7 @@ async function loadBackendFlags(workingDirectory: string): Promise<Record<string
 
     // This is a simplified parser - in a real implementation, you'd want to use
     // a proper TypeScript parser to extract the object
-    const flags: Record<string, any> = {};
+    const flags: Record<string, unknown> = {};
     
     // Look for flag definitions in the content
     const flagMatches = content.matchAll(/(\w+):\s*{[\s\S]*?name:\s*['"`](\w+)['"`][\s\S]*?owner:\s*['"`]([^'"`]+)['"`][\s\S]*?expiry:\s*['"`]([^'"`]+)['"`][\s\S]*?default:\s*(true|false)/g);

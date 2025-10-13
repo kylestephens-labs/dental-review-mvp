@@ -8,6 +8,7 @@ export const defaultConfig = {
     diffCoverageFunctionalRefactor: 60, // 60% for refactor tasks
     globalCoverage: 80, // Global coverage threshold (optional)
     maxWarnings: 0, // ESLint max warnings
+    maxCommitSize: 300, // Max lines of code per commit
   },
 
   // Paths

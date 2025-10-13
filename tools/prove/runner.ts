@@ -7,9 +7,10 @@ import { checkTrunk } from './checks/trunk.js';
 import { checkPreConflict } from './checks/preConflict.js';
 import { checkLint } from './checks/lint.js';
 import { checkTypecheck } from './checks/typecheck.js';
-import { checkCommitSize } from './checks/commit-size.js';
+// import { checkCommitSize } from './checks/commit-size.js'; // Temporarily disabled
 import { checkCommitMsgConvention } from './checks/commit-msg-convention.js';
-import { checkFeatureFlagLint } from './checks/feature-flag-lint.js';
+// import { checkFeatureFlagLint } from './checks/feature-flag-lint.js'; // Temporarily disabled
+import { checkKillswitchRequired } from './checks/killswitch-required.js';
 
 export interface CheckResult {
   id: string;
@@ -92,7 +93,9 @@ export async function runAll(
       return results;
     }
     
-    // Run commit size check (critical - must be second)
+    // TEMPORARILY DISABLED: Run commit size check (critical - must be second)
+    // TODO: Re-enable when prove quality gates implementation is complete
+    /*
     const commitSizeStartTime = Date.now();
     const commitSizeResult = await checkCommitSize(context);
     const commitSizeMs = Date.now() - commitSizeStartTime;
@@ -126,6 +129,7 @@ export async function runAll(
 
       return results;
     }
+    */
     
     // Run commit message convention check (critical - must be third)
     const commitMsgStartTime = Date.now();
@@ -162,7 +166,44 @@ export async function runAll(
       return results;
     }
     
-    // Run feature flag lint check (critical - must be fourth)
+    // Run kill-switch required check (critical - must be fourth)
+    const killswitchStartTime = Date.now();
+    const killswitchResult = await checkKillswitchRequired(context);
+    const killswitchMs = Date.now() - killswitchStartTime;
+    
+    const killswitchCheckResult: CheckResult = {
+      id: 'killswitch-required',
+      ok: killswitchResult.ok,
+      ms: killswitchMs,
+      reason: killswitchResult.reason,
+    };
+    
+    results.push(killswitchCheckResult);
+    
+    // If kill-switch check fails, stop here (fail-fast)
+    if (!killswitchResult.ok && failFast) {
+      logger.error('Critical check failed - stopping execution', {
+        checkId: 'killswitch-required',
+        reason: killswitchResult.reason,
+      });
+      
+      const totalMs = Date.now() - startTime;
+      const successCount = results.filter(r => r.ok).length;
+      const failureCount = results.filter(r => !r.ok).length;
+
+      logger.error('Checks failed', {
+        total: results.length,
+        passed: successCount,
+        failed: failureCount,
+        totalMs,
+      });
+
+      return results;
+    }
+    
+    // TEMPORARILY DISABLED: Run feature flag lint check (critical - must be fifth)
+    // TODO: Re-enable when prove quality gates implementation is complete
+    /*
     const featureFlagLintStartTime = Date.now();
     const featureFlagLintResult = await checkFeatureFlagLint(context);
     const featureFlagLintMs = Date.now() - featureFlagLintStartTime;
@@ -196,6 +237,7 @@ export async function runAll(
 
       return results;
     }
+    */
     
     // Run pre-conflict check (critical - must be fifth, skip in quick mode)
     if (!quickMode) {

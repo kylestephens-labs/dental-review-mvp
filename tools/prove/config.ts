@@ -12,6 +12,7 @@ const ConfigSchema = z.object({
     diffCoverageFunctionalRefactor: z.number().min(0).max(100),
     globalCoverage: z.number().min(0).max(100),
     maxWarnings: z.number().min(0),
+    maxCommitSize: z.number().min(1),
   }),
   paths: z.object({
     srcGlobs: z.array(z.string()),

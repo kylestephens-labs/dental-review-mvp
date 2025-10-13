@@ -82,6 +82,77 @@ Do: git fetch; git merge --no-commit --no-ff origin/main; merge --abort in final
 Test: Create fake conflict; expect failure.
 Done when: Works both ways.
 
+T10a — Pre-push guard: prove:quick hook
+
+Goal: Prevent slow/broken pushes; keep feedback ≤ 2–3 minutes.
+Do: Add .husky/pre-push running npm run prove:quick (env + typecheck + lint + unit).
+Test: Introduce lint error, git push → blocked; fix → push succeeds.
+Done when: Hook blocks bad pushes locally.
+
+T10b — Commit size gate: commit-size.ts
+
+Goal: Keep changes tiny (TBD core).
+Do: New check in Prove: fail if git diff --shortstat origin/main...HEAD exceeds configurable LOC (e.g., 300 LOC).
+Test: Create big change → npm run prove fails with message “diff > limit”.
+Done when: Gate enforces small, frequent commits.
+
+T10c — Commit message convention gate: commit-msg-convention.ts
+
+Goal: Traceability + task mode clarity.
+Do: Check latest commit message matches (<feat|fix|chore|refactor>): ... [T-YYYY-MM-DD-###] [MODE:F|NF].
+Test: Bad message → fail; good → pass.
+Done when: Convention enforced.
+
+T10d — Feature-flag registry + linter
+
+Goal: Make WIP safe on main (TBD cornerstone).
+Do:
+	•	Create frontend/src/flags.ts & backend/src/flags.ts with typed flag registry (name, owner, expiry, default).
+	•	Add ESLint rule (custom or simple script in Prove) to require any usage of isEnabled('new_flag') to reference a registered flag and to fail if new flag lacks owner/expiry.
+Test: Use unknown flag → fail; add to registry → pass.
+Done when: Flags cannot be ad-hoc.
+
+T10e — Kill-switch guard: killswitch-required.ts
+
+Goal: Guarantee reversible releases.
+Do: If commit message includes feat: and touches production code, require a flag or config toggle referenced in diff (simple regex across changed files for isEnabled( or KILL_SWITCH_).
+Test: New feature without flag → fail; with flag → pass.
+Done when: Every feature ships with a kill switch.
+
+T10f — Post-push fast CI lane: prove-fast.yml
+
+Goal: 2–3 minute CI on push to main.
+Do: Add a lean workflow running prove:quick only (no E2E, no heavy steps).
+Test: Push to main → CI finishes ≤ ~3 minutes.
+Done when: Lane exists and is fast.
+
+T10g — Nightly full prove
+
+Goal: Depth without slowing trunk.
+Do: Add a nightly cron job running full npm run prove (diff-coverage, build, optional security/size/coverage).
+Test: Failing gate appears in nightly; morning triage sees artifact.
+Done when: Nightly full battery runs.
+
+T10h — Auto-rollback on red fast lane
+
+Goal: Rapid recovery (safety first).
+Do: In prove-fast.yml, if job fails on a push to main, run a step that reverts the last commit (or triggers a CD rollback to previous image) behind a protected bot token (or just fail with instructions if auto-revert is too spicy).
+Test: Break main → workflow attempts rollback or posts instructions with exact git command.
+Done when: There’s a documented, automated path to green.
+
+T10i — Production smoke after deploy: post-deploy-smoke
+
+Goal: Close the loop quickly.
+Do: After deploy, run a tiny Playwright smoke (health, login, one CRUD).
+Test: Force 500 on /health in staging → job fails.
+Done when: Smokes run and report.
+
+T10j — Merge protection strategy note
+
+Goal: Reconcile “direct commits to main” vs. enforcement.
+Do: Document your policy in ARCHITECTURE.md:
+	•	Short-lived PRs (minutes), branch protection requires “Prove” before merge.
+
 ⸻
 
 Phase 3 — Mode awareness (functional vs non-functional)
@@ -335,3 +406,5 @@ Done when: Agents comply by default.
 ⸻
 
 If you want, I can output micro-prompts for any subset (e.g., T12, T17a, T23, T30/T30b) so you can paste them into Cursor exactly as “one task at a time.”
+
+Need to revisit the feature flag lint and commit size

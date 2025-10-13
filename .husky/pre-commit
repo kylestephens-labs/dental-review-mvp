@@ -1,1 +1,13 @@
-npm test
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+echo "🔍 Running prove:quick before commit..."
+npm run prove:quick
+
+if [ $? -ne 0 ]; then
+  echo "❌ prove:quick failed - commit blocked"
+  echo "💡 Fix the issues above and try again"
+  exit 1
+fi
+
+echo "✅ prove:quick passed - commit allowed"
