@@ -1,6 +1,6 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { Request, Response } from 'express';
 
-export async function GET(request: NextRequest) {
+export async function GET(req: Request, res: Response) {
   try {
     // Basic health check
     const health = {
@@ -10,16 +10,13 @@ export async function GET(request: NextRequest) {
       environment: process.env.NODE_ENV || 'development'
     };
 
-    return NextResponse.json(health, { status: 200 });
+    return res.status(200).json(health);
   } catch (error) {
     console.error('Health check failed:', error);
-    return NextResponse.json(
-      { 
-        status: 'error', 
-        error: 'Health check failed',
-        timestamp: new Date().toISOString()
-      }, 
-      { status: 500 }
-    );
+    return res.status(500).json({ 
+      status: 'error', 
+      error: 'Health check failed',
+      timestamp: new Date().toISOString()
+    });
   }
 }

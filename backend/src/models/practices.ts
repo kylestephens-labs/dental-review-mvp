@@ -1,4 +1,4 @@
-import { pool } from '../config/database';
+import { pool, PoolClient } from '../config/database';
 
 export interface Practice {
   id: string;
@@ -22,7 +22,7 @@ export interface CreatePracticeData {
   status?: string;
 }
 
-export async function createPractice(data: CreatePracticeData): Promise<Practice> {
+export async function createPractice(data: CreatePracticeData, client?: PoolClient): Promise<Practice> {
   const query = `
     INSERT INTO practices (name, phone, email, city, tz, status)
     VALUES ($1, $2, $3, $4, $5, $6)
@@ -38,12 +38,13 @@ export async function createPractice(data: CreatePracticeData): Promise<Practice
     data.status || 'provisioning'
   ];
 
-  const result = await pool.query(query, values);
+  const dbClient = client || pool();
+  const result = await dbClient.query(query, values);
   return result.rows[0];
 }
 
 export async function getPracticeById(id: string): Promise<Practice | null> {
   const query = 'SELECT * FROM practices WHERE id = $1';
-  const result = await pool.query(query, [id]);
+  const result = await pool().query(query, [id]);
   return result.rows[0] || null;
 }

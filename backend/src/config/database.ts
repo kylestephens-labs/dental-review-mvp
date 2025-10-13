@@ -1,13 +1,21 @@
-import { Pool } from 'pg';
+import { Pool, PoolClient } from 'pg';
 
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
-});
+let pool: Pool | null = null;
+
+function getPool(): Pool {
+  if (!pool) {
+    pool = new Pool({
+      connectionString: process.env.DATABASE_URL,
+      ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
+    });
+  }
+  return pool;
+}
 
 export async function testConnections() {
   try {
-    const client = await pool.connect();
+    const dbPool = getPool();
+    const client = await dbPool.connect();
     const result = await client.query('SELECT NOW()');
     client.release();
     return { status: 'connected', timestamp: result.rows[0].now };
@@ -16,4 +24,5 @@ export async function testConnections() {
   }
 }
 
-export { pool };
+export { getPool as pool };
+export type { PoolClient };

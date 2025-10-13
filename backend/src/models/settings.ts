@@ -1,4 +1,4 @@
-import { pool } from '../config/database';
+import { pool, PoolClient } from '../config/database';
 
 export interface Settings {
   practice_id: string;
@@ -29,7 +29,8 @@ export interface CreateSettingsData {
 
 export async function createDefaultSettings(
   practiceId: string, 
-  data: CreateSettingsData
+  data: CreateSettingsData,
+  client?: PoolClient
 ): Promise<Settings> {
   const query = `
     INSERT INTO settings (
@@ -61,12 +62,13 @@ export async function createDefaultSettings(
     JSON.stringify(data.billing_json)
   ];
 
-  const result = await pool.query(query, values);
+  const dbClient = client || pool();
+  const result = await dbClient.query(query, values);
   return result.rows[0];
 }
 
 export async function getSettingsByPracticeId(practiceId: string): Promise<Settings | null> {
   const query = 'SELECT * FROM settings WHERE practice_id = $1';
-  const result = await pool.query(query, [practiceId]);
+  const result = await pool().query(query, [practiceId]);
   return result.rows[0] || null;
 }

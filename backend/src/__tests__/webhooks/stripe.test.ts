@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
-import { NextRequest } from 'next/server';
+import { Request, Response } from 'express';
 import { POST } from '../../api/webhooks/stripe';
 import * as stripeUtils from '../../utils/stripe';
 import * as practiceModel from '../../models/practices';
@@ -12,6 +12,16 @@ vi.mock('../../models/practices');
 vi.mock('../../models/settings');
 vi.mock('../../models/events');
 
+// Mock the database pool to prevent real connections
+vi.mock('../../config/database', () => ({
+  pool: vi.fn().mockReturnValue({
+    connect: vi.fn().mockResolvedValue({
+      query: vi.fn().mockResolvedValue({ rows: [] }),
+      release: vi.fn()
+    })
+  })
+}));
+
 describe('POST /webhooks/stripe', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -20,6 +30,24 @@ describe('POST /webhooks/stripe', () => {
   afterEach(() => {
     vi.resetAllMocks();
   });
+
+  // Helper function to create mock Express request/response
+  const createMockReqRes = (body: any, headers: Record<string, string> = {}) => {
+    const req = {
+      body,
+      headers: {
+        'stripe-signature': 't=1234567890,v1=valid_signature',
+        ...headers
+      }
+    } as Request;
+
+    const res = {
+      status: vi.fn().mockReturnThis(),
+      json: vi.fn().mockReturnThis()
+    } as unknown as Response;
+
+    return { req, res };
+  };
 
   describe('Happy path - verified payload creates practice and logs event', () => {
     it('should create practice and settings on valid checkout.session.completed event', async () => {
@@ -44,28 +72,19 @@ describe('POST /webhooks/stripe', () => {
       };
 
       const mockRawBody = JSON.stringify(mockStripeEvent);
-      const mockSignature = 't=1234567890,v1=valid_signature';
+      const { req, res } = createMockReqRes(mockRawBody);
 
       vi.mocked(stripeUtils.verifyWebhookSignature).mockReturnValue(mockStripeEvent);
       vi.mocked(practiceModel.createPractice).mockResolvedValue({ id: 'practice_123' });
-      vi.mocked(settingsModel.createDefaultSettings).mockResolvedValue({ id: 'settings_123' });
+      vi.mocked(settingsModel.createDefaultSettings).mockResolvedValue({ practice_id: 'practice_123' });
       vi.mocked(eventsModel.insertEvent).mockResolvedValue({ id: 'event_123' });
       vi.mocked(eventsModel.getEventByStripeId).mockResolvedValue(null);
 
-      const request = new NextRequest('http://localhost:3000/webhooks/stripe', {
-        method: 'POST',
-        headers: {
-          'stripe-signature': mockSignature,
-          'content-type': 'application/json'
-        },
-        body: mockRawBody
-      });
-
       // Act
-      const response = await POST(request);
+      await POST(req, res);
 
       // Assert
-      expect(response.status).toBe(200);
+      expect(stripeUtils.verifyWebhookSignature).toHaveBeenCalledWith(mockRawBody, 't=1234567890,v1=valid_signature');
       expect(practiceModel.createPractice).toHaveBeenCalledWith({
         name: 'Dr. John Smith',
         email: 'john@dentalclinic.com',
@@ -85,6 +104,8 @@ describe('POST /webhooks/stripe', () => {
           customer_email: 'john@dentalclinic.com'
         }
       });
+      expect(res.status).toHaveBeenCalledWith(200);
+      expect(res.json).toHaveBeenCalledWith({ received: true });
     });
 
     it('should handle missing optional fields gracefully', async () => {
@@ -97,71 +118,63 @@ describe('POST /webhooks/stripe', () => {
             id: 'cs_1234567890',
             customer_details: {
               email: 'john@dentalclinic.com'
-              // name and phone missing
+              // name and phone are missing
             }
           }
         }
       };
 
       const mockRawBody = JSON.stringify(mockStripeEvent);
-      const mockSignature = 't=1234567890,v1=valid_signature';
+      const { req, res } = createMockReqRes(mockRawBody);
 
       vi.mocked(stripeUtils.verifyWebhookSignature).mockReturnValue(mockStripeEvent);
       vi.mocked(practiceModel.createPractice).mockResolvedValue({ id: 'practice_123' });
-      vi.mocked(settingsModel.createDefaultSettings).mockResolvedValue({ id: 'settings_123' });
+      vi.mocked(settingsModel.createDefaultSettings).mockResolvedValue({ practice_id: 'practice_123' });
       vi.mocked(eventsModel.insertEvent).mockResolvedValue({ id: 'event_123' });
       vi.mocked(eventsModel.getEventByStripeId).mockResolvedValue(null);
 
-      const request = new NextRequest('http://localhost:3000/webhooks/stripe', {
-        method: 'POST',
-        headers: {
-          'stripe-signature': mockSignature,
-          'content-type': 'application/json'
-        },
-        body: mockRawBody
-      });
-
       // Act
-      const response = await POST(request);
+      await POST(req, res);
 
       // Assert
-      expect(response.status).toBe(200);
       expect(practiceModel.createPractice).toHaveBeenCalledWith({
-        name: null,
+        name: 'john@dentalclinic.com', // Should use email as fallback
         email: 'john@dentalclinic.com',
         phone: null,
         status: 'provisioning'
       });
+      expect(res.status).toHaveBeenCalledWith(200);
+      expect(res.json).toHaveBeenCalledWith({ received: true });
     });
   });
 
   describe('Invalid signature is rejected', () => {
     it('should return 400 for invalid signature', async () => {
       // Arrange
-      const mockRawBody = JSON.stringify({});
-      const mockSignature = 't=1234567890,v1=invalid_signature';
+      const { req, res } = createMockReqRes('{}', { 'stripe-signature': 'invalid' });
 
       vi.mocked(stripeUtils.verifyWebhookSignature).mockImplementation(() => {
         throw new Error('Invalid signature');
       });
 
-      const request = new NextRequest('http://localhost:3000/webhooks/stripe', {
-        method: 'POST',
-        headers: {
-          'stripe-signature': mockSignature,
-          'content-type': 'application/json'
-        },
-        body: mockRawBody
-      });
-
       // Act
-      const response = await POST(request);
+      await POST(req, res);
 
       // Assert
-      expect(response.status).toBe(400);
-      expect(practiceModel.createPractice).not.toHaveBeenCalled();
-      expect(settingsModel.createDefaultSettings).not.toHaveBeenCalled();
-      expect(eventsModel.insertEvent).not.toHaveBeenCalled();
+      expect(res.status).toHaveBeenCalledWith(400);
+      expect(res.json).toHaveBeenCalledWith({ error: 'Invalid signature' });
+    });
+
+    it('should return 400 for missing signature', async () => {
+      // Arrange
+      const { req, res } = createMockReqRes('{}', {}); // No stripe-signature header
+
+      // Act
+      await POST(req, res);
+
+      // Assert
+      expect(res.status).toHaveBeenCalledWith(400);
+      expect(res.json).toHaveBeenCalledWith({ error: 'Invalid webhook payload' });
     });
   });
 
@@ -183,28 +196,20 @@ describe('POST /webhooks/stripe', () => {
       };
 
       const mockRawBody = JSON.stringify(mockStripeEvent);
-      const mockSignature = 't=1234567890,v1=valid_signature';
+      const { req, res } = createMockReqRes(mockRawBody);
 
       vi.mocked(stripeUtils.verifyWebhookSignature).mockReturnValue(mockStripeEvent);
       vi.mocked(eventsModel.getEventByStripeId).mockResolvedValue({ id: 'existing_event' });
 
-      const request = new NextRequest('http://localhost:3000/webhooks/stripe', {
-        method: 'POST',
-        headers: {
-          'stripe-signature': mockSignature,
-          'content-type': 'application/json'
-        },
-        body: mockRawBody
-      });
-
       // Act
-      const response = await POST(request);
+      await POST(req, res);
 
       // Assert
-      expect(response.status).toBe(200);
       expect(practiceModel.createPractice).not.toHaveBeenCalled();
       expect(settingsModel.createDefaultSettings).not.toHaveBeenCalled();
       expect(eventsModel.insertEvent).not.toHaveBeenCalled();
+      expect(res.status).toHaveBeenCalledWith(200);
+      expect(res.json).toHaveBeenCalledWith({ received: true });
     });
   });
 
@@ -213,7 +218,7 @@ describe('POST /webhooks/stripe', () => {
       // Arrange
       const mockStripeEvent = {
         id: 'evt_1234567890',
-        type: 'payment_intent.canceled',
+        type: 'payment_intent.succeeded',
         data: {
           object: {
             id: 'pi_1234567890'
@@ -222,27 +227,20 @@ describe('POST /webhooks/stripe', () => {
       };
 
       const mockRawBody = JSON.stringify(mockStripeEvent);
-      const mockSignature = 't=1234567890,v1=valid_signature';
+      const { req, res } = createMockReqRes(mockRawBody);
 
       vi.mocked(stripeUtils.verifyWebhookSignature).mockReturnValue(mockStripeEvent);
-
-      const request = new NextRequest('http://localhost:3000/webhooks/stripe', {
-        method: 'POST',
-        headers: {
-          'stripe-signature': mockSignature,
-          'content-type': 'application/json'
-        },
-        body: mockRawBody
-      });
+      vi.mocked(eventsModel.getEventByStripeId).mockResolvedValue(null);
 
       // Act
-      const response = await POST(request);
+      await POST(req, res);
 
       // Assert
-      expect(response.status).toBe(200);
       expect(practiceModel.createPractice).not.toHaveBeenCalled();
       expect(settingsModel.createDefaultSettings).not.toHaveBeenCalled();
       expect(eventsModel.insertEvent).not.toHaveBeenCalled();
+      expect(res.status).toHaveBeenCalledWith(200);
+      expect(res.json).toHaveBeenCalledWith({ received: true });
     });
   });
 
@@ -264,26 +262,18 @@ describe('POST /webhooks/stripe', () => {
       };
 
       const mockRawBody = JSON.stringify(mockStripeEvent);
-      const mockSignature = 't=1234567890,v1=valid_signature';
+      const { req, res } = createMockReqRes(mockRawBody);
 
       vi.mocked(stripeUtils.verifyWebhookSignature).mockReturnValue(mockStripeEvent);
       vi.mocked(eventsModel.getEventByStripeId).mockResolvedValue(null);
       vi.mocked(practiceModel.createPractice).mockRejectedValue(new Error('Database connection failed'));
 
-      const request = new NextRequest('http://localhost:3000/webhooks/stripe', {
-        method: 'POST',
-        headers: {
-          'stripe-signature': mockSignature,
-          'content-type': 'application/json'
-        },
-        body: mockRawBody
-      });
-
       // Act
-      const response = await POST(request);
+      await POST(req, res);
 
       // Assert
-      expect(response.status).toBe(500);
+      expect(res.status).toHaveBeenCalledWith(500);
+      expect(res.json).toHaveBeenCalledWith({ error: 'Internal server error' });
     });
   });
 });

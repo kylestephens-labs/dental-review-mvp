@@ -1,4 +1,4 @@
-import { pool } from '../config/database';
+import { pool, PoolClient } from '../config/database';
 
 export interface Event {
   id: string;
@@ -20,7 +20,7 @@ export interface CreateEventData {
   ua_hash?: string | null;
 }
 
-export async function insertEvent(data: CreateEventData): Promise<Event> {
+export async function insertEvent(data: CreateEventData, client?: PoolClient): Promise<Event> {
   const query = `
     INSERT INTO events (practice_id, type, actor, payload_json, ip_hash, ua_hash)
     VALUES ($1, $2, $3, $4, $5, $6)
@@ -36,7 +36,8 @@ export async function insertEvent(data: CreateEventData): Promise<Event> {
     data.ua_hash || null
   ];
 
-  const result = await pool.query(query, values);
+  const dbClient = client || pool();
+  const result = await dbClient.query(query, values);
   return result.rows[0];
 }
 
@@ -47,7 +48,7 @@ export async function getEventByStripeId(stripeEventId: string): Promise<Event |
     AND payload_json->>'stripe_event_id' = $1
   `;
   
-  const result = await pool.query(query, [stripeEventId]);
+  const result = await pool().query(query, [stripeEventId]);
   return result.rows[0] || null;
 }
 
@@ -59,6 +60,6 @@ export async function getEventsByPracticeId(practiceId: string, limit = 100): Pr
     LIMIT $2
   `;
   
-  const result = await pool.query(query, [practiceId, limit]);
+  const result = await pool().query(query, [practiceId, limit]);
   return result.rows;
 }
