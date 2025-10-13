@@ -1,0 +1,52 @@
+name: Prove Fast CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  prove-fast:
+    name: Prove Quality Gates (Fast)
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0  # Fetch full history for git operations
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+        
+    - name: Install dependencies
+      run: npm ci
+      
+    - name: Set Feature Flag Environment Variables
+      run: |
+        # Set feature flags as environment variables for CI testing
+        echo "VITE_FEATURE_ENHANCED_INTAKE_FORM=false" >> $GITHUB_ENV
+        echo "VITE_FEATURE_AUTO_SAVE=false" >> $GITHUB_ENV
+        echo "VITE_FEATURE_ADVANCED_ANALYTICS=false" >> $GITHUB_ENV
+        echo "VITE_FEATURE_DYNAMIC_CONTENT=false" >> $GITHUB_ENV
+        echo "VITE_FEATURE_GOOGLE_CALENDAR_INTEGRATION=false" >> $GITHUB_ENV
+        echo "VITE_FEATURE_OUTLOOK_INTEGRATION=false" >> $GITHUB_ENV
+        echo "VITE_FEATURE_CSV_UPLOAD_FEATURE=false" >> $GITHUB_ENV
+        echo "VITE_FEATURE_FRONT_DESK_MODE=false" >> $GITHUB_ENV
+        echo "VITE_FEATURE_REVIEW_INGESTION=false" >> $GITHUB_ENV
+        echo "VITE_FEATURE_WEEKLY_DIGEST=false" >> $GITHUB_ENV
+      
+    - name: Run Prove Quality Gates
+      run: npm run prove:quick
+      
+    - name: Prove Success Summary
+      run: |
+        echo "✅ Prove Quality Gates PASSED"
+        echo "📊 Fast CI completed successfully"
+        echo "🚀 Code is ready for trunk-based development"
+        echo "⏱️  Execution time: ~2-3 minutes"
