@@ -55,9 +55,14 @@ try {
   // Generate final report
   logger.generateReport(context.mode, checkResults);
 
+  // Exit with error code if any checks failed
+  if (checkResults.some(result => !result.ok)) {
+    process.exit(1);
+  }
+
 } catch (error) {
-  logger.error("Prove execution failed", { 
-    error: error instanceof Error ? error.message : String(error) 
+  logger.error("Prove execution failed", {
+    error: error instanceof Error ? error.message : String(error)
   });
   process.exit(1);
 }
