@@ -1,5 +1,8 @@
 import { test, expect } from '@playwright/test';
 
+// Feature flag for smoke tests
+const SMOKE_TESTS_ENABLED = process.env.SMOKE_TESTS_ENABLED !== 'false';
+
 test.describe('Production Smoke Tests', () => {
   test.beforeEach(async ({ page }) => {
     // Set a longer timeout for smoke tests
@@ -7,6 +10,12 @@ test.describe('Production Smoke Tests', () => {
   });
 
   test('Health Check - Application is running', async ({ page }) => {
+    // Check if smoke tests are enabled
+    if (!SMOKE_TESTS_ENABLED) {
+      test.skip('Smoke tests disabled via feature flag');
+      return;
+    }
+    
     // Test the health endpoint - try multiple possible endpoints
     const healthEndpoints = ['/healthz', '/api/healthz', '/health', '/api/health'];
     let healthData = null;
