@@ -74,7 +74,8 @@
     "quality:gate": "node .mcp/tools/scrum-mcp.ts quality-gate",
     "practices:check": "./.mcp/scripts/check-practices.sh",
     "practices:report": "./.mcp/scripts/daily-practice-report.sh",
-    "practices:install": "cp .mcp/scripts/pre-commit .git/hooks/pre-commit && chmod +x .git/hooks/pre-commit"
+    "practices:install": "cp .mcp/scripts/pre-commit .git/hooks/pre-commit && chmod +x .git/hooks/pre-commit",
+    "prove": "tsx tools/prove/cli.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",
