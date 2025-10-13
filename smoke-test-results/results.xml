@@ -1,0 +1,102 @@
+<testsuites id="" name="" tests="16" failures="0" skipped="0" errors="0" time="4.4894490000000005">
+<testsuite name="smoke-tests.spec.ts" timestamp="2025-10-13T21:13:02.466Z" hostname="chromium-smoke" tests="8" failures="0" skipped="0" time="5.544" errors="0">
+<testcase name="Production Smoke Tests › Health Check - Application is running" classname="smoke-tests.spec.ts" time="0.128">
+<system-out>
+<![CDATA[✅ Health check passed: { status: [32m'ok'[39m, endpoint: [32m'/healthz'[39m }
+]]>
+</system-out>
+</testcase>
+<testcase name="Production Smoke Tests › Homepage - Application loads successfully" classname="smoke-tests.spec.ts" time="2.734">
+<system-out>
+<![CDATA[✅ Homepage loaded successfully
+]]>
+</system-out>
+</testcase>
+<testcase name="Production Smoke Tests › Login Flow - Authentication works" classname="smoke-tests.spec.ts" time="0.661">
+<system-out>
+<![CDATA[ℹ️ No login functionality found - skipping login test
+]]>
+</system-out>
+</testcase>
+<testcase name="Production Smoke Tests › CRUD Operations - Basic functionality works" classname="smoke-tests.spec.ts" time="0.676">
+<system-out>
+<![CDATA[ℹ️ No CRUD interface found - this may be a static page
+]]>
+</system-out>
+</testcase>
+<testcase name="Production Smoke Tests › API Endpoints - Backend is responding" classname="smoke-tests.spec.ts" time="0.09">
+<system-out>
+<![CDATA[✅ API endpoint /api/health is responding
+]]>
+</system-out>
+</testcase>
+<testcase name="Production Smoke Tests › Error Handling - Graceful error responses" classname="smoke-tests.spec.ts" time="0.06">
+<system-out>
+<![CDATA[✅ Error handling appears to be working correctly
+]]>
+</system-out>
+</testcase>
+<testcase name="Production Smoke Tests › Performance - Page loads within acceptable time" classname="smoke-tests.spec.ts" time="0.592">
+<system-out>
+<![CDATA[✅ Page loaded in 528ms (max: 10000ms)
+]]>
+</system-out>
+</testcase>
+<testcase name="Production Smoke Tests › Responsive Design - Mobile viewport works" classname="smoke-tests.spec.ts" time="0.603">
+<system-out>
+<![CDATA[✅ Mobile viewport works correctly
+]]>
+</system-out>
+</testcase>
+</testsuite>
+<testsuite name="smoke-tests.spec.ts" timestamp="2025-10-13T21:13:02.466Z" hostname="mobile-smoke" tests="8" failures="0" skipped="0" time="5.449" errors="0">
+<testcase name="Production Smoke Tests › Health Check - Application is running" classname="smoke-tests.spec.ts" time="0.109">
+<system-out>
+<![CDATA[✅ Health check passed: { status: [32m'ok'[39m, endpoint: [32m'/healthz'[39m }
+]]>
+</system-out>
+</testcase>
+<testcase name="Production Smoke Tests › Homepage - Application loads successfully" classname="smoke-tests.spec.ts" time="2.685">
+<system-out>
+<![CDATA[✅ Homepage loaded successfully
+]]>
+</system-out>
+</testcase>
+<testcase name="Production Smoke Tests › Login Flow - Authentication works" classname="smoke-tests.spec.ts" time="0.631">
+<system-out>
+<![CDATA[ℹ️ No login functionality found - skipping login test
+]]>
+</system-out>
+</testcase>
+<testcase name="Production Smoke Tests › CRUD Operations - Basic functionality works" classname="smoke-tests.spec.ts" time="0.649">
+<system-out>
+<![CDATA[ℹ️ No CRUD interface found - this may be a static page
+]]>
+</system-out>
+</testcase>
+<testcase name="Production Smoke Tests › API Endpoints - Backend is responding" classname="smoke-tests.spec.ts" time="0.064">
+<system-out>
+<![CDATA[✅ API endpoint /api/health is responding
+]]>
+</system-out>
+</testcase>
+<testcase name="Production Smoke Tests › Error Handling - Graceful error responses" classname="smoke-tests.spec.ts" time="0.061">
+<system-out>
+<![CDATA[✅ Error handling appears to be working correctly
+]]>
+</system-out>
+</testcase>
+<testcase name="Production Smoke Tests › Performance - Page loads within acceptable time" classname="smoke-tests.spec.ts" time="0.616">
+<system-out>
+<![CDATA[✅ Page loaded in 526ms (max: 10000ms)
+]]>
+</system-out>
+</testcase>
+<testcase name="Production Smoke Tests › Responsive Design - Mobile viewport works" classname="smoke-tests.spec.ts" time="0.634">
+<system-out>
+<![CDATA[✅ Mobile viewport works correctly
+]]>
+</system-out>
+</testcase>
+</testsuite>
+</testsuites>

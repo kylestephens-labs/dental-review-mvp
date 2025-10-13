@@ -50,6 +50,8 @@
     "chatgpt:fill-task": "npx tsx .mcp/tools/chatgpt-integration.ts",
     "env:check": "npx tsx src/env-check.ts",
     "test": "vitest run",
+    "test:smoke": "playwright test --config=playwright.smoke.config.ts",
+    "test:smoke:local": "SMOKE_TEST_URL=http://localhost:5173 playwright test --config=playwright.smoke.config.ts",
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit",
     "preflight": "npx tsx .mcp/scripts/preflight-tests.ts",
@@ -136,6 +138,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.32.0",
+    "@playwright/test": "^1.56.0",
     "@tailwindcss/typography": "^0.5.16",
     "@types/node": "^22.16.5",
     "@types/react": "^18.3.23",

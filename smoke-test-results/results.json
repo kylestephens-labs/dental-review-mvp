@@ -1,0 +1,723 @@
+{
+  "config": {
+    "configFile": "/Users/kylestephens/Desktop/business_auto/Dental/dental-landing-template/playwright.smoke.config.ts",
+    "rootDir": "/Users/kylestephens/Desktop/business_auto/Dental/dental-landing-template/tests/playwright",
+    "forbidOnly": false,
+    "fullyParallel": true,
+    "globalSetup": "/Users/kylestephens/Desktop/business_auto/Dental/dental-landing-template/tests/playwright/smoke-setup.ts",
+    "globalTeardown": "/Users/kylestephens/Desktop/business_auto/Dental/dental-landing-template/tests/playwright/smoke-teardown.ts",
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {
+      "actualWorkers": 4
+    },
+    "preserveOutput": "always",
+    "reporter": [
+      [
+        "list",
+        null
+      ],
+      [
+        "html",
+        {
+          "outputFolder": "smoke-test-results"
+        }
+      ],
+      [
+        "json",
+        {
+          "outputFile": "smoke-test-results/results.json"
+        }
+      ],
+      [
+        "junit",
+        {
+          "outputFile": "smoke-test-results/results.xml"
+        }
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "quiet": false,
+    "projects": [
+      {
+        "outputDir": "/Users/kylestephens/Desktop/business_auto/Dental/dental-landing-template/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 4
+        },
+        "id": "chromium-smoke",
+        "name": "chromium-smoke",
+        "testDir": "/Users/kylestephens/Desktop/business_auto/Dental/dental-landing-template/tests/playwright",
+        "testIgnore": [],
+        "testMatch": [
+          "**/smoke-tests.spec.ts"
+        ],
+        "timeout": 60000
+      },
+      {
+        "outputDir": "/Users/kylestephens/Desktop/business_auto/Dental/dental-landing-template/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 4
+        },
+        "id": "mobile-smoke",
+        "name": "mobile-smoke",
+        "testDir": "/Users/kylestephens/Desktop/business_auto/Dental/dental-landing-template/tests/playwright",
+        "testIgnore": [],
+        "testMatch": [
+          "**/smoke-tests.spec.ts"
+        ],
+        "timeout": 60000
+      }
+    ],
+    "shard": null,
+    "updateSnapshots": "missing",
+    "updateSourceMethod": "patch",
+    "version": "1.56.0",
+    "workers": 4,
+    "webServer": null
+  },
+  "suites": [
+    {
+      "title": "smoke-tests.spec.ts",
+      "file": "smoke-tests.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "Production Smoke Tests",
+          "file": "smoke-tests.spec.ts",
+          "line": 3,
+          "column": 6,
+          "specs": [
+            {
+              "title": "Health Check - Application is running",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium-smoke",
+                  "projectName": "chromium-smoke",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 128,
+                      "errors": [],
+                      "stdout": [
+                        {
+                          "text": "✅ Health check passed: { status: \u001b[32m'ok'\u001b[39m, endpoint: \u001b[32m'/healthz'\u001b[39m }\n"
+                        }
+                      ],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-10-13T21:13:02.810Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "a8bb41ad8b38f84bf4a2-b4a6ca2b0f80324a8466",
+              "file": "smoke-tests.spec.ts",
+              "line": 9,
+              "column": 3
+            },
+            {
+              "title": "Homepage - Application loads successfully",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium-smoke",
+                  "projectName": "chromium-smoke",
+                  "results": [
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 1,
+                      "status": "passed",
+                      "duration": 2734,
+                      "errors": [],
+                      "stdout": [
+                        {
+                          "text": "✅ Homepage loaded successfully\n"
+                        }
+                      ],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-10-13T21:13:02.813Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "a8bb41ad8b38f84bf4a2-67b05a17849f0768c625",
+              "file": "smoke-tests.spec.ts",
+              "line": 52,
+              "column": 3
+            },
+            {
+              "title": "Login Flow - Authentication works",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium-smoke",
+                  "projectName": "chromium-smoke",
+                  "results": [
+                    {
+                      "workerIndex": 2,
+                      "parallelIndex": 2,
+                      "status": "passed",
+                      "duration": 661,
+                      "errors": [],
+                      "stdout": [
+                        {
+                          "text": "ℹ️ No login functionality found - skipping login test\n"
+                        }
+                      ],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-10-13T21:13:02.810Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "a8bb41ad8b38f84bf4a2-061e854d8f7c0a2ce6e9",
+              "file": "smoke-tests.spec.ts",
+              "line": 90,
+              "column": 3
+            },
+            {
+              "title": "CRUD Operations - Basic functionality works",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium-smoke",
+                  "projectName": "chromium-smoke",
+                  "results": [
+                    {
+                      "workerIndex": 3,
+                      "parallelIndex": 3,
+                      "status": "passed",
+                      "duration": 676,
+                      "errors": [],
+                      "stdout": [
+                        {
+                          "text": "ℹ️ No CRUD interface found - this may be a static page\n"
+                        }
+                      ],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-10-13T21:13:02.810Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "a8bb41ad8b38f84bf4a2-e5c7f4c832296e38a73e",
+              "file": "smoke-tests.spec.ts",
+              "line": 126,
+              "column": 3
+            },
+            {
+              "title": "API Endpoints - Backend is responding",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium-smoke",
+                  "projectName": "chromium-smoke",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 90,
+                      "errors": [],
+                      "stdout": [
+                        {
+                          "text": "✅ API endpoint /api/health is responding\n"
+                        }
+                      ],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-10-13T21:13:03.047Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "a8bb41ad8b38f84bf4a2-7403668e1d11b8775ac6",
+              "file": "smoke-tests.spec.ts",
+              "line": 167,
+              "column": 3
+            },
+            {
+              "title": "Error Handling - Graceful error responses",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium-smoke",
+                  "projectName": "chromium-smoke",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 60,
+                      "errors": [],
+                      "stdout": [
+                        {
+                          "text": "✅ Error handling appears to be working correctly\n"
+                        }
+                      ],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-10-13T21:13:03.143Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "a8bb41ad8b38f84bf4a2-5f5f1003511148d2c7a7",
+              "file": "smoke-tests.spec.ts",
+              "line": 197,
+              "column": 3
+            },
+            {
+              "title": "Performance - Page loads within acceptable time",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium-smoke",
+                  "projectName": "chromium-smoke",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 592,
+                      "errors": [],
+                      "stdout": [
+                        {
+                          "text": "✅ Page loaded in 528ms (max: 10000ms)\n"
+                        }
+                      ],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-10-13T21:13:03.207Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "a8bb41ad8b38f84bf4a2-ba333c4ec47e9c23c6cc",
+              "file": "smoke-tests.spec.ts",
+              "line": 212,
+              "column": 3
+            },
+            {
+              "title": "Responsive Design - Mobile viewport works",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium-smoke",
+                  "projectName": "chromium-smoke",
+                  "results": [
+                    {
+                      "workerIndex": 2,
+                      "parallelIndex": 2,
+                      "status": "passed",
+                      "duration": 603,
+                      "errors": [],
+                      "stdout": [
+                        {
+                          "text": "✅ Mobile viewport works correctly\n"
+                        }
+                      ],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-10-13T21:13:03.578Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "a8bb41ad8b38f84bf4a2-44ec06dad5272857aa99",
+              "file": "smoke-tests.spec.ts",
+              "line": 225,
+              "column": 3
+            },
+            {
+              "title": "Health Check - Application is running",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "mobile-smoke",
+                  "projectName": "mobile-smoke",
+                  "results": [
+                    {
+                      "workerIndex": 4,
+                      "parallelIndex": 3,
+                      "status": "passed",
+                      "duration": 109,
+                      "errors": [],
+                      "stdout": [
+                        {
+                          "text": "✅ Health check passed: { status: \u001b[32m'ok'\u001b[39m, endpoint: \u001b[32m'/healthz'\u001b[39m }\n"
+                        }
+                      ],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-10-13T21:13:03.858Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "a8bb41ad8b38f84bf4a2-aea57e21a001e8faa01c",
+              "file": "smoke-tests.spec.ts",
+              "line": 9,
+              "column": 3
+            },
+            {
+              "title": "Homepage - Application loads successfully",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "mobile-smoke",
+                  "projectName": "mobile-smoke",
+                  "results": [
+                    {
+                      "workerIndex": 5,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 2685,
+                      "errors": [],
+                      "stdout": [
+                        {
+                          "text": "✅ Homepage loaded successfully\n"
+                        }
+                      ],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-10-13T21:13:04.068Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "a8bb41ad8b38f84bf4a2-8afbaf5faff24d0e012d",
+              "file": "smoke-tests.spec.ts",
+              "line": 52,
+              "column": 3
+            },
+            {
+              "title": "Login Flow - Authentication works",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "mobile-smoke",
+                  "projectName": "mobile-smoke",
+                  "results": [
+                    {
+                      "workerIndex": 4,
+                      "parallelIndex": 3,
+                      "status": "passed",
+                      "duration": 631,
+                      "errors": [],
+                      "stdout": [
+                        {
+                          "text": "ℹ️ No login functionality found - skipping login test\n"
+                        }
+                      ],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-10-13T21:13:04.043Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "a8bb41ad8b38f84bf4a2-d4b110c9cf02d389c275",
+              "file": "smoke-tests.spec.ts",
+              "line": 90,
+              "column": 3
+            },
+            {
+              "title": "CRUD Operations - Basic functionality works",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "mobile-smoke",
+                  "projectName": "mobile-smoke",
+                  "results": [
+                    {
+                      "workerIndex": 6,
+                      "parallelIndex": 2,
+                      "status": "passed",
+                      "duration": 649,
+                      "errors": [],
+                      "stdout": [
+                        {
+                          "text": "ℹ️ No CRUD interface found - this may be a static page\n"
+                        }
+                      ],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-10-13T21:13:04.437Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "a8bb41ad8b38f84bf4a2-5c0b3fc80fd7e0bd3dd3",
+              "file": "smoke-tests.spec.ts",
+              "line": 126,
+              "column": 3
+            },
+            {
+              "title": "API Endpoints - Backend is responding",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "mobile-smoke",
+                  "projectName": "mobile-smoke",
+                  "results": [
+                    {
+                      "workerIndex": 4,
+                      "parallelIndex": 3,
+                      "status": "passed",
+                      "duration": 64,
+                      "errors": [],
+                      "stdout": [
+                        {
+                          "text": "✅ API endpoint /api/health is responding\n"
+                        }
+                      ],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-10-13T21:13:04.678Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "a8bb41ad8b38f84bf4a2-5277c71ee2dc68dca836",
+              "file": "smoke-tests.spec.ts",
+              "line": 167,
+              "column": 3
+            },
+            {
+              "title": "Error Handling - Graceful error responses",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "mobile-smoke",
+                  "projectName": "mobile-smoke",
+                  "results": [
+                    {
+                      "workerIndex": 4,
+                      "parallelIndex": 3,
+                      "status": "passed",
+                      "duration": 61,
+                      "errors": [],
+                      "stdout": [
+                        {
+                          "text": "✅ Error handling appears to be working correctly\n"
+                        }
+                      ],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-10-13T21:13:04.749Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "a8bb41ad8b38f84bf4a2-6f96b713ea0b2d5fcd60",
+              "file": "smoke-tests.spec.ts",
+              "line": 197,
+              "column": 3
+            },
+            {
+              "title": "Performance - Page loads within acceptable time",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "mobile-smoke",
+                  "projectName": "mobile-smoke",
+                  "results": [
+                    {
+                      "workerIndex": 4,
+                      "parallelIndex": 3,
+                      "status": "passed",
+                      "duration": 616,
+                      "errors": [],
+                      "stdout": [
+                        {
+                          "text": "✅ Page loaded in 526ms (max: 10000ms)\n"
+                        }
+                      ],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-10-13T21:13:04.814Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "a8bb41ad8b38f84bf4a2-f6b0484e1633b0659a9b",
+              "file": "smoke-tests.spec.ts",
+              "line": 212,
+              "column": 3
+            },
+            {
+              "title": "Responsive Design - Mobile viewport works",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "mobile-smoke",
+                  "projectName": "mobile-smoke",
+                  "results": [
+                    {
+                      "workerIndex": 6,
+                      "parallelIndex": 2,
+                      "status": "passed",
+                      "duration": 634,
+                      "errors": [],
+                      "stdout": [
+                        {
+                          "text": "✅ Mobile viewport works correctly\n"
+                        }
+                      ],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-10-13T21:13:05.156Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "a8bb41ad8b38f84bf4a2-ef5f08bf9c6d2219a2f1",
+              "file": "smoke-tests.spec.ts",
+              "line": 225,
+              "column": 3
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2025-10-13T21:13:02.366Z",
+    "duration": 4489.4490000000005,
+    "expected": 16,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0
+  }
+}
