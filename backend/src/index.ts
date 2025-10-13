@@ -2,19 +2,23 @@ import express from 'express';
 import { testConnections } from './config/database';
 import { POST as stripeWebhook } from './api/webhooks/stripe';
 import { GET as healthCheck } from './api/healthz';
+import { GET as onboardGet } from './api/onboard/get';
 
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-// Middleware
-app.use(express.raw({ type: 'application/json' })); // For Stripe webhook signature verification
-app.use(express.json());
-
 // Health check endpoint
 app.get('/healthz', healthCheck);
 
-// Stripe webhook endpoint
-app.post('/webhooks/stripe', stripeWebhook);
+// Stripe webhook endpoint - needs raw body for signature verification
+// MUST be before express.json() middleware
+app.post('/webhooks/stripe', express.raw({ type: 'application/json' }), stripeWebhook);
+
+// Global JSON middleware for all other routes
+app.use(express.json());
+
+// Onboarding endpoint
+app.get('/onboard/:token', onboardGet);
 
 // Error handling middleware
 app.use((err: Error, req: express.Request, res: express.Response, next: express.NextFunction) => {

@@ -1,6 +1,22 @@
 import * as fs from 'fs';
 import * as path from 'path';
 
+// Load environment variables from .env file
+try {
+  const envFile = fs.readFileSync(path.join(process.cwd(), '.env'), 'utf8');
+  const envVars = envFile.split('\n').filter(line => line.trim() && !line.startsWith('#'));
+  
+  for (const line of envVars) {
+    const [key, ...valueParts] = line.split('=');
+    if (key && valueParts.length > 0) {
+      process.env[key.trim()] = valueParts.join('=').trim();
+    }
+  }
+} catch (error) {
+  // .env file doesn't exist, continue with system environment variables
+  console.log('No .env file found, using system environment variables');
+}
+
 interface EnvConfig {
   requiredVars: string[];
   optionalVars: string[];
@@ -54,16 +70,30 @@ const envConfig: EnvConfig = {
     'JWT_SECRET'
   ],
   validationRules: {
-    'STRIPE_SECRET_KEY': (value: string) => value.startsWith('sk_'),
-    'STRIPE_PUBLISHABLE_KEY': (value: string) => value.startsWith('pk_'),
-    'STRIPE_WEBHOOK_SECRET': (value: string) => value.startsWith('whsec_'),
-    'TWILIO_ACCOUNT_SID': (value: string) => value.startsWith('AC'),
-    'DATABASE_URL': (value: string) => value.startsWith('postgres://') || value.startsWith('postgresql://'),
-    'N8N_WEBHOOK_URL': (value: string) => value.startsWith('https://'),
+    'STRIPE_SECRET_KEY': (value: string) => value.startsWith('sk_') && !value.includes('your_') && value.length > 20,
+    'STRIPE_PUBLISHABLE_KEY': (value: string) => value.startsWith('pk_') && !value.includes('your_') && value.length > 20,
+    'STRIPE_WEBHOOK_SECRET': (value: string) => value.startsWith('whsec_') && !value.includes('your_') && value.length > 20,
+    'TWILIO_ACCOUNT_SID': (value: string) => value.startsWith('AC') && !value.includes('your_') && value.length > 20,
+    'TWILIO_AUTH_TOKEN': (value: string) => !value.includes('your_') && value.length > 20,
+    'AWS_SES_ACCESS_KEY_ID': (value: string) => !value.includes('your_') && value.length > 10,
+    'AWS_SES_SECRET_ACCESS_KEY': (value: string) => !value.includes('your_') && value.length > 20,
+    'GOOGLE_PLACES_API_KEY': (value: string) => !value.includes('your_') && value.length > 20,
+    'GOOGLE_CALENDAR_CLIENT_ID': (value: string) => !value.includes('your_') && value.length > 20,
+    'GOOGLE_CALENDAR_CLIENT_SECRET': (value: string) => !value.includes('your_') && value.length > 20,
+    'FACEBOOK_GRAPH_ACCESS_TOKEN': (value: string) => !value.includes('your_') && value.length > 20,
+    'DATABASE_URL': (value: string) => (value.startsWith('postgres://') || value.startsWith('postgresql://')) && !value.includes('username:password@localhost') && value.length > 30,
+    'HMAC_SECRET_KEY': (value: string) => !value.includes('your_') && value.length > 20,
+    'JWT_SECRET': (value: string) => !value.includes('your_') && value.length > 20,
+    'N8N_WEBHOOK_URL': (value: string) => (value.startsWith('https://') || value.startsWith('http://')) && !value.includes('your_') && value.length > 10,
     'N8N_PROTOCOL': (value: string) => ['http', 'https'].includes(value),
-    'N8N_HOST': (value: string) => value.length > 0,
-    'SUPABASE_URL': (value: string) => value.startsWith('https://'),
-    'N8N_INTAKE_WEBHOOK': (value: string) => value.startsWith('https://')
+    'N8N_HOST': (value: string) => value.length > 0 && !value.includes('your_'),
+    'N8N_ENCRYPTION_KEY': (value: string) => !value.includes('your_') && value.length >= 32,
+    'N8N_DB_HOST': (value: string) => !value.includes('your_') && value.length > 0,
+    'N8N_DB_USER': (value: string) => !value.includes('your_') && value.length > 0,
+    'N8N_DB_PASSWORD': (value: string) => !value.includes('your_') && value.length > 0,
+    'SUPABASE_URL': (value: string) => value.startsWith('https://') && !value.includes('your_') && value.length > 20,
+    'SUPABASE_SERVICE_ROLE_KEY': (value: string) => !value.includes('your_') && value.length > 20,
+    'N8N_INTAKE_WEBHOOK': (value: string) => (value.startsWith('https://') || value.startsWith('http://')) && !value.includes('your_') && value.length > 10
   }
 };
 

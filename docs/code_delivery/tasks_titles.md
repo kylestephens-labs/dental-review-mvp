@@ -5,25 +5,25 @@ Phase 0 — Foundations (schema, env, seeds) — MVP
 Start: add .env.example with all keys (Stripe, Twilio, SES, Places, GCal, Graph, DB, HMAC).
 End: boot script fails fast if any keys missing; npm run env:check passes locally.
 Feature Flag(Y/N): N
-Status: Ready
+Status: Completed
 
 2. SQL migration 001: core tables
 Start: /scripts/migrations/001_init.sql.
 End: creates practices, settings, patients, visits, review_requests, engagements, events with indexes/uniqs; psql -f succeeds.
 Feature Flag(Y/N): N
-Status: Ready
+Status: Completed
 
 3. SQL migration 002: queue + templates + reviews
 Start: /scripts/migrations/002_queue_templates_reviews.sql.
 End: creates jobs, templates, reviews, review_snapshots, practice_baselines; adds new cols to settings/review_requests per ARCH; migration idempotent.
 Feature Flag(Y/N): N
-Status: Ready
+Status: Completed
 
 4. Seed EN/ES ADA-checked templates
 Start: /scripts/seed_templates.sql + /common/templates/*.json.
 End: templates has EN & ES rows; unit test reads one and checks placeholder tokens render.
 Feature Flag(Y/N): N
-Status: Ready
+Status: Completed
 
 ⸻
 
@@ -39,13 +39,13 @@ Status: Completed
 Start: backend route + middleware.
 End: on checkout.session.completed: insert practice+settings, persist billing_json, write events(type='stripe_checkout'), 200 OK.
 Feature Flag(Y/N): N
-Status: Ready
+Status: Completed
 
 7. Magic-link issuance
 Start: HMAC token util + GET /onboard/:token.
 End: webhook writes token; SES email sent with link; token verified & one-time.
 Feature Flag(Y/N): N
-Status: Ready
+Status: In progress
 
 7b) /healthz endpoint (App Runner health checks)
 • Start: Add backend route GET /healthz returning 200 with {status:'ok', sha:<commit>}.
