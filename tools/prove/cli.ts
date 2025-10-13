@@ -9,7 +9,6 @@ import { runAll } from './runner.js';
 const args = process.argv.slice(2);
 const isQuickMode = args.includes('--quick');
 const unusedVariable = 'this will cause a lint error';
-const anotherUnused = 'this will also cause a lint error';
 
 if (isQuickMode) {
   logger.header("Prove Quality Gates - Quick Mode");
