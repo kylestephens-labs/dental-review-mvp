@@ -1,1 +1,1 @@
-import '@testing-library/jest-dom';
+// Test setup file - no additional setup needed for template tests
