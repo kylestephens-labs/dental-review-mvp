@@ -5,8 +5,19 @@ import { logger } from './logger.js';
 import { buildContext, getContextSummary, validateContext } from './context.js';
 import { runAll } from './runner.js';
 
-logger.header("Prove Quality Gates - CLI stub message");
-logger.info("Testing context system...");
+// Parse command line arguments
+const args = process.argv.slice(2);
+const isQuickMode = args.includes('--quick');
+const unusedVariable = 'this will cause a lint error';
+const anotherUnused = 'this will also cause a lint error';
+
+if (isQuickMode) {
+  logger.header("Prove Quality Gates - Quick Mode");
+  logger.info("Running fast checks: env + typecheck + lint + unit tests");
+} else {
+  logger.header("Prove Quality Gates - Full Mode");
+  logger.info("Running all quality gates");
+}
 
 try {
   // Build and test context
@@ -40,7 +51,7 @@ try {
 
   // Test runner
   logger.info("Testing runner...");
-  const checkResults = await runAll(context);
+  const checkResults = await runAll(context, { quickMode: isQuickMode });
   
   // Generate final report
   logger.generateReport(context.mode, checkResults);
