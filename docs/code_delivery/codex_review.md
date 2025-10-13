@@ -15,3 +15,10 @@ docs/dentist_project/architecture.md
 docs/dentist_project/business_plan
 docs/dentist_project/MVP
 docs/code_delivery/tasks_titles.md
+
+
+
+Please review the following files for more context on the project:
+docs/misc/prove_enforcement_8_paths/prove-overview.md
+docs/misc/prove_enforcement_8_paths/architecture.md
+docs/misc/prove_enforcement_8_paths/tasks.md

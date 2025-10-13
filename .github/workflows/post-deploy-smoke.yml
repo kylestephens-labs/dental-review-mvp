@@ -2,7 +2,7 @@ name: Post-Deploy Smoke Tests
 
 on:
   workflow_run:
-    workflows: ["CI/CD Pipeline"]
+    workflows: ["Prove Quality Gates (Fast)"]
     types: [completed]
     branches: [main]
   workflow_dispatch:
@@ -87,7 +87,7 @@ jobs:
       with:
         name: smoke-test-results
         path: |
-          test-results/
+          smoke-test-results/
         retention-days: 7
         
     - name: Smoke Test Summary
@@ -96,10 +96,10 @@ jobs:
         echo "📊 Smoke Test Summary"
         echo "==================="
         echo "Target URL: $SMOKE_TEST_URL"
-        echo "Test Results: test-results/smoke-results.json"
-        echo "HTML Report: test-results/smoke-report/index.html"
+        echo "Test Results: smoke-test-results/results.json"
+        echo "HTML Report: smoke-test-results/index.html"
         
-        if [ -f "test-results/smoke-results.json" ]; then
+        if [ -f "smoke-test-results/results.json" ]; then
           echo "✅ Test results generated"
         else
           echo "❌ No test results found"

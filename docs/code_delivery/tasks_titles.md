@@ -45,7 +45,7 @@ Status: Completed
 Start: HMAC token util + GET /onboard/:token.
 End: webhook writes token; SES email sent with link; token verified & one-time.
 Feature Flag(Y/N): N
-Status: In progress
+Status: Completed
 
 7b) /healthz endpoint (App Runner health checks)
 • Start: Add backend route GET /healthz returning 200 with {status:'ok', sha:<commit>}.

@@ -78,6 +78,20 @@ export async function checkPreConflict(context: ProveContext): Promise<PreConfli
         stderr: mergeResult.stderr,
       });
       
+      // CRITICAL: Abort the merge immediately to avoid leaving repo in conflicted state
+      const abortResult = await exec('git', ['merge', '--abort'], {
+        cwd: context.workingDirectory,
+        timeout: 10000,
+      });
+      
+      if (!abortResult.success) {
+        logger.warn('Failed to abort merge after conflict detection', {
+          stderr: abortResult.stderr,
+        });
+      } else {
+        logger.info('Successfully aborted merge after conflict detection');
+      }
+      
       return {
         ok: false,
         reason,

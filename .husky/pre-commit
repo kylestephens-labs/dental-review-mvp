@@ -1,3 +1,14 @@
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+echo "🔍 Running secret detection before commit..."
+# Simple secret detection - check for common patterns
+if git diff --cached --name-only | xargs grep -l -E "(password|secret|key|token)\s*[:=]\s*['\"][^'\"]{8,}" 2>/dev/null; then
+  echo "❌ Potential secrets detected in staged files"
+  echo "💡 Remove or mask sensitive information before committing"
+  exit 1
+fi
+
 echo "🔍 Running prove:quick before commit..."
 npm run prove:quick
 

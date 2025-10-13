@@ -27,11 +27,34 @@ export async function checkKillswitchRequired(context: ProveContext): Promise<Ki
   try {
     const { workingDirectory } = context;
     
-    // Get files changed in the current commit only
-    const changedFilesResult = await exec('git', ['diff', '--name-only', 'HEAD~1', 'HEAD'], {
-      timeout: 10000,
-      cwd: workingDirectory
-    });
+    // Get files changed using the proper base reference from context
+    const { git: { baseRef } } = context;
+    
+    // Handle edge case: if this is the first commit (no HEAD~1), check against empty tree
+    let changedFilesResult;
+    try {
+      // First try the normal diff against baseRef
+      changedFilesResult = await exec('git', ['diff', '--name-only', baseRef, 'HEAD'], {
+        timeout: 10000,
+        cwd: workingDirectory
+      });
+      
+      // If that fails (e.g., baseRef doesn't exist), try against empty tree for first commit
+      if (!changedFilesResult.success && baseRef.includes('HEAD~1')) {
+        logger.info('Base reference not found, checking against empty tree (first commit)');
+        changedFilesResult = await exec('git', ['diff', '--name-only', '4b825dc642cb6eb9a060e54bf8d69288fbee4904', 'HEAD'], {
+          timeout: 10000,
+          cwd: workingDirectory
+        });
+      }
+    } catch (error) {
+      // If all else fails, try to get all files in the current commit
+      logger.warn('Failed to get diff, trying to get all files in current commit');
+      changedFilesResult = await exec('git', ['diff-tree', '--no-commit-id', '--name-only', '-r', 'HEAD'], {
+        timeout: 10000,
+        cwd: workingDirectory
+      });
+    }
     
     if (!changedFilesResult.success) {
       return {

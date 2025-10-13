@@ -278,79 +278,77 @@ export async function runAll(
       logger.info('Skipping pre-conflict check in quick mode');
     }
     
-    // Run quick mode checks (lint + typecheck)
-    if (quickMode) {
-      logger.info('Running quick mode checks...');
-      
-      // Run lint check
-      const lintStartTime = Date.now();
-      const lintResult = await checkLint(context);
-      const lintMs = Date.now() - lintStartTime;
-      
-      const lintCheckResult: CheckResult = {
-        id: 'lint',
-        ok: lintResult.ok,
-        ms: lintMs,
+    // Run basic checks (lint + typecheck) - always run these
+    logger.info('Running basic checks (lint + typecheck)...');
+    
+    // Run lint check
+    const lintStartTime = Date.now();
+    const lintResult = await checkLint(context);
+    const lintMs = Date.now() - lintStartTime;
+    
+    const lintCheckResult: CheckResult = {
+      id: 'lint',
+      ok: lintResult.ok,
+      ms: lintMs,
+      reason: lintResult.reason,
+    };
+    
+    results.push(lintCheckResult);
+    
+    // If lint check fails, stop here (fail-fast)
+    if (!lintResult.ok && failFast) {
+      logger.error('Critical check failed - stopping execution', {
+        checkId: 'lint',
         reason: lintResult.reason,
-      };
+      });
       
-      results.push(lintCheckResult);
-      
-      // If lint check fails, stop here (fail-fast)
-      if (!lintResult.ok && failFast) {
-        logger.error('Critical check failed - stopping execution', {
-          checkId: 'lint',
-          reason: lintResult.reason,
-        });
-        
-        const totalMs = Date.now() - startTime;
-        const successCount = results.filter(r => r.ok).length;
-        const failureCount = results.filter(r => !r.ok).length;
+      const totalMs = Date.now() - startTime;
+      const successCount = results.filter(r => r.ok).length;
+      const failureCount = results.filter(r => !r.ok).length;
 
-        logger.error('Checks failed', {
-          total: results.length,
-          passed: successCount,
-          failed: failureCount,
-          totalMs,
-        });
+      logger.error('Checks failed', {
+        total: results.length,
+        passed: successCount,
+        failed: failureCount,
+        totalMs,
+      });
 
-        return results;
-      }
-      
-      // Run typecheck
-      const typecheckStartTime = Date.now();
-      const typecheckResult = await checkTypecheck(context);
-      const typecheckMs = Date.now() - typecheckStartTime;
-      
-      const typecheckCheckResult: CheckResult = {
-        id: 'typecheck',
-        ok: typecheckResult.ok,
-        ms: typecheckMs,
+      return results;
+    }
+    
+    // Run typecheck
+    const typecheckStartTime = Date.now();
+    const typecheckResult = await checkTypecheck(context);
+    const typecheckMs = Date.now() - typecheckStartTime;
+    
+    const typecheckCheckResult: CheckResult = {
+      id: 'typecheck',
+      ok: typecheckResult.ok,
+      ms: typecheckMs,
+      reason: typecheckResult.reason,
+    };
+    
+    results.push(typecheckCheckResult);
+    
+    // If typecheck fails, stop here (fail-fast)
+    if (!typecheckResult.ok && failFast) {
+      logger.error('Critical check failed - stopping execution', {
+        checkId: 'typecheck',
         reason: typecheckResult.reason,
-      };
+      });
       
-      results.push(typecheckCheckResult);
-      
-      // If typecheck fails, stop here (fail-fast)
-      if (!typecheckResult.ok && failFast) {
-        logger.error('Critical check failed - stopping execution', {
-          checkId: 'typecheck',
-          reason: typecheckResult.reason,
-        });
-        
-        const totalMs = Date.now() - startTime;
-        const successCount = results.filter(r => r.ok).length;
-        const failureCount = results.filter(r => !r.ok).length;
+      const totalMs = Date.now() - startTime;
+      const successCount = results.filter(r => r.ok).length;
+      const failureCount = results.filter(r => !r.ok).length;
 
-        logger.error('Checks failed', {
-          total: results.length,
-          passed: successCount,
-          failed: failureCount,
-          totalMs,
-        });
+      logger.error('Checks failed', {
+        total: results.length,
+        passed: successCount,
+        failed: failureCount,
+        totalMs,
+      });
 
-        return results;
-      }
+      return results;
     }
     
     const totalMs = Date.now() - startTime;

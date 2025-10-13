@@ -6,7 +6,7 @@ export async function checkLint(context: ProveContext): Promise<{ ok: boolean; r
   logger.info('Running ESLint...');
   
   try {
-    const result = await exec('npx', ['eslint', '--ext', '.ts,.tsx', 'tools/', '--max-warnings', '0', '--rule', '@typescript-eslint/no-unused-vars:error'], {
+    const result = await exec('npx', ['eslint', 'src/', '--ext', '.ts,.tsx,.js,.jsx', '--ignore-pattern', 'src/__tests__/*', '--ignore-pattern', 'src/impl-*', '--ignore-pattern', 'src/refactor-*', '--max-warnings', '0'], {
       timeout: 60000, // 1 minute timeout
       cwd: context.workingDirectory
     });
