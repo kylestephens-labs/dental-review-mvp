@@ -1,0 +1,142 @@
+name: Prove Nightly Full
+
+on:
+  schedule:
+    # Run every night at 2 AM UTC (adjust timezone as needed)
+    - cron: '0 2 * * *'
+  workflow_dispatch: # Allow manual triggering for testing
+
+jobs:
+  prove-nightly:
+    name: Prove Quality Gates (Full Nightly)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0  # Fetch full history for comprehensive analysis
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+        
+    - name: Install dependencies
+      run: npm ci
+      
+    - name: Set Feature Flag Environment Variables
+      run: |
+        # Set feature flags as environment variables for comprehensive testing
+        echo "VITE_FEATURE_ENHANCED_INTAKE_FORM=false" >> $GITHUB_ENV
+        echo "VITE_FEATURE_AUTO_SAVE=false" >> $GITHUB_ENV
+        echo "VITE_FEATURE_ADVANCED_ANALYTICS=false" >> $GITHUB_ENV
+        echo "VITE_FEATURE_DYNAMIC_CONTENT=false" >> $GITHUB_ENV
+        echo "VITE_FEATURE_GOOGLE_CALENDAR_INTEGRATION=false" >> $GITHUB_ENV
+        echo "VITE_FEATURE_OUTLOOK_INTEGRATION=false" >> $GITHUB_ENV
+        echo "VITE_FEATURE_CSV_UPLOAD_FEATURE=false" >> $GITHUB_ENV
+        echo "VITE_FEATURE_FRONT_DESK_MODE=false" >> $GITHUB_ENV
+        echo "VITE_FEATURE_REVIEW_INGESTION=false" >> $GITHUB_ENV
+        echo "VITE_FEATURE_WEEKLY_DIGEST=false" >> $GITHUB_ENV
+      
+    - name: Run Full Prove Quality Gates
+      run: npm run prove > prove-output.log 2>&1
+      continue-on-error: true  # Don't fail the workflow, we'll handle results in artifacts
+      
+    - name: Generate Coverage Report
+      run: |
+        echo "📊 Generating comprehensive coverage report..."
+        npm run test -- --coverage --reporter=json --outputFile=coverage/coverage-final.json || echo "Coverage generation failed"
+        
+    - name: Run Security Audit
+      run: |
+        echo "🔒 Running security audit..."
+        npm audit --audit-level=moderate --json > security-audit.json || echo "Security audit failed"
+        
+    - name: Run Build Analysis
+      run: |
+        echo "🏗️ Running build analysis..."
+        npm run build
+        echo "Build completed successfully"
+        
+    - name: Generate Bundle Size Analysis
+      run: |
+        echo "📦 Analyzing bundle size..."
+        npx rollup-plugin-visualizer dist/ --mode static --open false || echo "Bundle analysis failed"
+        
+    - name: Create Nightly Report
+      run: |
+        echo "📋 Creating nightly prove report..."
+        mkdir -p nightly-reports
+        
+        # Check status of each component
+        PROVE_STATUS="❌ FAILED"
+        if [ -f prove-output.log ] && grep -q "Prove completed.*success.*true" prove-output.log; then
+          PROVE_STATUS="✅ PASSED"
+        fi
+        
+        COVERAGE_STATUS="❌ Failed"
+        if [ -f coverage/coverage-final.json ]; then
+          COVERAGE_STATUS="✅ Generated"
+        fi
+        
+        SECURITY_STATUS="❌ Failed"
+        if [ -f security-audit.json ]; then
+          SECURITY_STATUS="✅ Completed"
+        fi
+        
+        BUILD_STATUS="❌ Failed"
+        if [ -d dist ]; then
+          BUILD_STATUS="✅ Successful"
+        fi
+        
+        # Create a comprehensive report
+        cat > nightly-reports/prove-nightly-report.md << EOF
+        # Prove Nightly Full Report
+        
+        **Date**: $(date)
+        **Commit**: $(git rev-parse HEAD)
+        **Branch**: $(git rev-parse --abbrev-ref HEAD)
+        
+        ## Quality Gates Status
+        - **Prove Full Run**: $PROVE_STATUS
+        - **Coverage Report**: $COVERAGE_STATUS
+        - **Security Audit**: $SECURITY_STATUS
+        - **Build Analysis**: $BUILD_STATUS
+        
+        ## Artifacts
+        - Coverage data: \`coverage/coverage-final.json\`
+        - Security audit: \`security-audit.json\`
+        - Build output: \`dist/\`
+        
+        ## Next Steps
+        - Review any failed checks
+        - Address security vulnerabilities
+        - Optimize bundle size if needed
+        - Update quality gates if necessary
+        EOF
+        
+        echo "✅ Nightly report created"
+        
+    - name: Upload Nightly Artifacts
+      uses: actions/upload-artifact@v4
+      if: always()  # Upload even if previous steps failed
+      with:
+        name: prove-nightly-report-${{ github.run_number }}
+        path: |
+          nightly-reports/
+          coverage/
+          security-audit.json
+          dist/
+          prove-output.log
+        retention-days: 30
+        
+    - name: Nightly Summary
+      if: always()
+      run: |
+        echo "🌙 Prove Nightly Full completed"
+        echo "📊 Report generated and uploaded as artifact"
+        echo "🔍 Review artifacts for detailed analysis"
+        echo "⏰ Next run scheduled for tomorrow at 2 AM UTC"
