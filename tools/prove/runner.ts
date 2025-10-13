@@ -9,6 +9,7 @@ import { checkLint } from './checks/lint.js';
 import { checkTypecheck } from './checks/typecheck.js';
 import { checkCommitSize } from './checks/commit-size.js';
 import { checkCommitMsgConvention } from './checks/commit-msg-convention.js';
+import { checkFeatureFlagLint } from './checks/feature-flag-lint.js';
 
 export interface CheckResult {
   id: string;
@@ -161,7 +162,42 @@ export async function runAll(
       return results;
     }
     
-    // Run pre-conflict check (critical - must be fourth, skip in quick mode)
+    // Run feature flag lint check (critical - must be fourth)
+    const featureFlagLintStartTime = Date.now();
+    const featureFlagLintResult = await checkFeatureFlagLint(context);
+    const featureFlagLintMs = Date.now() - featureFlagLintStartTime;
+    
+    const featureFlagLintCheckResult: CheckResult = {
+      id: 'feature-flag-lint',
+      ok: featureFlagLintResult.ok,
+      ms: featureFlagLintMs,
+      reason: featureFlagLintResult.reason,
+    };
+    
+    results.push(featureFlagLintCheckResult);
+    
+    // If feature flag lint check fails, stop here (fail-fast)
+    if (!featureFlagLintResult.ok && failFast) {
+      logger.error('Critical check failed - stopping execution', {
+        checkId: 'feature-flag-lint',
+        reason: featureFlagLintResult.reason,
+      });
+      
+      const totalMs = Date.now() - startTime;
+      const successCount = results.filter(r => r.ok).length;
+      const failureCount = results.filter(r => !r.ok).length;
+
+      logger.error('Checks failed', {
+        total: results.length,
+        passed: successCount,
+        failed: failureCount,
+        totalMs,
+      });
+
+      return results;
+    }
+    
+    // Run pre-conflict check (critical - must be fifth, skip in quick mode)
     if (!quickMode) {
       const preConflictStartTime = Date.now();
       const preConflictResult = await checkPreConflict(context);
