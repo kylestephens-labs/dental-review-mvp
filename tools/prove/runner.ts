@@ -7,6 +7,8 @@ import { checkTrunk } from './checks/trunk.js';
 import { checkPreConflict } from './checks/preConflict.js';
 import { checkLint } from './checks/lint.js';
 import { checkTypecheck } from './checks/typecheck.js';
+import { checkCommitSize } from './checks/commit-size.js';
+import { checkCommitMsgConvention } from './checks/commit-msg-convention.js';
 
 export interface CheckResult {
   id: string;
@@ -89,7 +91,77 @@ export async function runAll(
       return results;
     }
     
-    // Run pre-conflict check (critical - must be second, skip in quick mode)
+    // Run commit size check (critical - must be second)
+    const commitSizeStartTime = Date.now();
+    const commitSizeResult = await checkCommitSize(context);
+    const commitSizeMs = Date.now() - commitSizeStartTime;
+    
+    const commitSizeCheckResult: CheckResult = {
+      id: 'commit-size',
+      ok: commitSizeResult.ok,
+      ms: commitSizeMs,
+      reason: commitSizeResult.reason,
+    };
+    
+    results.push(commitSizeCheckResult);
+    
+    // If commit size check fails, stop here (fail-fast)
+    if (!commitSizeResult.ok && failFast) {
+      logger.error('Critical check failed - stopping execution', {
+        checkId: 'commit-size',
+        reason: commitSizeResult.reason,
+      });
+      
+      const totalMs = Date.now() - startTime;
+      const successCount = results.filter(r => r.ok).length;
+      const failureCount = results.filter(r => !r.ok).length;
+
+      logger.error('Checks failed', {
+        total: results.length,
+        passed: successCount,
+        failed: failureCount,
+        totalMs,
+      });
+
+      return results;
+    }
+    
+    // Run commit message convention check (critical - must be third)
+    const commitMsgStartTime = Date.now();
+    const commitMsgResult = await checkCommitMsgConvention(context);
+    const commitMsgMs = Date.now() - commitMsgStartTime;
+    
+    const commitMsgCheckResult: CheckResult = {
+      id: 'commit-msg-convention',
+      ok: commitMsgResult.ok,
+      ms: commitMsgMs,
+      reason: commitMsgResult.reason,
+    };
+    
+    results.push(commitMsgCheckResult);
+    
+    // If commit message convention check fails, stop here (fail-fast)
+    if (!commitMsgResult.ok && failFast) {
+      logger.error('Critical check failed - stopping execution', {
+        checkId: 'commit-msg-convention',
+        reason: commitMsgResult.reason,
+      });
+      
+      const totalMs = Date.now() - startTime;
+      const successCount = results.filter(r => r.ok).length;
+      const failureCount = results.filter(r => !r.ok).length;
+
+      logger.error('Checks failed', {
+        total: results.length,
+        passed: successCount,
+        failed: failureCount,
+        totalMs,
+      });
+
+      return results;
+    }
+    
+    // Run pre-conflict check (critical - must be fourth, skip in quick mode)
     if (!quickMode) {
       const preConflictStartTime = Date.now();
       const preConflictResult = await checkPreConflict(context);
