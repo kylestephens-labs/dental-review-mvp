@@ -5,7 +5,7 @@ export interface LogEntry {
   level: 'header' | 'info' | 'success' | 'error' | 'result';
   message: string;
   timestamp: string;
-  data?: any;
+  data?: unknown;
 }
 
 export interface ProveResult {
@@ -30,7 +30,7 @@ class Logger {
     this.startTime = Date.now();
   }
 
-  private createEntry(level: LogEntry['level'], message: string, data?: any): LogEntry {
+  private createEntry(level: LogEntry['level'], message: string, data?: unknown): LogEntry {
     return {
       level,
       message,
@@ -70,27 +70,27 @@ class Logger {
     }
   }
 
-  header(message: string, data?: any): void {
+  header(message: string, data?: unknown): void {
     this.log(this.createEntry('header', message, data));
   }
 
-  info(message: string, data?: any): void {
+  info(message: string, data?: unknown): void {
     this.log(this.createEntry('info', message, data));
   }
 
-  success(message: string, data?: any): void {
+  success(message: string, data?: unknown): void {
     this.log(this.createEntry('success', message, data));
   }
 
-  error(message: string, data?: any): void {
+  error(message: string, data?: unknown): void {
     this.log(this.createEntry('error', message, data));
   }
 
-  result(message: string, data?: any): void {
+  result(message: string, data?: unknown): void {
     this.log(this.createEntry('result', message, data));
   }
 
-  warn(message: string, data?: any): void {
+  warn(message: string, data?: unknown): void {
     this.log(this.createEntry('info', `⚠️  ${message}`, data));
   }
 

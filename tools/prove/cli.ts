@@ -8,7 +8,6 @@ import { runAll } from './runner.js';
 // Parse command line arguments
 const args = process.argv.slice(2);
 const isQuickMode = args.includes('--quick');
-const unusedVariable = 'this will cause a lint error';
 
 if (isQuickMode) {
   logger.header("Prove Quality Gates - Quick Mode");

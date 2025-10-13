@@ -67,7 +67,8 @@ function loadConfigFromFile(): Partial<ConfigInput> {
   try {
     // Try to load from prove.config.ts (already imported as defaultConfig)
     return defaultConfig;
-  } catch (error) {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  } catch (_error) {
     logger.info('No custom config file found, using defaults');
     return {};
   }

@@ -42,7 +42,8 @@ async function resolveDeliveryMode(): Promise<'functional' | 'non-functional'> {
         logger.info(`Mode resolved from TASK.json: ${taskData.mode}`);
         return taskData.mode;
       }
-    } catch (error) {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    } catch (_error) {
       // TASK.json doesn't exist or is invalid, continue to other methods
       logger.info('TASK.json not found or invalid, trying other methods');
     }

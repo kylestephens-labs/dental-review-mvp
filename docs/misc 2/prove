@@ -1,3 +1,104 @@
+awesome—here’s a clean, shareable overview you can drop in your repo docs.
+
+What is the “prove” logic?
+
+“Prove” is a single, repeatable command that runs all quality gates end-to-end. If it passes, the change is considered deliverable; if any gate fails, the change is not proved. It turns “the AI says it’s done” into “the system objectively verified it.”
+
+Why are we doing it?
+	•	Remove trust from narration. We don’t believe agent messages; we believe verifiers.
+	•	Make IDEs interchangeable. Cursor, Windsurf, MCP, local LLM—doesn’t matter; they all must pass the same gates.
+	•	Reduce regressions & bloat. Gates catch missing tests, API/DB drift, bundle creep, and unsafe configs.
+	•	Speed up solo development. One command gives a complete signal; less manual diff auditing.
+
+Expected benefits
+	•	Higher reliability: Broken types, untested changes, and contract drift are blocked automatically.
+	•	Faster iterations: Run one command locally for instant feedback; CI enforces before merge.
+	•	Clear acceptance criteria: “Green prove log” is the definition of done.
+	•	Auditability: CI logs are an immutable record; easier rollbacks and root-cause analysis.
+	•	Team/Tool flexibility: You can swap models/IDEs without retooling QA.
+
+How is it implemented?
+
+Single source of truth: a package.json script named prove that chains all checks, and a thin CI job that runs the same command.
+
+Example (trim to your needs)
+
+// package.json
+{
+  "scripts": {
+    "env:check": "tsx scripts/env-check.ts",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "lint": "eslint . --max-warnings=0",
+    "test": "vitest run --reporter=verbose",
+    "coverage": "vitest run --coverage",
+    "diffcov": "npx diff-cover coverage/coverage-final.json --fail-under=85",
+    "build:web": "vite build",
+    "build:api": "tsup src/index.ts --dts",
+    "size": "size-limit",
+    "openapi:check": "redocly lint openapi.yaml",
+    "db:migrate:test": "tsx scripts/db-migrate-check.ts",
+    "security": "osv-scanner -r .",
+    "prove": "npm run env:check && npm run typecheck && npm run lint && npm run test && npm run coverage && npm run diffcov && npm run build:web && npm run build:api && npm run size && npm run openapi:check && npm run db:migrate:test && npm run security"
+  }
+}
+
+# .github/workflows/prove.yml
+name: Prove
+on: { pull_request: { branches: [ main ] } }
+jobs:
+  prove:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+      - run: |
+          git fetch origin main
+          git merge --no-commit --no-ff origin/main || (echo "Merge conflict"; exit 1)
+      - uses: actions/setup-node@v4
+        with: { node-version: 20, cache: 'npm' }
+      - run: npm ci
+      - run: npx playwright install --with-deps || true
+      - run: npm run prove
+
+Workflow: Agents (or you) run npm run prove locally for fast feedback; CI runs the same command as an independent, blocking gate before merge.
+
+What areas/processes does “prove” enforce?
+
+Tailored to your stack (React + TS + Vite + Tailwind + shadcn/ui; AWS App Runner/RDS/SES; Supabase leads; Stripe; Twilio; Google APIs; Facebook Graph):
+	•	Environment & secrets sanity
+	•	env:check validates required env vars (Zod/envalid).
+	•	Optional: gitleaks/trufflehog secret scans in CI.
+	•	Type safety
+	•	tsc --noEmit (frontend + backend) with strict: true.
+	•	Code quality
+	•	eslint --max-warnings=0 (+ prettier via pre-commit if you add Husky/lint-staged).
+	•	Unit & integration tests
+	•	vitest for components and server logic.
+	•	Backend DB tests with Testcontainers (real Postgres) if available.
+	•	Diff-aware coverage
+	•	diff-cover ensures changed lines meet a threshold (e.g., 85%), enforcing TDD in practice.
+	•	E2E critical flows (optional but recommended)
+	•	Playwright smoke: auth/signup, notes CRUD, Stripe checkout (test mode), Twilio send (test creds), SES mock/sandbox, Google Places/Calendar mocked via MSW, Facebook Graph mocked.
+	•	Run on staging post-deploy if you add a second job.
+	•	Build & bundle size budgets
+	•	vite build and size-limit to block bloat and accidental heavy deps.
+	•	API & webhook contracts
+	•	openapi:check lints spec; tests verify signed webhooks (Stripe CLI signatures, Twilio signatures).
+	•	Database migrations safety
+	•	db:migrate:test applies up/down in a disposable Postgres; rejects non-reversible or failing migrations.
+	•	Security & dependencies
+	•	osv-scanner/npm audit fails on high/critical vulns (allowlist w/ expiry if needed).
+	•	Pre-conflict & trunk discipline
+	•	CI dry-merges main to fail early on conflicts, keeping trunk-based development smooth.
+
+⸻
+
+If you want, I can tailor the exact env-check.ts and db-migrate-check.ts scripts (Zod schemas for your Stripe/Twilio/Google keys and a Testcontainers Postgres migration probe) so you can paste them in and have “prove” running today.
+
+#####
+
+
+
 Awesome—let’s turn your 8 practices into a single, robust gating system that any IDE/agent must pass. I’ll keep this opinionated, Node/TS-first, and tailored to your stack.
 
 The shape of a solid gating system

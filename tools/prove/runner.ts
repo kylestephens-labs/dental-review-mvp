@@ -3,19 +3,24 @@
 
 import { type ProveContext } from './context.js';
 import { logger } from './logger.js';
+import { checkTrunk } from './checks/trunk.js';
+import { checkPreConflict } from './checks/preConflict.js';
+import { checkLint } from './checks/lint.js';
+import { checkTypecheck } from './checks/typecheck.js';
 
 export interface CheckResult {
   id: string;
   ok: boolean;
   ms: number;
   reason?: string;
-  details?: any;
+  details?: unknown;
 }
 
 export interface RunnerOptions {
   concurrency?: number;
   timeout?: number;
   failFast?: boolean;
+  quickMode?: boolean;
 }
 
 /**
@@ -32,6 +37,7 @@ export async function runAll(
     concurrency = context.cfg.runner.concurrency,
     timeout = context.cfg.runner.timeout,
     failFast = true,
+    quickMode = false,
   } = options;
 
   logger.header('Running prove checks...');
@@ -46,19 +52,156 @@ export async function runAll(
   const results: CheckResult[] = [];
 
   try {
-    // TODO: Implement actual checks
-    // For now, just print placeholder message
-    logger.info('No checks registered yet - this is a skeleton implementation');
+    // Run trunk check (critical - must be first)
+    logger.info('Running critical checks...');
     
-    // Simulate a placeholder check
-    const placeholderResult: CheckResult = {
-      id: 'placeholder',
-      ok: true,
-      ms: Date.now() - startTime,
-      reason: 'Skeleton implementation - no checks yet',
+    const trunkStartTime = Date.now();
+    const trunkResult = await checkTrunk(context);
+    const trunkMs = Date.now() - trunkStartTime;
+    
+    const trunkCheckResult: CheckResult = {
+      id: 'trunk',
+      ok: trunkResult.ok,
+      ms: trunkMs,
+      reason: trunkResult.reason,
     };
+    
+    results.push(trunkCheckResult);
+    
+    // If trunk check fails, stop here (fail-fast)
+    if (!trunkResult.ok && failFast) {
+      logger.error('Critical check failed - stopping execution', {
+        checkId: 'trunk',
+        reason: trunkResult.reason,
+      });
+      
+      const totalMs = Date.now() - startTime;
+      const successCount = results.filter(r => r.ok).length;
+      const failureCount = results.filter(r => !r.ok).length;
 
-    results.push(placeholderResult);
+      logger.error('Checks failed', {
+        total: results.length,
+        passed: successCount,
+        failed: failureCount,
+        totalMs,
+      });
+
+      return results;
+    }
+    
+    // Run pre-conflict check (critical - must be second, skip in quick mode)
+    if (!quickMode) {
+      const preConflictStartTime = Date.now();
+      const preConflictResult = await checkPreConflict(context);
+      const preConflictMs = Date.now() - preConflictStartTime;
+      
+      const preConflictCheckResult: CheckResult = {
+        id: 'pre-conflict',
+        ok: preConflictResult.ok,
+        ms: preConflictMs,
+        reason: preConflictResult.reason,
+      };
+      
+      results.push(preConflictCheckResult);
+      
+      // If pre-conflict check fails, stop here (fail-fast)
+      if (!preConflictResult.ok && failFast) {
+        logger.error('Critical check failed - stopping execution', {
+          checkId: 'pre-conflict',
+          reason: preConflictResult.reason,
+        });
+        
+        const totalMs = Date.now() - startTime;
+        const successCount = results.filter(r => r.ok).length;
+        const failureCount = results.filter(r => !r.ok).length;
+
+        logger.error('Checks failed', {
+          total: results.length,
+          passed: successCount,
+          failed: failureCount,
+          totalMs,
+        });
+
+        return results;
+      }
+    } else {
+      logger.info('Skipping pre-conflict check in quick mode');
+    }
+    
+    // Run quick mode checks (lint + typecheck)
+    if (quickMode) {
+      logger.info('Running quick mode checks...');
+      
+      // Run lint check
+      const lintStartTime = Date.now();
+      const lintResult = await checkLint(context);
+      const lintMs = Date.now() - lintStartTime;
+      
+      const lintCheckResult: CheckResult = {
+        id: 'lint',
+        ok: lintResult.ok,
+        ms: lintMs,
+        reason: lintResult.reason,
+      };
+      
+      results.push(lintCheckResult);
+      
+      // If lint check fails, stop here (fail-fast)
+      if (!lintResult.ok && failFast) {
+        logger.error('Critical check failed - stopping execution', {
+          checkId: 'lint',
+          reason: lintResult.reason,
+        });
+        
+        const totalMs = Date.now() - startTime;
+        const successCount = results.filter(r => r.ok).length;
+        const failureCount = results.filter(r => !r.ok).length;
+
+        logger.error('Checks failed', {
+          total: results.length,
+          passed: successCount,
+          failed: failureCount,
+          totalMs,
+        });
+
+        return results;
+      }
+      
+      // Run typecheck
+      const typecheckStartTime = Date.now();
+      const typecheckResult = await checkTypecheck(context);
+      const typecheckMs = Date.now() - typecheckStartTime;
+      
+      const typecheckCheckResult: CheckResult = {
+        id: 'typecheck',
+        ok: typecheckResult.ok,
+        ms: typecheckMs,
+        reason: typecheckResult.reason,
+      };
+      
+      results.push(typecheckCheckResult);
+      
+      // If typecheck fails, stop here (fail-fast)
+      if (!typecheckResult.ok && failFast) {
+        logger.error('Critical check failed - stopping execution', {
+          checkId: 'typecheck',
+          reason: typecheckResult.reason,
+        });
+        
+        const totalMs = Date.now() - startTime;
+        const successCount = results.filter(r => r.ok).length;
+        const failureCount = results.filter(r => !r.ok).length;
+
+        logger.error('Checks failed', {
+          total: results.length,
+          passed: successCount,
+          failed: failureCount,
+          totalMs,
+        });
+
+        return results;
+      }
+    }
     
     const totalMs = Date.now() - startTime;
     const successCount = results.filter(r => r.ok).length;
@@ -195,7 +338,8 @@ export async function runParallel(
  */
 export function registerCheck(
   id: string,
-  checkFn: (context: ProveContext) => Promise<CheckResult>
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  _checkFn: (context: ProveContext) => Promise<CheckResult>
 ): void {
   // TODO: Implement check registry
   logger.info(`Registering check: ${id}`);

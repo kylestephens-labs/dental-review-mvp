@@ -212,7 +212,7 @@ export async function execFile(
     });
 
     return result;
-  } catch (error: any) {
+  } catch (error: unknown) {
     const result: ExecResult = {
       code: error.code || 1,
       stdout: error.stdout || '',
