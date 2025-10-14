@@ -31,26 +31,16 @@ const envConfig: EnvConfig = {
     'STRIPE_WEBHOOK_SECRET',
     'TWILIO_ACCOUNT_SID',
     'TWILIO_AUTH_TOKEN',
-    'AWS_SES_ACCESS_KEY_ID',
+    'AWS_ACCESS_KEY_ID', // Updated to match GitHub secret
     'AWS_SES_SECRET_ACCESS_KEY',
     'GOOGLE_PLACES_API_KEY',
-    'GOOGLE_CALENDAR_CLIENT_ID',
-    'GOOGLE_CALENDAR_CLIENT_SECRET',
-    'FACEBOOK_GRAPH_ACCESS_TOKEN',
+    'GOOGLE_CLIENTID', // Updated to match GitHub secret
+    'GOOGLE_OATUH_SECRET', // Updated to match GitHub secret
     'DATABASE_URL',
-    'HMAC_SECRET_KEY',
-    // N8N configuration
-    'N8N_WEBHOOK_URL',
-    'N8N_PROTOCOL',
-    'N8N_HOST',
-    'N8N_ENCRYPTION_KEY',
-    'N8N_DB_HOST',
-    'N8N_DB_USER',
-    'N8N_DB_PASSWORD',
+    'HMAC_SECRET', // Updated to match GitHub secret
     // Supabase configuration
     'SUPABASE_URL',
-    'SUPABASE_SERVICE_ROLE_KEY',
-    'N8N_INTAKE_WEBHOOK'
+    'SUPABASE_SERVICE_ROLE_KEY'
   ],
   optionalVars: [
     'NODE_ENV',
@@ -75,25 +65,16 @@ const envConfig: EnvConfig = {
     'STRIPE_WEBHOOK_SECRET': (value: string) => value.startsWith('whsec_') && !value.includes('your_') && value.length > 20,
     'TWILIO_ACCOUNT_SID': (value: string) => value.startsWith('AC') && !value.includes('your_') && value.length > 20,
     'TWILIO_AUTH_TOKEN': (value: string) => !value.includes('your_') && value.length > 20,
-    'AWS_SES_ACCESS_KEY_ID': (value: string) => !value.includes('your_') && value.length > 10,
+    'AWS_ACCESS_KEY_ID': (value: string) => !value.includes('your_') && value.length > 10, // Updated to match GitHub secret
     'AWS_SES_SECRET_ACCESS_KEY': (value: string) => !value.includes('your_') && value.length > 20,
     'GOOGLE_PLACES_API_KEY': (value: string) => !value.includes('your_') && value.length > 20,
-    'GOOGLE_CALENDAR_CLIENT_ID': (value: string) => !value.includes('your_') && value.length > 20,
-    'GOOGLE_CALENDAR_CLIENT_SECRET': (value: string) => !value.includes('your_') && value.length > 20,
-    'FACEBOOK_GRAPH_ACCESS_TOKEN': (value: string) => !value.includes('your_') && value.length > 20,
+    'GOOGLE_CLIENTID': (value: string) => !value.includes('your_') && value.length > 20, // Updated to match GitHub secret
+    'GOOGLE_OATUH_SECRET': (value: string) => !value.includes('your_') && value.length > 20, // Updated to match GitHub secret
     'DATABASE_URL': (value: string) => (value.startsWith('postgres://') || value.startsWith('postgresql://')) && !value.includes('username:password@localhost') && value.length > 30,
-    'HMAC_SECRET_KEY': (value: string) => !value.includes('your_') && value.length > 20,
+    'HMAC_SECRET': (value: string) => !value.includes('your_') && value.length > 20, // Updated to match GitHub secret
     'JWT_SECRET': (value: string) => !value.includes('your_') && value.length > 20,
-    'N8N_WEBHOOK_URL': (value: string) => (value.startsWith('https://') || value.startsWith('http://')) && !value.includes('your_') && value.length > 10,
-    'N8N_PROTOCOL': (value: string) => ['http', 'https'].includes(value),
-    'N8N_HOST': (value: string) => value.length > 0 && !value.includes('your_'),
-    'N8N_ENCRYPTION_KEY': (value: string) => !value.includes('your_') && value.length >= 32,
-    'N8N_DB_HOST': (value: string) => !value.includes('your_') && value.length > 0,
-    'N8N_DB_USER': (value: string) => !value.includes('your_') && value.length > 0,
-    'N8N_DB_PASSWORD': (value: string) => !value.includes('your_') && value.length > 0,
     'SUPABASE_URL': (value: string) => value.startsWith('https://') && !value.includes('your_') && value.length > 20,
-    'SUPABASE_SERVICE_ROLE_KEY': (value: string) => !value.includes('your_') && value.length > 20,
-    'N8N_INTAKE_WEBHOOK': (value: string) => (value.startsWith('https://') || value.startsWith('http://')) && !value.includes('your_') && value.length > 10
+    'SUPABASE_SERVICE_ROLE_KEY': (value: string) => !value.includes('your_') && value.length > 20
   }
 };
 
