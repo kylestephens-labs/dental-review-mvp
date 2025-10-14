@@ -55,7 +55,7 @@ export async function checkCommitMsgConvention(context: ProveContext): Promise<C
     const parsed = parseCommitMessage(commitMessage);
 
     if (!parsed.isValid) {
-      const reason = `Commit message does not match convention. Expected format: (<feat|fix|chore|refactor|revert>): ... [T-YYYY-MM-DD-###] [MODE:F|NF]. Got: "${commitMessage}"`;
+      const reason = `Commit message does not match convention. Expected format: (<feat|fix|chore|refactor|revert|test>): ... [T-YYYY-MM-DD-###] [MODE:F|NF]. Got: "${commitMessage}"`;
       
       logger.error('Commit message convention check failed', {
         commitMessage,
@@ -111,8 +111,8 @@ function parseCommitMessage(message: string): { isValid: boolean; details: { typ
   const subject = normalizedMessage.split('\n')[0];
 
   // Regex pattern for the convention:
-  // (<feat|fix|chore|refactor|revert>): ... [T-YYYY-MM-DD-###] [MODE:F|NF]
-  const conventionPattern = /^(feat|fix|chore|refactor|revert):\s+(.+?)\s+\[T-(\d{4}-\d{2}-\d{2}-\d+)\]\s+\[MODE:(F|NF)\]$/;
+  // (<feat|fix|chore|refactor|revert|test>): ... [T-YYYY-MM-DD-###] [MODE:F|NF]
+  const conventionPattern = /^(feat|fix|chore|refactor|revert|test):\s+(.+?)\s+\[T-(\d{4}-\d{2}-\d{2}-\d+)\]\s+\[MODE:(F|NF)\]$/;
 
   const match = subject.match(conventionPattern);
 
