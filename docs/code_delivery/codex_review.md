@@ -1,7 +1,7 @@
 
 Please review cursor's work and provide any feedback.
 
-Please provide the following for taskX so codex can review your work
+Please provide the following for the refactoring you did so codex can review your work
 
 -The task identifier plus the intent (“Task X– description, intent”).
 -A quick bullet list of what Cursor says it built or changed (touching code, tests, env/config).
