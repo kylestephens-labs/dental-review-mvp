@@ -7,22 +7,8 @@ import { logger } from '../logger.js';
 import { type CheckResult } from '../runner.js';
 import { readFile } from 'fs/promises';
 import { join } from 'path';
-
-interface CoverageFile {
-  statementMap: Record<string, any>;
-  s: Record<string, number>;
-  branchMap: Record<string, any>;
-  b: Record<string, number[]>;
-  fnMap: Record<string, any>;
-  f: Record<string, number>;
-}
-
-interface CoverageSummary {
-  statements: { pct: number };
-  branches: { pct: number };
-  functions: { pct: number };
-  lines: { pct: number };
-}
+import { type CoverageFile, type CoverageSummary } from '../types/common.js';
+import { CoverageAnalyzer } from '../utils/coverage.js';
 
 export async function checkCoverage(context: ProveContext): Promise<CheckResult> {
   const startTime = Date.now();
@@ -54,75 +40,8 @@ export async function checkCoverage(context: ProveContext): Promise<CheckResult>
       const coverageContent = await readFile(coverageFilePath, 'utf-8');
       const rawCoverageData = JSON.parse(coverageContent);
       
-      // Calculate coverage from Istanbul format
-      let totalStatements = 0;
-      let coveredStatements = 0;
-      let totalBranches = 0;
-      let coveredBranches = 0;
-      let totalFunctions = 0;
-      let coveredFunctions = 0;
-      let totalLines = 0;
-      let coveredLines = 0;
-
-      // Process each file's coverage data
-      for (const [filePath, fileData] of Object.entries(rawCoverageData)) {
-        if (typeof fileData === 'object' && fileData !== null) {
-          const coverage = fileData as CoverageFile;
-          
-          // Calculate statements coverage
-          const statementKeys = Object.keys(coverage.s || {});
-          totalStatements += statementKeys.length;
-          coveredStatements += statementKeys.filter(key => coverage.s[key] > 0).length;
-          
-          // Calculate branches coverage
-          const branchKeys = Object.keys(coverage.b || {});
-          totalBranches += branchKeys.length;
-          coveredBranches += branchKeys.filter(key => {
-            const branchHits = coverage.b[key] || [];
-            return branchHits.some((hit: number) => hit > 0);
-          }).length;
-          
-          // Calculate functions coverage
-          const functionKeys = Object.keys(coverage.f || {});
-          totalFunctions += functionKeys.length;
-          coveredFunctions += functionKeys.filter(key => coverage.f[key] > 0).length;
-          
-          // Calculate lines coverage (approximate from statements)
-          const lineMap = new Set<string>();
-          Object.values(coverage.statementMap || {}).forEach((stmt: any) => {
-            if (stmt && typeof stmt === 'object' && stmt.start && stmt.end) {
-              for (let line = stmt.start.line; line <= stmt.end.line; line++) {
-                lineMap.add(`${filePath}:${line}`);
-              }
-            }
-          });
-          totalLines += lineMap.size;
-          coveredLines += Array.from(lineMap).filter(lineKey => {
-            const [file, line] = lineKey.split(':');
-            const lineNum = parseInt(line, 10);
-            return Object.values(coverage.statementMap || {}).some((stmt: any) => {
-              if (stmt && typeof stmt === 'object' && stmt.start && stmt.end) {
-                return lineNum >= stmt.start.line && lineNum <= stmt.end.line && 
-                       coverage.s[Object.keys(coverage.s || {}).find(key => coverage.statementMap[key] === stmt) || ''] > 0;
-              }
-              return false;
-            });
-          }).length;
-        }
-      }
-
-      // Calculate percentages
-      const statementsCoverage = totalStatements > 0 ? (coveredStatements / totalStatements) * 100 : 0;
-      const branchesCoverage = totalBranches > 0 ? (coveredBranches / totalBranches) * 100 : 0;
-      const functionsCoverage = totalFunctions > 0 ? (coveredFunctions / totalFunctions) * 100 : 0;
-      const linesCoverage = totalLines > 0 ? (coveredLines / totalLines) * 100 : 0;
-
-      coverageData = {
-        statements: { pct: statementsCoverage },
-        branches: { pct: branchesCoverage },
-        functions: { pct: functionsCoverage },
-        lines: { pct: linesCoverage },
-      };
+    // Calculate coverage using shared utility
+    coverageData = CoverageAnalyzer.parseIstanbulCoverage(rawCoverageData);
     } catch (error) {
       const duration = Date.now() - startTime;
       logger.error('Failed to read coverage file', {

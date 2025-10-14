@@ -3,6 +3,7 @@
 
 import { exec } from './exec.js';
 import { logger } from '../logger.js';
+import { type ChangedLine } from '../types/common.js';
 
 export interface GitContext {
   currentBranch: string;
@@ -318,4 +319,75 @@ export function matchesGlobPatterns(filePath: string, patterns: string[]): boole
  */
 export function filterFilesByPatterns(files: string[], patterns: string[]): string[] {
   return files.filter(file => matchesGlobPatterns(file, patterns));
+}
+
+/**
+ * GitAnalyzer class for shared git analysis utilities
+ * Consolidates git diff parsing and analysis logic
+ */
+export class GitAnalyzer {
+  /**
+   * Get changed lines using git diff
+   */
+  static async getChangedLines(baseRef: string, currentRef: string, workingDirectory: string): Promise<ChangedLine[]> {
+    try {
+      // Get diff between base and current commit
+      const result = await exec('git', ['diff', '--unified=0', baseRef, currentRef], {
+        cwd: workingDirectory,
+        timeout: 30000,
+      });
+
+      if (!result.success) {
+        logger.error('Failed to get git diff', { stderr: result.stderr });
+        return [];
+      }
+
+      const diffOutput = result.stdout;
+      const changedLines: ChangedLine[] = [];
+      
+      // Parse diff output to extract changed lines
+      const lines = diffOutput.split('\n');
+      let currentFile = '';
+      
+      for (const line of lines) {
+        // File header: diff --git a/file b/file
+        if (line.startsWith('diff --git')) {
+          const match = line.match(/diff --git a\/(.+) b\/(.+)/);
+          if (match) {
+            currentFile = match[2]; // Use the new file path
+          }
+        }
+        
+        // Hunk header: @@ -oldStart,oldCount +newStart,newCount @@
+        if (line.startsWith('@@')) {
+          const match = line.match(/@@ -(\d+)(?:,(\d+))? \+(\d+)(?:,(\d+))? @@/);
+          if (match && currentFile) {
+            const oldStart = parseInt(match[1], 10);
+            const oldCount = parseInt(match[2] || '1', 10);
+            const newStart = parseInt(match[3], 10);
+            const newCount = parseInt(match[4] || '1', 10);
+            
+            // Add changed lines
+            for (let i = 0; i < newCount; i++) {
+              changedLines.push({
+                file: currentFile,
+                line: newStart + i,
+                type: 'added'
+              });
+            }
+          }
+        }
+      }
+
+      logger.info('Changed lines extracted', { 
+        totalChangedLines: changedLines.length,
+        files: [...new Set(changedLines.map(l => l.file))]
+      });
+
+      return changedLines;
+    } catch (error) {
+      logger.error('Error getting changed lines', { error: error instanceof Error ? error.message : String(error) });
+      return [];
+    }
+  }
 }

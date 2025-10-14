@@ -6,23 +6,10 @@ import { type ProveContext } from '../context.js';
 import { logger } from '../logger.js';
 import { type CheckResult } from '../runner.js';
 import { readFile } from 'fs/promises';
-import { join, resolve } from 'path';
-import { exec } from '../utils/exec.js';
-
-interface CoverageFile {
-  statementMap: Record<string, any>;
-  s: Record<string, number>;
-  branchMap: Record<string, any>;
-  b: Record<string, number[]>;
-  fnMap: Record<string, any>;
-  f: Record<string, number>;
-}
-
-interface ChangedLine {
-  file: string;
-  line: number;
-  type: 'added' | 'modified' | 'deleted';
-}
+import { join } from 'path';
+import { type CoverageFile, type ChangedLine } from '../types/common.js';
+import { CoverageAnalyzer } from '../utils/coverage.js';
+import { GitAnalyzer } from '../utils/git.js';
 
 export async function checkDiffCoverage(context: ProveContext): Promise<CheckResult> {
   const startTime = Date.now();
@@ -64,8 +51,8 @@ export async function checkDiffCoverage(context: ProveContext): Promise<CheckRes
       };
     }
 
-    // Get changed lines using git diff
-    const changedLines = await getChangedLines(context);
+    // Get changed lines using shared utility
+    const changedLines = await GitAnalyzer.getChangedLines(context.git.baseRef, 'HEAD', context.workingDirectory);
     
     if (changedLines.length === 0) {
       logger.info('No changed lines found, diff coverage check passed');
@@ -100,8 +87,8 @@ export async function checkDiffCoverage(context: ProveContext): Promise<CheckRes
       };
     }
 
-    // Calculate coverage for changed lines
-    const coverageResults = calculateChangedLinesCoverage(changedLines, coverageData, context);
+    // Calculate coverage for changed lines using shared utility
+    const coverageResults = CoverageAnalyzer.calculateChangedLinesCoverage(changedLines, coverageData, context.workingDirectory);
     
     const requiredCoverage = context.cfg.thresholds.diffCoverageFunctional;
     const actualCoverage = coverageResults.percentage;
@@ -176,185 +163,11 @@ export async function checkDiffCoverage(context: ProveContext): Promise<CheckRes
   }
 }
 
-/**
- * Get changed lines using git diff
- */
-async function getChangedLines(context: ProveContext): Promise<ChangedLine[]> {
-  try {
-    // Get diff between base and current commit
-    const result = await exec('git', ['diff', '--unified=0', context.git.baseRef, 'HEAD'], {
-      cwd: context.workingDirectory,
-      timeout: 30000,
-    });
+// getChangedLines function moved to shared utility: GitAnalyzer.getChangedLines
 
-    if (!result.success) {
-      logger.error('Failed to get git diff', { stderr: result.stderr });
-      return [];
-    }
-
-    const diffOutput = result.stdout;
-    const changedLines: ChangedLine[] = [];
-    
-    // Parse diff output to extract changed lines
-    const lines = diffOutput.split('\n');
-    let currentFile = '';
-    
-    for (const line of lines) {
-      // File header: @@ -oldStart,oldCount +newStart,newCount @@
-      if (line.startsWith('diff --git')) {
-        const match = line.match(/diff --git a\/(.+) b\/(.+)/);
-        if (match) {
-          currentFile = match[2]; // Use the new file path
-        }
-      }
-      
-      // Hunk header: @@ -oldStart,oldCount +newStart,newCount @@
-      if (line.startsWith('@@')) {
-        const match = line.match(/@@ -(\d+)(?:,(\d+))? \+(\d+)(?:,(\d+))? @@/);
-        if (match && currentFile) {
-          const oldStart = parseInt(match[1], 10);
-          const oldCount = parseInt(match[2] || '1', 10);
-          const newStart = parseInt(match[3], 10);
-          const newCount = parseInt(match[4] || '1', 10);
-          
-          // Add changed lines
-          for (let i = 0; i < newCount; i++) {
-            changedLines.push({
-              file: currentFile,
-              line: newStart + i,
-              type: 'added',
-            });
-          }
-        }
-      }
-    }
-
-    logger.info('Changed lines extracted', {
-      totalChangedLines: changedLines.length,
-      files: [...new Set(changedLines.map(l => l.file))],
-    });
-
-    return changedLines;
-  } catch (error) {
-    logger.error('Failed to get changed lines', {
-      error: error instanceof Error ? error.message : String(error),
-    });
-    return [];
-  }
-}
-
-/**
- * Calculate coverage for changed lines
- */
-function calculateChangedLinesCoverage(
-  changedLines: ChangedLine[],
-  coverageData: Record<string, CoverageFile>,
-  context: ProveContext
-): {
-  totalLines: number;
-  coveredLines: number;
-  percentage: number;
-  uncoveredLines: ChangedLine[];
-} {
-  let totalLines = 0;
-  let coveredLines = 0;
-  const uncoveredLines: ChangedLine[] = [];
-
-  // Group changed lines by file
-  const linesByFile = new Map<string, ChangedLine[]>();
-  for (const line of changedLines) {
-    if (!linesByFile.has(line.file)) {
-      linesByFile.set(line.file, []);
-    }
-    linesByFile.get(line.file)!.push(line);
-  }
-
-  // Process each file
-  for (const [filePath, lines] of linesByFile) {
-    // Normalize the file path to match Istanbul coverage data format
-    // Git diff returns relative paths, but Istanbul uses absolute paths
-    const normalizedPath = resolve(context.workingDirectory, filePath);
-    
-    // Try to find coverage data by absolute path first
-    let coverage = coverageData[normalizedPath];
-    
-    // If not found, try to find by relative path (fallback)
-    if (!coverage) {
-      coverage = coverageData[filePath];
-    }
-    
-    // If still not found, try to find by matching the end of the path
-    if (!coverage) {
-      const matchingKey = Object.keys(coverageData).find(key => 
-        key.endsWith(filePath) || key.includes(filePath)
-      );
-      if (matchingKey) {
-        coverage = coverageData[matchingKey];
-      }
-    }
-    
-    if (!coverage) {
-      logger.warn('No coverage data found for file', { 
-        file: filePath, 
-        normalizedPath,
-        availableKeys: Object.keys(coverageData).slice(0, 5) // Show first 5 keys for debugging
-      });
-      continue;
-    }
-
-    for (const line of lines) {
-      totalLines++;
-      
-      // Check if the line is covered
-      const isCovered = isLineCovered(line.line, coverage);
-      
-      if (isCovered) {
-        coveredLines++;
-      } else {
-        uncoveredLines.push(line);
-      }
-    }
-  }
-
-  const percentage = totalLines > 0 ? (coveredLines / totalLines) * 100 : 100;
-
-  return {
-    totalLines,
-    coveredLines,
-    percentage,
-    uncoveredLines,
-  };
-}
+// calculateChangedLinesCoverage function moved to shared utility: CoverageAnalyzer.calculateChangedLinesCoverage
 
 /**
  * Check if a specific line is covered
  */
-function isLineCovered(lineNumber: number, coverage: CoverageFile): boolean {
-  // Check statement coverage
-  for (const [stmtId, stmt] of Object.entries(coverage.statementMap || {})) {
-    if (stmt && typeof stmt === 'object' && stmt.start && stmt.end) {
-      if (lineNumber >= stmt.start.line && lineNumber <= stmt.end.line) {
-        return (coverage.s[stmtId] || 0) > 0;
-      }
-    }
-  }
-
-  // Check function coverage
-  for (const [fnId, fn] of Object.entries(coverage.fnMap || {})) {
-    if (fn && typeof fn === 'object' && fn.loc && fn.loc.start && fn.loc.end) {
-      if (lineNumber >= fn.loc.start.line && lineNumber <= fn.loc.end.line) {
-        return (coverage.f[fnId] || 0) > 0;
-      }
-    }
-  }
-
-  // Check branch coverage
-  for (const [branchId, branch] of Object.entries(coverage.branchMap || {})) {
-    if (branch && typeof branch === 'object' && branch.line === lineNumber) {
-      const branchHits = coverage.b[branchId] || [];
-      return branchHits.some((hit: number) => hit > 0);
-    }
-  }
-
-  return false;
-}
+// isLineCovered function moved to shared utility: CoverageAnalyzer.isLineCovered

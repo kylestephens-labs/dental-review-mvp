@@ -4,22 +4,14 @@
 import { z } from 'zod';
 import { defaultConfig, type ProveConfig } from './prove.config.js';
 import { logger } from './logger.js';
+import { ThresholdsSchema } from './config/schemas/thresholds.js';
+import { PathsSchema } from './config/schemas/paths.js';
+import { TogglesSchema } from './config/schemas/toggles.js';
 
 // Zod schema for configuration validation
 const ConfigSchema = z.object({
-  thresholds: z.object({
-    diffCoverageFunctional: z.number().min(0).max(100),
-    diffCoverageFunctionalRefactor: z.number().min(0).max(100),
-    globalCoverage: z.number().min(0).max(100),
-    maxWarnings: z.number().min(0),
-    maxCommitSize: z.number().min(1),
-  }),
-  paths: z.object({
-    srcGlobs: z.array(z.string()),
-    testGlobs: z.array(z.string()),
-    coverageFile: z.string(),
-    proveReportFile: z.string(),
-  }),
+  thresholds: ThresholdsSchema,
+  paths: PathsSchema,
   git: z.object({
     baseRefFallback: z.string(),
     requireMainBranch: z.boolean(),
@@ -30,14 +22,7 @@ const ConfigSchema = z.object({
     timeout: z.number().min(1000),
     failFast: z.boolean(),
   }),
-  toggles: z.object({
-    coverage: z.boolean(),
-    diffCoverage: z.boolean(),
-    sizeBudget: z.boolean(),
-    security: z.boolean(),
-    contracts: z.boolean(),
-    dbMigrations: z.boolean(),
-  }),
+  toggles: TogglesSchema,
   modes: z.object({
     functional: z.object({
       requireTdd: z.boolean(),
