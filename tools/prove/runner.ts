@@ -12,6 +12,10 @@ import { checkTests } from './checks/tests.js';
 import { checkCoverage } from './checks/coverage.js';
 import { checkTddChangedHasTests } from './checks/tddChangedHasTests.js';
 import { checkDiffCoverage } from './checks/diffCoverage.js';
+import { checkBuildWeb } from './checks/buildWeb.js';
+import { checkBuildApi } from './checks/buildApi.js';
+import { checkSizeBudget } from './checks/sizeBudget.js';
+import { executeCheck, handleCheckFailure, CHECK_CONFIGS } from './checks/runner-helper.js';
 // import { checkCommitSize } from './checks/commit-size.js'; // Temporarily disabled
 import { checkCommitMsgConvention } from './checks/commit-msg-convention.js';
 // import { checkFeatureFlagLint } from './checks/feature-flag-lint.js'; // Temporarily disabled
@@ -529,6 +533,69 @@ export async function runAll(
       });
 
       return results;
+    }
+
+    // Run build check (skip in quick mode)
+    logger.info('Running build checks...');
+    
+    const buildWebResult = await executeCheck(
+      context,
+      CHECK_CONFIGS.buildWeb,
+      checkBuildWeb,
+      quickMode
+    );
+    
+    results.push(buildWebResult);
+
+    // Handle build check failure
+    if (!buildWebResult.ok) {
+      const failureResult = handleCheckFailure(
+        'build-web',
+        buildWebResult.reason || 'Build check failed',
+        results,
+        failFast,
+        startTime
+      );
+      if (failureResult) return failureResult;
+    }
+
+    // Run API build check (stub - always skipped, runs in both quick and full mode)
+    logger.info('Running API build checks...');
+    
+    const buildApiResult = await executeCheck(
+      context,
+      CHECK_CONFIGS.buildApi,
+      checkBuildApi,
+      quickMode
+    );
+    
+    results.push(buildApiResult);
+
+    // Run size budget check (optional - controlled by toggle)
+    logger.info('Running size budget checks...');
+    
+    // Check if buildWeb already ran and succeeded
+    const buildWebSucceeded = buildWebResult.ok && !buildWebResult.reason?.includes('skipped');
+    
+    const sizeBudgetResult = await executeCheck(
+      context,
+      CHECK_CONFIGS.sizeBudget,
+      (ctx) => checkSizeBudget(ctx, buildWebSucceeded),
+      quickMode
+    );
+    
+    results.push(sizeBudgetResult);
+
+    // Handle size budget check failure
+    if (!sizeBudgetResult.ok) {
+      const failureResult = handleCheckFailure(
+        'size-budget',
+        sizeBudgetResult.reason || 'Size budget check failed',
+        results,
+        failFast,
+        startTime
+      );
+      if (failureResult) return failureResult;
     }
     
     const totalMs = Date.now() - startTime;

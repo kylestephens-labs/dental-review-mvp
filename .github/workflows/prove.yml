@@ -1,0 +1,177 @@
+name: Prove Quality Gates
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  prove-quality-gates:
+    name: Prove Quality Gates
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    strategy:
+      matrix:
+        node-version: [18, 20]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Pre-conflict dry merge (for PRs)
+        if: github.event_name == 'pull_request'
+        run: |
+          echo "Performing pre-conflict dry merge..."
+          git fetch origin ${{ github.base_ref }}
+          git merge --no-commit --no-ff origin/${{ github.base_ref }}
+          git merge --abort || true
+          echo "Pre-conflict check completed"
+
+      - name: Run Prove Quality Gates (Quick Mode)
+        run: npm run prove:quick
+        env:
+          # Environment variables for prove checks
+          AWS_SES_ACCESS_KEY_ID: ${{ secrets.AWS_SES_ACCESS_KEY_ID }}
+          AWS_SES_SECRET_ACCESS_KEY: ${{ secrets.AWS_SES_SECRET_ACCESS_KEY }}
+          FACEBOOK_GRAPH_ACCESS_TOKEN: ${{ secrets.FACEBOOK_GRAPH_ACCESS_TOKEN }}
+          HMAC_SECRET_KEY: ${{ secrets.HMAC_SECRET_KEY }}
+          N8N_ENCRYPTION_KEY: ${{ secrets.N8N_ENCRYPTION_KEY }}
+
+      - name: Run Prove Quality Gates (Full Mode) - Main Branch Only
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        run: npm run prove
+        env:
+          # Environment variables for prove checks
+          AWS_SES_ACCESS_KEY_ID: ${{ secrets.AWS_SES_ACCESS_KEY_ID }}
+          AWS_SES_SECRET_ACCESS_KEY: ${{ secrets.AWS_SES_SECRET_ACCESS_KEY }}
+          FACEBOOK_GRAPH_ACCESS_TOKEN: ${{ secrets.FACEBOOK_GRAPH_ACCESS_TOKEN }}
+          HMAC_SECRET_KEY: ${{ secrets.HMAC_SECRET_KEY }}
+          N8N_ENCRYPTION_KEY: ${{ secrets.N8N_ENCRYPTION_KEY }}
+
+      - name: Upload Prove Report Artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: prove-report-node-${{ matrix.node-version }}
+          path: |
+            prove-report.json
+            prove-report.txt
+          retention-days: 30
+
+      - name: Comment PR with Prove Results
+        if: github.event_name == 'pull_request' && always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const path = require('path');
+            
+            try {
+              // Try to read prove report
+              const reportPath = 'prove-report.json';
+              if (fs.existsSync(reportPath)) {
+                const report = JSON.parse(fs.readFileSync(reportPath, 'utf8'));
+                
+                const comment = `## 🔍 Prove Quality Gates Results
+                
+                **Status**: ${report.success ? '✅ PASSED' : '❌ FAILED'}
+                **Mode**: ${report.mode || 'unknown'}
+                **Total Checks**: ${report.checks?.length || 0}
+                **Passed**: ${report.checks?.filter(c => c.ok).length || 0}
+                **Failed**: ${report.checks?.filter(c => !c.ok).length || 0}
+                **Duration**: ${report.totalMs ? `${report.totalMs}ms` : 'unknown'}
+                
+                ### Check Details:
+                ${report.checks?.map(check => 
+                  `- **${check.id}**: ${check.ok ? '✅' : '❌'} ${check.reason || ''} (${check.ms}ms)`
+                ).join('\n') || 'No check details available'}
+                
+                <details>
+                <summary>📊 Full Report</summary>
+                
+                \`\`\`json
+                ${JSON.stringify(report, null, 2)}
+                \`\`\`
+                </details>`;
+                
+                github.rest.issues.createComment({
+                  issue_number: context.issue.number,
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  body: comment
+                });
+              } else {
+                github.rest.issues.createComment({
+                  issue_number: context.issue.number,
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  body: '## 🔍 Prove Quality Gates Results\n\n❌ **No report generated** - Check workflow logs for details.'
+                });
+              }
+            } catch (error) {
+              console.error('Error creating PR comment:', error);
+              github.rest.issues.createComment({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: '## 🔍 Prove Quality Gates Results\n\n⚠️ **Error generating report** - Check workflow logs for details.'
+              });
+            }
+
+  prove-quality-gates-fast:
+    name: Prove Quality Gates (Fast)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run Prove Quality Gates (Quick Mode)
+        run: npm run prove:quick
+        env:
+          # Environment variables for prove checks
+          AWS_SES_ACCESS_KEY_ID: ${{ secrets.AWS_SES_ACCESS_KEY_ID }}
+          AWS_SES_SECRET_ACCESS_KEY: ${{ secrets.AWS_SES_SECRET_ACCESS_KEY }}
+          FACEBOOK_GRAPH_ACCESS_TOKEN: ${{ secrets.FACEBOOK_GRAPH_ACCESS_TOKEN }}
+          HMAC_SECRET_KEY: ${{ secrets.HMAC_SECRET_KEY }}
+          N8N_ENCRYPTION_KEY: ${{ secrets.N8N_ENCRYPTION_KEY }}
+
+      - name: Upload Prove Report Artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: prove-report-fast
+          path: |
+            prove-report.json
+            prove-report.txt
+          retention-days: 30

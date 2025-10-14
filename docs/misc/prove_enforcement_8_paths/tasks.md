@@ -269,7 +269,7 @@ Do: Return success with “skipped (no server build)”.
 Test: npm run prove shows “skipped”.
 Done when: OK.
 
-T22 — Check: sizeBudget.ts (optional)
+T22 — Check: sizeBudget.ts
 
 Goal: Enforce bundle budgets.
 Do: If toggled, run size-limit.
