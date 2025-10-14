@@ -53,6 +53,77 @@ jobs:
         echo "🚀 Code is ready for trunk-based development"
         echo "⏱️  Execution time: ~2-3 minutes"
         
+    - name: Auto-Close Urgent Issues on Success
+      if: success() && github.ref == 'refs/heads/main' && github.event_name == 'push'
+      uses: actions/github-script@v7
+      with:
+        script: |
+          console.log('🔍 Checking for urgent issues to close...');
+          
+          // Find all open issues with urgent/rollback labels
+          const issues = await github.rest.issues.listForRepo({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            state: 'open',
+            labels: 'urgent,rollback,main-branch,prove-failure'
+          });
+          
+          if (issues.data.length === 0) {
+            console.log('✅ No urgent issues found to close');
+            return;
+          }
+          
+          console.log(`📋 Found ${issues.data.length} urgent issues to close`);
+          
+          // Close each issue with a resolution comment
+          for (const issue of issues.data) {
+            try {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issue.number,
+                body: `## ✅ **AUTOMATICALLY RESOLVED**
+
+**Main branch has been restored and prove quality gates are now passing.**
+
+### 📊 Resolution Details
+- **Commit**: \`${{ github.sha }}\`
+- **Author**: ${{ github.actor }}
+- **Message**: ${{ github.event.head_commit.message }}
+- **Workflow**: ${{ github.workflow }}
+- **Resolved At**: ${new Date().toISOString()}
+
+### ✅ Status Verification
+- **Trunk-based development**: ✅ PASSED
+- **Commit message convention**: ✅ PASSED
+- **Pre-conflict checks**: ✅ PASSED
+- **Environment validation**: ✅ PASSED (in CI)
+- **Type checking**: ✅ PASSED
+- **Linting**: ✅ PASSED
+- **Unit tests**: ✅ PASSED
+
+### 🎯 Result
+**Main branch is stable and ready for continued development.**
+
+---
+*This issue was automatically closed by the Prove Quality Gates workflow after successful validation.*`
+              });
+              
+              await github.rest.issues.update({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issue.number,
+                state: 'closed'
+              });
+              
+              console.log(`✅ Closed issue #${issue.number}: ${issue.title}`);
+            } catch (error) {
+              console.error(`❌ Failed to close issue #${issue.number}:`, error.message);
+            }
+          }
+          
+          console.log('🎉 All urgent issues have been processed');
+        
     - name: Auto-Rollback on Failure
       if: failure() && github.ref == 'refs/heads/main' && github.event_name == 'push'
       run: |

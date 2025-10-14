@@ -133,6 +133,75 @@ jobs:
           prove-output.log
         retention-days: 30
         
+    - name: Auto-Close Urgent Issues on Success
+      if: success()
+      uses: actions/github-script@v7
+      with:
+        script: |
+          console.log('🔍 Checking for urgent issues to close...');
+          
+          // Find all open issues with urgent/rollback labels
+          const issues = await github.rest.issues.listForRepo({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            state: 'open',
+            labels: 'urgent,rollback,main-branch,prove-failure'
+          });
+          
+          if (issues.data.length === 0) {
+            console.log('✅ No urgent issues found to close');
+            return;
+          }
+          
+          console.log(`📋 Found ${issues.data.length} urgent issues to close`);
+          
+          // Close each issue with a resolution comment
+          for (const issue of issues.data) {
+            try {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issue.number,
+                body: `## ✅ **AUTOMATICALLY RESOLVED**
+
+**Main branch has been restored and prove quality gates are now passing.**
+
+### 📊 Resolution Details
+- **Commit**: \`${{ github.sha }}\`
+- **Author**: ${{ github.actor }}
+- **Message**: Nightly prove quality gates validation
+- **Workflow**: ${{ github.workflow }}
+- **Resolved At**: ${new Date().toISOString()}
+
+### ✅ Status Verification
+- **Prove Full Run**: ✅ PASSED
+- **Coverage Report**: ✅ GENERATED
+- **Security Audit**: ✅ COMPLETED
+- **Build Analysis**: ✅ SUCCESSFUL
+- **Bundle Analysis**: ✅ COMPLETED
+
+### 🎯 Result
+**Main branch is stable and ready for continued development.**
+
+---
+*This issue was automatically closed by the Prove Nightly Full workflow after successful validation.*`
+              });
+              
+              await github.rest.issues.update({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issue.number,
+                state: 'closed'
+              });
+              
+              console.log(`✅ Closed issue #${issue.number}: ${issue.title}`);
+            } catch (error) {
+              console.error(`❌ Failed to close issue #${issue.number}:`, error.message);
+            }
+          }
+          
+          console.log('🎉 All urgent issues have been processed');
+        
     - name: Nightly Summary
       if: always()
       run: |
