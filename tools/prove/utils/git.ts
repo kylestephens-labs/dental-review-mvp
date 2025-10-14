@@ -354,7 +354,8 @@ export class GitAnalyzer {
         if (line.startsWith('diff --git')) {
           const match = line.match(/diff --git a\/(.+) b\/(.+)/);
           if (match) {
-            currentFile = match[2]; // Use the new file path
+            // Strip the b/ prefix and use repo-relative path
+            currentFile = match[2].replace(/^b\//, '');
           }
         }
         

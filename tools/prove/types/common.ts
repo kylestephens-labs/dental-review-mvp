@@ -8,6 +8,7 @@ export interface CoverageFile {
   b: Record<string, number[]>;
   fnMap: Record<string, any>;
   f: Record<string, number>;
+  l?: Record<number, number>; // Line coverage data (Istanbul format)
 }
 
 export interface ChangedLine {

@@ -3,6 +3,7 @@
 
 import { type CoverageFile, type CoverageSummary, type CoverageResult, type ChangedLine } from '../types/common.js';
 import { logger } from '../logger.js';
+import { join, resolve, normalize } from 'path';
 
 export class CoverageAnalyzer {
   /**
@@ -102,8 +103,8 @@ export class CoverageAnalyzer {
 
     // Process each file
     for (const [filePath, lines] of linesByFile) {
-      // Normalize the file path to match Istanbul coverage data format
-      const normalizedPath = `${workingDirectory}/${filePath}`;
+      // Build normalized path using proper path utilities for cross-platform compatibility
+      const normalizedPath = normalize(resolve(workingDirectory, filePath));
       
       // Try to find coverage data by absolute path first
       let coverage = coverageData[normalizedPath];
@@ -116,7 +117,7 @@ export class CoverageAnalyzer {
       // If still not found, try to find by matching the end of the path
       if (!coverage) {
         const matchingKey = Object.keys(coverageData).find(key => 
-          key.endsWith(filePath) || key.includes(filePath)
+          normalize(key).endsWith(normalize(filePath)) || key.includes(filePath)
         );
         if (matchingKey) {
           coverage = coverageData[matchingKey];
@@ -129,15 +130,19 @@ export class CoverageAnalyzer {
           normalizedPath,
           availableKeys: Object.keys(coverageData).slice(0, 5) // Show first 5 keys for debugging
         });
+        // Count missing coverage as uncovered lines
+        for (const line of lines) {
+          totalLines++;
+          uncoveredLines.push(line);
+        }
         continue;
       }
 
       for (const line of lines) {
         totalLines++;
         
-        // Check if the line is covered by looking at statement coverage
-        // This is a simplified approach - in reality, we'd need to map line numbers to statements
-        const isCovered = this.isLineCovered(line, coverage);
+        // Use real line-to-hit mapping from Istanbul coverage
+        const isCovered = this.isLineCovered(line.line, coverage);
         
         if (isCovered) {
           coveredLines++;
@@ -158,11 +163,24 @@ export class CoverageAnalyzer {
   }
 
   /**
-   * Check if a specific line is covered (simplified implementation)
+   * Check if a specific line is covered using Istanbul's line coverage data
    */
-  private static isLineCovered(line: ChangedLine, coverage: CoverageFile): boolean {
-    // This is a simplified check - in reality, we'd need to map line numbers to statement IDs
-    // For now, we'll assume all lines are covered if there's any coverage data
-    return Object.keys(coverage.s || {}).length > 0;
+  private static isLineCovered(lineNumber: number, coverage: CoverageFile): boolean {
+    // Use Istanbul's line coverage data (coverage.l[lineNumber])
+    // This is the most accurate way to check if a specific line is covered
+    if (coverage.l && typeof coverage.l === 'object') {
+      return (coverage.l[lineNumber] || 0) > 0;
+    }
+    
+    // Fallback: check if any statement on this line is covered
+    for (const [stmtId, stmt] of Object.entries(coverage.statementMap || {})) {
+      if (stmt && typeof stmt === 'object' && stmt.start && stmt.end) {
+        if (lineNumber >= stmt.start.line && lineNumber <= stmt.end.line) {
+          return (coverage.s[stmtId] || 0) > 0;
+        }
+      }
+    }
+    
+    return false;
   }
 }
