@@ -1,15 +1,26 @@
 // Entry point for prove CLI
-// TODO: Implement CLI logic
 
 import { logger } from './logger.js';
 import { buildContext, getContextSummary, validateContext } from './context.js';
 import { runAll } from './runner.js';
+import { parseArgs, printHelp } from './utils/args.js';
 
 // Parse command line arguments
 const args = process.argv.slice(2);
-const isQuickMode = args.includes('--quick');
+const options = parseArgs(args);
 
-if (isQuickMode) {
+// Handle help option
+if (options.help) {
+  printHelp();
+  process.exit(0);
+}
+
+// Set up logging based on options
+if (options.json) {
+  process.env.PROVE_JSON = '1';
+}
+
+if (options.quickMode) {
   logger.header("Prove Quality Gates - Quick Mode");
   logger.info("Running fast checks: env + typecheck + lint + unit tests");
 } else {
@@ -47,21 +58,63 @@ try {
   // Context is ready for checks to import
   logger.success("Context system ready for checks to import");
 
-  // Test runner
+  // Run all prove checks
   logger.info("Testing runner...");
-  const checkResults = await runAll(context, { quickMode: isQuickMode });
+  const checkResults = await runAll(context, { 
+    quickMode: options.quickMode,
+    failFast: true 
+  });
   
   // Generate final report
   logger.generateReport(context.mode, checkResults);
 
-  // Exit with error code if any checks failed
-  if (checkResults.some(result => !result.ok)) {
+  // Check for failures and provide clear failure reasons
+  const failedChecks = checkResults.filter(result => !result.ok);
+  
+  if (failedChecks.length > 0) {
+    logger.error("Prove checks failed", {
+      totalChecks: checkResults.length,
+      passedChecks: checkResults.filter(r => r.ok).length,
+      failedChecks: failedChecks.length,
+      failures: failedChecks.map(check => ({
+        id: check.id,
+        reason: check.reason,
+        duration: `${check.ms}ms`
+      }))
+    });
+    
+    // Print detailed failure information
+    logger.error("Failed checks details:");
+    failedChecks.forEach(check => {
+      logger.error(`[${check.id}] Failed: ${check.reason || 'Unknown error'}`);
+      if (check.details) {
+        logger.error(`[${check.id}] Details:`, check.details);
+      }
+    });
+    
     process.exit(1);
   }
 
+  // All checks passed
+  logger.success("All prove checks passed successfully");
+  process.exit(0);
+
 } catch (error) {
   logger.error("Prove execution failed", {
-    error: error instanceof Error ? error.message : String(error)
+    error: error instanceof Error ? error.message : String(error),
+    stack: error instanceof Error ? error.stack : undefined
   });
+  
+  // Print clear error message
+  logger.error("Fatal error occurred during prove execution");
+  if (error instanceof Error) {
+    logger.error(`Error: ${error.message}`);
+    if (error.stack) {
+      logger.error("Stack trace:", error.stack);
+    }
+  } else {
+    logger.error(`Error: ${String(error)}`);
+  }
+  
   process.exit(1);
 }

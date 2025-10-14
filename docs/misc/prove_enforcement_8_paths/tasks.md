@@ -457,3 +457,5 @@ Test failures - Environment setup, feature flag issues, Supabase client issues
 Coverage - Depends on tests running successfully
 Environment check - When all GitHub Secrets are properly configured
 The goal is to have a working CI pipeline that allows development to continue while we incrementally fix the underlying issues in dedicated tasks.
+prove-report.txt files
+Full mode: Still commented out as "TEMPORARILY DISABLED" (lines 67-72) in prove.yml

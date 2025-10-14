@@ -1,6 +1,7 @@
-// Orchestrates checks (serial + parallel)
-// Skeleton implementation ready for check registration
+// Orchestrates checks (serial + parallel) with p-limit concurrency control
+// Implements bounded parallelism for parallel checks while maintaining serial execution for critical checks
 
+import pLimit from 'p-limit';
 import { type ProveContext } from './context.js';
 import { logger } from './logger.js';
 import { checkTrunk } from './checks/trunk.js';
@@ -20,6 +21,7 @@ import { executeCheck, handleCheckFailure, CHECK_CONFIGS } from './checks/runner
 import { checkCommitMsgConvention } from './checks/commit-msg-convention.js';
 // import { checkFeatureFlagLint } from './checks/feature-flag-lint.js'; // Temporarily disabled
 import { checkKillswitchRequired } from './checks/killswitch-required.js';
+import { checkDeliveryMode } from './checks/deliveryMode.js';
 
 export interface CheckResult {
   id: string;
@@ -37,7 +39,64 @@ export interface RunnerOptions {
 }
 
 /**
- * Run all prove checks
+ * Get execution plan based on context and options
+ * @param context - Prove context
+ * @param quickMode - Whether to run in quick mode
+ * @returns Object with critical and parallel check lists
+ */
+function getExecutionPlan(context: ProveContext, quickMode: boolean) {
+  // Define critical checks that must run serially (fail-fast)
+  const criticalChecks = [
+    { id: 'trunk', fn: checkTrunk },
+    { id: 'delivery-mode', fn: checkDeliveryMode },
+    { id: 'commit-msg-convention', fn: checkCommitMsgConvention },
+    { id: 'killswitch-required', fn: checkKillswitchRequired },
+  ];
+
+  // Add pre-conflict check if not in quick mode
+  if (!quickMode) {
+    criticalChecks.push({ id: 'pre-conflict', fn: checkPreConflict });
+  }
+
+  // Define parallel checks that can run concurrently
+  const parallelChecks = [
+    { id: 'env-check', fn: checkEnvCheck },
+    { id: 'lint', fn: checkLint },
+    { id: 'typecheck', fn: checkTypecheck },
+    { id: 'tests', fn: checkTests },
+  ];
+
+  // Add mode-specific checks
+  if (context.mode === 'functional') {
+    parallelChecks.push(
+      { id: 'tdd-changed-has-tests', fn: checkTddChangedHasTests },
+      { id: 'diff-coverage', fn: checkDiffCoverage }
+    );
+  }
+
+  // Add coverage check if enabled
+  if (context.cfg.toggles.coverage) {
+    parallelChecks.push({ id: 'coverage', fn: checkCoverage });
+  }
+
+  // Add build checks if not in quick mode
+  if (!quickMode) {
+    parallelChecks.push(
+      { id: 'build-web', fn: checkBuildWeb },
+      { id: 'build-api', fn: checkBuildApi }
+    );
+  }
+
+  // Add size budget check if enabled and not in quick mode
+  if (context.cfg.toggles.sizeBudget && !quickMode) {
+    parallelChecks.push({ id: 'size-budget', fn: checkSizeBudget });
+  }
+
+  return { criticalChecks, parallelChecks };
+}
+
+/**
+ * Run all prove checks with proper serial/parallel execution using p-limit
  * @param context - Prove context
  * @param options - Runner options
  * @returns Promise<CheckResult[]> - Results of all checks
@@ -65,209 +124,30 @@ export async function runAll(
   const results: CheckResult[] = [];
 
   try {
-    // Run trunk check (critical - must be first)
-    logger.info('Running critical checks...');
-    
-    const trunkStartTime = Date.now();
-    const trunkResult = await checkTrunk(context);
-    const trunkMs = Date.now() - trunkStartTime;
-    
-    const trunkCheckResult: CheckResult = {
-      id: 'trunk',
-      ok: trunkResult.ok,
-      ms: trunkMs,
-      reason: trunkResult.reason,
-    };
-    
-    results.push(trunkCheckResult);
-    
-    // If trunk check fails, stop here (fail-fast)
-    if (!trunkResult.ok && failFast) {
-      logger.error('Critical check failed - stopping execution', {
-        checkId: 'trunk',
-        reason: trunkResult.reason,
-      });
+    // Get execution plan
+    const { criticalChecks, parallelChecks } = getExecutionPlan(context, quickMode);
+
+    // Run critical checks serially (fail-fast)
+    logger.info('Running critical checks serially...');
+    for (const { id, fn } of criticalChecks) {
+      const checkStartTime = Date.now();
+      const checkResult = await fn(context);
+      const checkMs = Date.now() - checkStartTime;
       
-      const totalMs = Date.now() - startTime;
-      const successCount = results.filter(r => r.ok).length;
-      const failureCount = results.filter(r => !r.ok).length;
-
-      logger.error('Checks failed', {
-        total: results.length,
-        passed: successCount,
-        failed: failureCount,
-        totalMs,
-      });
-
-      return results;
-    }
-    
-    // TEMPORARILY DISABLED: Run commit size check (critical - must be second)
-    // TODO: Re-enable when prove quality gates implementation is complete
-    /*
-    const commitSizeStartTime = Date.now();
-    const commitSizeResult = await checkCommitSize(context);
-    const commitSizeMs = Date.now() - commitSizeStartTime;
-    
-    const commitSizeCheckResult: CheckResult = {
-      id: 'commit-size',
-      ok: commitSizeResult.ok,
-      ms: commitSizeMs,
-      reason: commitSizeResult.reason,
-    };
-    
-    results.push(commitSizeCheckResult);
-    
-    // If commit size check fails, stop here (fail-fast)
-    if (!commitSizeResult.ok && failFast) {
-      logger.error('Critical check failed - stopping execution', {
-        checkId: 'commit-size',
-        reason: commitSizeResult.reason,
-      });
-      
-      const totalMs = Date.now() - startTime;
-      const successCount = results.filter(r => r.ok).length;
-      const failureCount = results.filter(r => !r.ok).length;
-
-      logger.error('Checks failed', {
-        total: results.length,
-        passed: successCount,
-        failed: failureCount,
-        totalMs,
-      });
-
-      return results;
-    }
-    */
-    
-    // Run commit message convention check (critical - must be third)
-    const commitMsgStartTime = Date.now();
-    const commitMsgResult = await checkCommitMsgConvention(context);
-    const commitMsgMs = Date.now() - commitMsgStartTime;
-    
-    const commitMsgCheckResult: CheckResult = {
-      id: 'commit-msg-convention',
-      ok: commitMsgResult.ok,
-      ms: commitMsgMs,
-      reason: commitMsgResult.reason,
-    };
-    
-    results.push(commitMsgCheckResult);
-    
-    // If commit message convention check fails, stop here (fail-fast)
-    if (!commitMsgResult.ok && failFast) {
-      logger.error('Critical check failed - stopping execution', {
-        checkId: 'commit-msg-convention',
-        reason: commitMsgResult.reason,
-      });
-      
-      const totalMs = Date.now() - startTime;
-      const successCount = results.filter(r => r.ok).length;
-      const failureCount = results.filter(r => !r.ok).length;
-
-      logger.error('Checks failed', {
-        total: results.length,
-        passed: successCount,
-        failed: failureCount,
-        totalMs,
-      });
-
-      return results;
-    }
-    
-    // Run kill-switch required check (critical - must be fourth)
-    const killswitchStartTime = Date.now();
-    const killswitchResult = await checkKillswitchRequired(context);
-    const killswitchMs = Date.now() - killswitchStartTime;
-    
-    const killswitchCheckResult: CheckResult = {
-      id: 'killswitch-required',
-      ok: killswitchResult.ok,
-      ms: killswitchMs,
-      reason: killswitchResult.reason,
-    };
-    
-    results.push(killswitchCheckResult);
-    
-    // If kill-switch check fails, stop here (fail-fast)
-    if (!killswitchResult.ok && failFast) {
-      logger.error('Critical check failed - stopping execution', {
-        checkId: 'killswitch-required',
-        reason: killswitchResult.reason,
-      });
-      
-      const totalMs = Date.now() - startTime;
-      const successCount = results.filter(r => r.ok).length;
-      const failureCount = results.filter(r => !r.ok).length;
-
-      logger.error('Checks failed', {
-        total: results.length,
-        passed: successCount,
-        failed: failureCount,
-        totalMs,
-      });
-
-      return results;
-    }
-    
-    // TEMPORARILY DISABLED: Run feature flag lint check (critical - must be fifth)
-    // TODO: Re-enable when prove quality gates implementation is complete
-    /*
-    const featureFlagLintStartTime = Date.now();
-    const featureFlagLintResult = await checkFeatureFlagLint(context);
-    const featureFlagLintMs = Date.now() - featureFlagLintStartTime;
-    
-    const featureFlagLintCheckResult: CheckResult = {
-      id: 'feature-flag-lint',
-      ok: featureFlagLintResult.ok,
-      ms: featureFlagLintMs,
-      reason: featureFlagLintResult.reason,
-    };
-    
-    results.push(featureFlagLintCheckResult);
-    
-    // If feature flag lint check fails, stop here (fail-fast)
-    if (!featureFlagLintResult.ok && failFast) {
-      logger.error('Critical check failed - stopping execution', {
-        checkId: 'feature-flag-lint',
-        reason: featureFlagLintResult.reason,
-      });
-      
-      const totalMs = Date.now() - startTime;
-      const successCount = results.filter(r => r.ok).length;
-      const failureCount = results.filter(r => !r.ok).length;
-
-      logger.error('Checks failed', {
-        total: results.length,
-        passed: successCount,
-        failed: failureCount,
-        totalMs,
-      });
-
-      return results;
-    }
-    */
-    
-    // Run pre-conflict check (critical - must be fifth, skip in quick mode)
-    if (!quickMode) {
-      const preConflictStartTime = Date.now();
-      const preConflictResult = await checkPreConflict(context);
-      const preConflictMs = Date.now() - preConflictStartTime;
-      
-      const preConflictCheckResult: CheckResult = {
-        id: 'pre-conflict',
-        ok: preConflictResult.ok,
-        ms: preConflictMs,
-        reason: preConflictResult.reason,
+      const result: CheckResult = {
+        id,
+        ok: checkResult.ok,
+        ms: checkMs,
+        reason: checkResult.reason,
       };
       
-      results.push(preConflictCheckResult);
+      results.push(result);
       
-      // If pre-conflict check fails, stop here (fail-fast)
-      if (!preConflictResult.ok && failFast) {
+      // Fail-fast on critical check failure
+      if (!checkResult.ok && failFast) {
         logger.error('Critical check failed - stopping execution', {
-          checkId: 'pre-conflict',
-          reason: preConflictResult.reason,
+          checkId: id,
+          reason: checkResult.reason,
         });
         
         const totalMs = Date.now() - startTime;
@@ -283,34 +163,95 @@ export async function runAll(
 
         return results;
       }
-    } else {
-      logger.info('Skipping pre-conflict check in quick mode');
     }
+
+    // Run parallel checks with concurrency limit and proper fail-fast
+    logger.info('Running parallel checks with concurrency limit...', {
+      parallelChecks: parallelChecks.length,
+      concurrency,
+    });
+
+    const limit = pLimit(concurrency);
+    const parallelResults: CheckResult[] = [];
+    let hasFailed = false;
+    let firstFailure: CheckResult | null = null;
+
+    // Create a queue of check functions to execute
+    const checkQueue = [...parallelChecks];
     
-    // Run basic checks (env + lint + typecheck) - always run these
-    logger.info('Running basic checks (env + lint + typecheck)...');
-    
-    // Run environment check
-    const envCheckStartTime = Date.now();
-    const envCheckResult = await checkEnvCheck(context);
-    const envCheckMs = Date.now() - envCheckStartTime;
-    
-    const envCheckCheckResult: CheckResult = {
-      id: 'env-check',
-      ok: envCheckResult.ok,
-      ms: envCheckMs,
-      reason: envCheckResult.reason,
-    };
-    
-    results.push(envCheckCheckResult);
-    
-    // If env check fails, stop here (fail-fast)
-    if (!envCheckResult.ok && failFast) {
-      logger.error('Critical check failed - stopping execution', {
-        checkId: 'env-check',
-        reason: envCheckResult.reason,
-      });
+    // Process checks with fail-fast behavior
+    const processChecks = async (): Promise<void> => {
+      const promises: Promise<void>[] = [];
       
+      for (let i = 0; i < Math.min(concurrency, checkQueue.length); i++) {
+        promises.push(processNextCheck());
+      }
+      
+      await Promise.all(promises);
+    };
+
+    const processNextCheck = async (): Promise<void> => {
+      while (checkQueue.length > 0 && !hasFailed) {
+        const { id, fn } = checkQueue.shift()!;
+        
+        try {
+          const checkStartTime = Date.now();
+          const checkResult = await fn(context);
+          const checkMs = Date.now() - checkStartTime;
+          
+          const result: CheckResult = {
+            id,
+            ok: checkResult.ok,
+            ms: checkMs,
+            reason: checkResult.reason,
+          };
+          
+          parallelResults.push(result);
+          
+          // Check for failure and set fail-fast flag
+          if (!checkResult.ok && failFast) {
+            hasFailed = true;
+            firstFailure = result;
+            logger.error('Parallel check failed - stopping execution', {
+              checkId: id,
+              reason: checkResult.reason,
+            });
+            return;
+          }
+          
+          // If not failed, process next check if available
+          if (checkQueue.length > 0) {
+            return processNextCheck();
+          }
+        } catch (error) {
+          const checkMs = Date.now() - checkStartTime;
+          const result: CheckResult = {
+            id,
+            ok: false,
+            ms: checkMs,
+            reason: error instanceof Error ? error.message : String(error),
+          };
+          
+          parallelResults.push(result);
+          
+          if (failFast) {
+            hasFailed = true;
+            firstFailure = result;
+            logger.error('Parallel check failed - stopping execution', {
+              checkId: id,
+              reason: result.reason,
+            });
+            return;
+          }
+        }
+      }
+    };
+
+    await processChecks();
+    results.push(...parallelResults);
+
+    // Handle fail-fast scenario
+    if (hasFailed && firstFailure) {
       const totalMs = Date.now() - startTime;
       const successCount = results.filter(r => r.ok).length;
       const failureCount = results.filter(r => !r.ok).length;
@@ -320,282 +261,10 @@ export async function runAll(
         passed: successCount,
         failed: failureCount,
         totalMs,
+        firstFailure: firstFailure.id,
       });
 
       return results;
-    }
-    
-    // Run lint check
-    const lintStartTime = Date.now();
-    const lintResult = await checkLint(context);
-    const lintMs = Date.now() - lintStartTime;
-    
-    const lintCheckResult: CheckResult = {
-      id: 'lint',
-      ok: lintResult.ok,
-      ms: lintMs,
-      reason: lintResult.reason,
-    };
-    
-    results.push(lintCheckResult);
-    
-    // If lint check fails, stop here (fail-fast)
-    if (!lintResult.ok && failFast) {
-      logger.error('Critical check failed - stopping execution', {
-        checkId: 'lint',
-        reason: lintResult.reason,
-      });
-      
-      const totalMs = Date.now() - startTime;
-      const successCount = results.filter(r => r.ok).length;
-      const failureCount = results.filter(r => !r.ok).length;
-
-      logger.error('Checks failed', {
-        total: results.length,
-        passed: successCount,
-        failed: failureCount,
-        totalMs,
-      });
-
-      return results;
-    }
-    
-    // Run typecheck
-    const typecheckStartTime = Date.now();
-    const typecheckResult = await checkTypecheck(context);
-    const typecheckMs = Date.now() - typecheckStartTime;
-    
-    const typecheckCheckResult: CheckResult = {
-      id: 'typecheck',
-      ok: typecheckResult.ok,
-      ms: typecheckMs,
-      reason: typecheckResult.reason,
-    };
-    
-    results.push(typecheckCheckResult);
-    
-    // If typecheck fails, stop here (fail-fast)
-    if (!typecheckResult.ok && failFast) {
-      logger.error('Critical check failed - stopping execution', {
-        checkId: 'typecheck',
-        reason: typecheckResult.reason,
-      });
-      
-      const totalMs = Date.now() - startTime;
-      const successCount = results.filter(r => r.ok).length;
-      const failureCount = results.filter(r => !r.ok).length;
-
-      logger.error('Checks failed', {
-        total: results.length,
-        passed: successCount,
-        failed: failureCount,
-        totalMs,
-      });
-
-      return results;
-    }
-    
-    // Run tests
-    const testsStartTime = Date.now();
-    const testsResult = await checkTests(context);
-    const testsMs = Date.now() - testsStartTime;
-    
-    const testsCheckResult: CheckResult = {
-      id: 'tests',
-      ok: testsResult.ok,
-      ms: testsMs,
-      reason: testsResult.reason,
-    };
-    
-    results.push(testsCheckResult);
-    
-    // If tests fail, stop here (fail-fast)
-    if (!testsResult.ok && failFast) {
-      logger.error('Critical check failed - stopping execution', {
-        checkId: 'tests',
-        reason: testsResult.reason,
-      });
-      
-      const totalMs = Date.now() - startTime;
-      const successCount = results.filter(r => r.ok).length;
-      const failureCount = results.filter(r => !r.ok).length;
-
-      logger.error('Checks failed', {
-        total: results.length,
-        passed: successCount,
-        failed: failureCount,
-        totalMs,
-      });
-
-      return results;
-    }
-
-    // Run coverage check (optional global check)
-    const coverageStartTime = Date.now();
-    const coverageResult = await checkCoverage(context);
-    const coverageMs = Date.now() - coverageStartTime;
-
-    const coverageCheckResult: CheckResult = {
-      id: 'coverage',
-      ok: coverageResult.ok,
-      ms: coverageMs,
-      reason: coverageResult.reason,
-    };
-
-    results.push(coverageCheckResult);
-
-    // If coverage fails and fail-fast is enabled, stop here
-    if (!coverageResult.ok && failFast) {
-      logger.error('Critical check failed - stopping execution', {
-        checkId: 'coverage',
-        reason: coverageResult.reason,
-      });
-      
-      const totalMs = Date.now() - startTime;
-      const successCount = results.filter(r => r.ok).length;
-      const failureCount = results.filter(r => !r.ok).length;
-
-      logger.error('Checks failed', {
-        total: results.length,
-        passed: successCount,
-        failed: failureCount,
-        totalMs,
-      });
-
-      return results;
-    }
-
-    // Run TDD check (functional mode only)
-    const tddStartTime = Date.now();
-    const tddResult = await checkTddChangedHasTests(context);
-    const tddMs = Date.now() - tddStartTime;
-
-    const tddCheckResult: CheckResult = {
-      id: 'tdd-changed-has-tests',
-      ok: tddResult.ok,
-      ms: tddMs,
-      reason: tddResult.reason,
-    };
-
-    results.push(tddCheckResult);
-
-    // If TDD check fails and fail-fast is enabled, stop here
-    if (!tddResult.ok && failFast) {
-      logger.error('Critical check failed - stopping execution', {
-        checkId: 'tdd-changed-has-tests',
-        reason: tddResult.reason,
-      });
-      
-      const totalMs = Date.now() - startTime;
-      const successCount = results.filter(r => r.ok).length;
-      const failureCount = results.filter(r => !r.ok).length;
-
-      logger.error('Checks failed', {
-        total: results.length,
-        passed: successCount,
-        failed: failureCount,
-        totalMs,
-      });
-
-      return results;
-    }
-
-    // Run diff coverage check (functional mode only)
-    const diffCoverageStartTime = Date.now();
-    const diffCoverageResult = await checkDiffCoverage(context);
-    const diffCoverageMs = Date.now() - diffCoverageStartTime;
-
-    const diffCoverageCheckResult: CheckResult = {
-      id: 'diff-coverage',
-      ok: diffCoverageResult.ok,
-      ms: diffCoverageMs,
-      reason: diffCoverageResult.reason,
-    };
-
-    results.push(diffCoverageCheckResult);
-
-    // If diff coverage check fails and fail-fast is enabled, stop here
-    if (!diffCoverageResult.ok && failFast) {
-      logger.error('Critical check failed - stopping execution', {
-        checkId: 'diff-coverage',
-        reason: diffCoverageResult.reason,
-      });
-      
-      const totalMs = Date.now() - startTime;
-      const successCount = results.filter(r => r.ok).length;
-      const failureCount = results.filter(r => !r.ok).length;
-
-      logger.error('Checks failed', {
-        total: results.length,
-        passed: successCount,
-        failed: failureCount,
-        totalMs,
-      });
-
-      return results;
-    }
-
-    // Run build check (skip in quick mode)
-    logger.info('Running build checks...');
-    
-    const buildWebResult = await executeCheck(
-      context,
-      CHECK_CONFIGS.buildWeb,
-      checkBuildWeb,
-      quickMode
-    );
-    
-    results.push(buildWebResult);
-
-    // Handle build check failure
-    if (!buildWebResult.ok) {
-      const failureResult = handleCheckFailure(
-        'build-web',
-        buildWebResult.reason || 'Build check failed',
-        results,
-        failFast,
-        startTime
-      );
-      if (failureResult) return failureResult;
-    }
-
-    // Run API build check (stub - always skipped, runs in both quick and full mode)
-    logger.info('Running API build checks...');
-    
-    const buildApiResult = await executeCheck(
-      context,
-      CHECK_CONFIGS.buildApi,
-      checkBuildApi,
-      quickMode
-    );
-    
-    results.push(buildApiResult);
-
-    // Run size budget check (optional - controlled by toggle)
-    logger.info('Running size budget checks...');
-    
-    // Check if buildWeb already ran and succeeded
-    const buildWebSucceeded = buildWebResult.ok && !buildWebResult.reason?.includes('skipped');
-    
-    const sizeBudgetResult = await executeCheck(
-      context,
-      CHECK_CONFIGS.sizeBudget,
-      (ctx) => checkSizeBudget(ctx, buildWebSucceeded),
-      quickMode
-    );
-    
-    results.push(sizeBudgetResult);
-
-    // Handle size budget check failure
-    if (!sizeBudgetResult.ok) {
-      const failureResult = handleCheckFailure(
-        'size-budget',
-        sizeBudgetResult.reason || 'Size budget check failed',
-        results,
-        failFast,
-        startTime
-      );
-      if (failureResult) return failureResult;
     }
     
     const totalMs = Date.now() - startTime;
@@ -607,6 +276,7 @@ export async function runAll(
       passed: successCount,
       failed: failureCount,
       totalMs,
+      concurrencyUsed: Math.min(concurrency, parallelChecks.length),
     });
 
     return results;
@@ -675,7 +345,7 @@ export async function runSerial(
 }
 
 /**
- * Run checks in parallel with concurrency limit
+ * Run checks in parallel with concurrency limit using p-limit
  * @param context - Prove context
  * @param checkIds - Array of check IDs to run
  * @param concurrency - Maximum concurrent checks
@@ -691,37 +361,46 @@ export async function runParallel(
     concurrency 
   });
   
-  // TODO: Implement p-limit for concurrency control
-  // For now, just run all checks sequentially as placeholder
-  const results: CheckResult[] = [];
+  const limit = pLimit(concurrency);
   
-  for (const checkId of checkIds) {
-    const startTime = Date.now();
-    
-    try {
-      // TODO: Implement actual check execution
-      logger.info(`Running parallel check: ${checkId}`);
+  const parallelPromises = checkIds.map(checkId =>
+    limit(async (): Promise<CheckResult> => {
+      const startTime = Date.now();
       
-      // Placeholder implementation
-      const result: CheckResult = {
-        id: checkId,
-        ok: true,
-        ms: Date.now() - startTime,
-        reason: 'Skeleton implementation',
-      };
-      
-      results.push(result);
-    } catch (error) {
-      const result: CheckResult = {
-        id: checkId,
-        ok: false,
-        ms: Date.now() - startTime,
-        reason: error instanceof Error ? error.message : String(error),
-      };
-      
-      results.push(result);
-    }
-  }
+      try {
+        logger.info(`Running parallel check: ${checkId}`);
+        
+        // TODO: Implement actual check execution based on checkId
+        // For now, return a placeholder result
+        const result: CheckResult = {
+          id: checkId,
+          ok: true,
+          ms: Date.now() - startTime,
+          reason: 'Skeleton implementation',
+        };
+        
+        return result;
+      } catch (error) {
+        const result: CheckResult = {
+          id: checkId,
+          ok: false,
+          ms: Date.now() - startTime,
+          reason: error instanceof Error ? error.message : String(error),
+        };
+        
+        return result;
+      }
+    })
+  );
+  
+  const results = await Promise.all(parallelPromises);
+  
+  logger.info('Parallel checks completed', {
+    total: results.length,
+    passed: results.filter(r => r.ok).length,
+    failed: results.filter(r => !r.ok).length,
+    concurrencyUsed: Math.min(concurrency, checkIds.length),
+  });
   
   return results;
 }

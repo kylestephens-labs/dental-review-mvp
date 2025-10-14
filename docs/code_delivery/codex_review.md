@@ -1,7 +1,7 @@
 
 Please review cursor's work and provide any feedback.
 
-Please provide the following for the refactoring you did so codex can review your work
+Please provide the following for the tasks t-... you did so codex can review your work
 
 -The task identifier plus the intent (“Task X– description, intent”).
 -A quick bullet list of what Cursor says it built or changed (touching code, tests, env/config).
@@ -22,3 +22,27 @@ Please review the following files for more context on the project:
 docs/misc/prove_enforcement_8_paths/prove-overview.md
 docs/misc/prove_enforcement_8_paths/architecture.md
 docs/misc/prove_enforcement_8_paths/tasks.md
+
+
+
+cursor task refacotring:
+
+test locally again and if everything looks good send me another refactoring plan for t23-25:
+
+
+Can the implementation for tasks23-25 be refactored to make it more efficient, easier to maintain, reduce technical debt, Improve Code/file/script Structure and Design, Eliminate Duplicated Code/file/script, consolidate similar Code/file/script, less prone to breaking. Make sure to not change the functionality and keep the behavior identical for all tasks; for anything uncertain, leave a TODO.
+
+send a proposal on how you would do this, but do not make the changes yet
+
+Include the following in your proposal:
+
+-The task identifier plus the intent (“Task X– description, refactoring intent”).
+-A quick bullet list of what you want to refactor or change (touching code, tests, env/config).
+-Any test/dev commands to run to verify results.
+-A pointer to new or edited files/paths if they’re not obvious.
+
+
+codex refactoring review:
+
+Please review cursor's refactoring proposal for t23-t25 and provide feedback on how to make the task implementations
+more efficient, easier to maintain, reduce technical debt, Improve Code/file/script Structure and Design, Eliminate Duplicated Code/file/script, consolidate similar Code/file/script, less prone to breaking. Make sure to not change the functionality and keep the behavior identical for all tasks:
