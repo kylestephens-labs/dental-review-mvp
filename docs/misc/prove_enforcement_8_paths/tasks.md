@@ -411,4 +411,23 @@ If you want, I can output micro-prompts for any subset (e.g., T12, T17a, T23, T3
 
 -Need to revisit the feature flag lint and commit size
 -There are many TypeScript errors in the test files and some UI components. These are existing issues in the codebase, not related to our typecheck implementation.
+🔧 TypeScript Issues to Fix:
+Missing Jest/testing types - Add @types/jest and @types/testing-library__jest-dom
+Missing exports - Export buttonVariants and toggleVariants from UI components
+Test file TypeScript errors - Fix all test file type issues
+UI component type mismatches - Fix component prop types and interfaces
+Feature flags environment types - Align with actual environment values
+🧪 Testing Infrastructure:
+Test type definitions - Ensure all test files have proper TypeScript support
+Test utilities - Fix any missing test helper types
+Mock types - Ensure all mocks have proper TypeScript definitions
+🎨 UI Component Fixes:
+Export missing variants - buttonVariants, toggleVariants, etc.
+Component prop types - Fix any missing or incorrect prop interfaces
+Toggle group component - Fix missing type and value props
+Toast component - Fix missing id property and altText issues
+⚙️ Configuration:
+TypeScript strict mode - Re-enable strict TypeScript checking
+Test file inclusion - Include test files in type checking
+Environment type alignment - Ensure all environment types match actual values
 

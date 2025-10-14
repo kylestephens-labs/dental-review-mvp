@@ -9,7 +9,7 @@ export async function checkEnvCheck(context: ProveContext): Promise<{ ok: boolea
   if (context.isCI) {
     const hasRequiredSecrets = process.env.STRIPE_SECRET_KEY && 
                               process.env.DATABASE_URL && 
-                              process.env.HMAC_SECRET_KEY;
+                              process.env.HMAC_SECRET;
     
     if (!hasRequiredSecrets) {
       logger.info('Skipping environment check in CI - secrets not configured', {

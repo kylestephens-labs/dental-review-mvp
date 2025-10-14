@@ -32,7 +32,7 @@ const envConfig: EnvConfig = {
     'TWILIO_ACCOUNT_SID',
     'TWILIO_AUTH_TOKEN',
     'AWS_ACCESS_KEY_ID', // Updated to match GitHub secret
-    'AWS_SES_SECRET_ACCESS_KEY',
+    'AWS_SECRET_ACCESS_KEY',
     'GOOGLE_PLACES_API_KEY',
     'GOOGLE_CLIENTID', // Updated to match GitHub secret
     'GOOGLE_OATUH_SECRET', // Updated to match GitHub secret
