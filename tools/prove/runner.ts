@@ -8,6 +8,10 @@ import { checkPreConflict } from './checks/preConflict.js';
 import { checkLint } from './checks/lint.js';
 import { checkTypecheck } from './checks/typecheck.js';
 import { checkEnvCheck } from './checks/envCheck.js';
+import { checkTests } from './checks/tests.js';
+import { checkCoverage } from './checks/coverage.js';
+import { checkTddChangedHasTests } from './checks/tddChangedHasTests.js';
+import { checkDiffCoverage } from './checks/diffCoverage.js';
 // import { checkCommitSize } from './checks/commit-size.js'; // Temporarily disabled
 import { checkCommitMsgConvention } from './checks/commit-msg-convention.js';
 // import { checkFeatureFlagLint } from './checks/feature-flag-lint.js'; // Temporarily disabled
@@ -371,6 +375,146 @@ export async function runAll(
       logger.error('Critical check failed - stopping execution', {
         checkId: 'typecheck',
         reason: typecheckResult.reason,
+      });
+      
+      const totalMs = Date.now() - startTime;
+      const successCount = results.filter(r => r.ok).length;
+      const failureCount = results.filter(r => !r.ok).length;
+
+      logger.error('Checks failed', {
+        total: results.length,
+        passed: successCount,
+        failed: failureCount,
+        totalMs,
+      });
+
+      return results;
+    }
+    
+    // Run tests
+    const testsStartTime = Date.now();
+    const testsResult = await checkTests(context);
+    const testsMs = Date.now() - testsStartTime;
+    
+    const testsCheckResult: CheckResult = {
+      id: 'tests',
+      ok: testsResult.ok,
+      ms: testsMs,
+      reason: testsResult.reason,
+    };
+    
+    results.push(testsCheckResult);
+    
+    // If tests fail, stop here (fail-fast)
+    if (!testsResult.ok && failFast) {
+      logger.error('Critical check failed - stopping execution', {
+        checkId: 'tests',
+        reason: testsResult.reason,
+      });
+      
+      const totalMs = Date.now() - startTime;
+      const successCount = results.filter(r => r.ok).length;
+      const failureCount = results.filter(r => !r.ok).length;
+
+      logger.error('Checks failed', {
+        total: results.length,
+        passed: successCount,
+        failed: failureCount,
+        totalMs,
+      });
+
+      return results;
+    }
+
+    // Run coverage check (optional global check)
+    const coverageStartTime = Date.now();
+    const coverageResult = await checkCoverage(context);
+    const coverageMs = Date.now() - coverageStartTime;
+
+    const coverageCheckResult: CheckResult = {
+      id: 'coverage',
+      ok: coverageResult.ok,
+      ms: coverageMs,
+      reason: coverageResult.reason,
+    };
+
+    results.push(coverageCheckResult);
+
+    // If coverage fails and fail-fast is enabled, stop here
+    if (!coverageResult.ok && failFast) {
+      logger.error('Critical check failed - stopping execution', {
+        checkId: 'coverage',
+        reason: coverageResult.reason,
+      });
+      
+      const totalMs = Date.now() - startTime;
+      const successCount = results.filter(r => r.ok).length;
+      const failureCount = results.filter(r => !r.ok).length;
+
+      logger.error('Checks failed', {
+        total: results.length,
+        passed: successCount,
+        failed: failureCount,
+        totalMs,
+      });
+
+      return results;
+    }
+
+    // Run TDD check (functional mode only)
+    const tddStartTime = Date.now();
+    const tddResult = await checkTddChangedHasTests(context);
+    const tddMs = Date.now() - tddStartTime;
+
+    const tddCheckResult: CheckResult = {
+      id: 'tdd-changed-has-tests',
+      ok: tddResult.ok,
+      ms: tddMs,
+      reason: tddResult.reason,
+    };
+
+    results.push(tddCheckResult);
+
+    // If TDD check fails and fail-fast is enabled, stop here
+    if (!tddResult.ok && failFast) {
+      logger.error('Critical check failed - stopping execution', {
+        checkId: 'tdd-changed-has-tests',
+        reason: tddResult.reason,
+      });
+      
+      const totalMs = Date.now() - startTime;
+      const successCount = results.filter(r => r.ok).length;
+      const failureCount = results.filter(r => !r.ok).length;
+
+      logger.error('Checks failed', {
+        total: results.length,
+        passed: successCount,
+        failed: failureCount,
+        totalMs,
+      });
+
+      return results;
+    }
+
+    // Run diff coverage check (functional mode only)
+    const diffCoverageStartTime = Date.now();
+    const diffCoverageResult = await checkDiffCoverage(context);
+    const diffCoverageMs = Date.now() - diffCoverageStartTime;
+
+    const diffCoverageCheckResult: CheckResult = {
+      id: 'diff-coverage',
+      ok: diffCoverageResult.ok,
+      ms: diffCoverageMs,
+      reason: diffCoverageResult.reason,
+    };
+
+    results.push(diffCoverageCheckResult);
+
+    // If diff coverage check fails and fail-fast is enabled, stop here
+    if (!diffCoverageResult.ok && failFast) {
+      logger.error('Critical check failed - stopping execution', {
+        checkId: 'diff-coverage',
+        reason: diffCoverageResult.reason,
       });
       
       const totalMs = Date.now() - startTime;

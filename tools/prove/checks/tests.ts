@@ -1,0 +1,93 @@
+// Check: tests.ts
+// Goal: Run unit/integration tests using vitest
+// Do: npm run test (vitest); surface stdout on fail.
+
+import { type ProveContext } from '../context.js';
+import { exec } from '../utils/exec.js';
+import { logger } from '../logger.js';
+
+export interface TestCheckResult {
+  ok: boolean;
+  reason?: string;
+  details?: {
+    stdout: string;
+    stderr: string;
+    exitCode: number;
+    duration: number;
+  };
+}
+
+/**
+ * Run the test suite using vitest
+ * @param context - Prove context
+ * @returns Promise<TestCheckResult> - Test execution result
+ */
+export async function checkTests(context: ProveContext): Promise<TestCheckResult> {
+  const startTime = Date.now();
+  
+  try {
+    logger.info('Running test suite...');
+    
+    // Execute npm run test command with coverage flag
+    const result = await exec('npm', ['run', 'test', '--', '--coverage'], {
+      cwd: context.workingDirectory,
+      timeout: context.cfg.checkTimeouts.tests,
+    });
+    
+    const duration = Date.now() - startTime;
+    
+    // Check if tests passed (exit code 0)
+    if (result.success) {
+      logger.success('All tests passed', {
+        duration,
+        testOutput: result.stdout,
+      });
+      
+      return {
+        ok: true,
+        details: {
+          stdout: result.stdout,
+          stderr: result.stderr,
+          exitCode: result.code,
+          duration,
+        },
+      };
+    } else {
+      logger.error('Tests failed', {
+        exitCode: result.code,
+        duration,
+        stdout: result.stdout,
+        stderr: result.stderr,
+      });
+      
+      return {
+        ok: false,
+        reason: `Tests failed with exit code ${result.code}`,
+        details: {
+          stdout: result.stdout,
+          stderr: result.stderr,
+          exitCode: result.code,
+          duration,
+        },
+      };
+    }
+  } catch (error) {
+    const duration = Date.now() - startTime;
+    
+    logger.error('Test execution failed', {
+      error: error instanceof Error ? error.message : String(error),
+      duration,
+    });
+    
+    return {
+      ok: false,
+      reason: error instanceof Error ? error.message : String(error),
+      details: {
+        stdout: '',
+        stderr: error instanceof Error ? error.message : String(error),
+        exitCode: 1,
+        duration,
+      },
+    };
+  }
+}
