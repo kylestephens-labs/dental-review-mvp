@@ -82,31 +82,32 @@ jobs:
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 issue_number: issue.number,
-                body: `## ✅ **AUTOMATICALLY RESOLVED**
-
-**Main branch has been restored and prove quality gates are now passing.**
-
-### 📊 Resolution Details
-- **Commit**: \`${{ github.sha }}\`
-- **Author**: ${{ github.actor }}
-- **Message**: ${{ github.event.head_commit.message }}
-- **Workflow**: ${{ github.workflow }}
-- **Resolved At**: ${new Date().toISOString()}
-
-### ✅ Status Verification
-- **Trunk-based development**: ✅ PASSED
-- **Commit message convention**: ✅ PASSED
-- **Pre-conflict checks**: ✅ PASSED
-- **Environment validation**: ✅ PASSED (in CI)
-- **Type checking**: ✅ PASSED
-- **Linting**: ✅ PASSED
-- **Unit tests**: ✅ PASSED
-
-### 🎯 Result
-**Main branch is stable and ready for continued development.**
-
----
-*This issue was automatically closed by the Prove Quality Gates workflow after successful validation.*`
+                body: |
+                  ## ✅ **AUTOMATICALLY RESOLVED**
+                  
+                  **Main branch has been restored and prove quality gates are now passing.**
+                  
+                  ### 📊 Resolution Details
+                  - **Commit**: `${{ github.sha }}`
+                  - **Author**: ${{ github.actor }}
+                  - **Message**: ${{ github.event.head_commit.message }}
+                  - **Workflow**: ${{ github.workflow }}
+                  - **Resolved At**: ${new Date().toISOString()}
+                  
+                  ### ✅ Status Verification
+                  - **Trunk-based development**: ✅ PASSED
+                  - **Commit message convention**: ✅ PASSED
+                  - **Pre-conflict checks**: ✅ PASSED
+                  - **Environment validation**: ✅ PASSED (in CI)
+                  - **Type checking**: ✅ PASSED
+                  - **Linting**: ✅ PASSED
+                  - **Unit tests**: ✅ PASSED
+                  
+                  ### 🎯 Result
+                  **Main branch is stable and ready for continued development.**
+                  
+                  ---
+                  *This issue was automatically closed by the Prove Quality Gates workflow after successful validation.*
               });
               
               await github.rest.issues.update({
