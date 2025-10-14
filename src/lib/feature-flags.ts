@@ -170,7 +170,7 @@ export function isFeatureEnabled(
     (typeof import.meta !== 'undefined' && import.meta.env 
       ? import.meta.env.MODE 
       : process.env.NODE_ENV) || 'development';
-  if (!flag.environments.includes(currentEnv as 'development' | 'staging' | 'production')) {
+  if (!flag.environments.includes(currentEnv as 'development' | 'production' | 'test')) {
     return false;
   }
   
