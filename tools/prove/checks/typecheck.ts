@@ -6,7 +6,7 @@ export async function checkTypecheck(context: ProveContext): Promise<{ ok: boole
   logger.info('Running TypeScript type check...');
   
   try {
-    const result = await exec('npx', ['tsc', '--noEmit'], {
+    const result = await exec('npm', ['run', 'typecheck'], {
       timeout: 120000, // 2 minute timeout
       cwd: context.workingDirectory
     });

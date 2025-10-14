@@ -410,4 +410,5 @@ If you want, I can output micro-prompts for any subset (e.g., T12, T17a, T23, T3
 ### misc notes
 
 -Need to revisit the feature flag lint and commit size
+-There are many TypeScript errors in the test files and some UI components. These are existing issues in the codebase, not related to our typecheck implementation.
 
