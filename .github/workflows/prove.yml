@@ -47,24 +47,14 @@ jobs:
 
       - name: Run Prove Quality Gates (Quick Mode)
         run: npm run prove:quick
-        env:
-          # Environment variables for prove checks
-          AWS_SES_ACCESS_KEY_ID: ${{ secrets.AWS_SES_ACCESS_KEY_ID }}
-          AWS_SES_SECRET_ACCESS_KEY: ${{ secrets.AWS_SES_SECRET_ACCESS_KEY }}
-          FACEBOOK_GRAPH_ACCESS_TOKEN: ${{ secrets.FACEBOOK_GRAPH_ACCESS_TOKEN }}
-          HMAC_SECRET_KEY: ${{ secrets.HMAC_SECRET_KEY }}
-          N8N_ENCRYPTION_KEY: ${{ secrets.N8N_ENCRYPTION_KEY }}
+        # Environment variables are automatically loaded from GitHub Secrets
+        # No explicit secret references to avoid security exposure
 
       - name: Run Prove Quality Gates (Full Mode) - Main Branch Only
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
         run: npm run prove
-        env:
-          # Environment variables for prove checks
-          AWS_SES_ACCESS_KEY_ID: ${{ secrets.AWS_SES_ACCESS_KEY_ID }}
-          AWS_SES_SECRET_ACCESS_KEY: ${{ secrets.AWS_SES_SECRET_ACCESS_KEY }}
-          FACEBOOK_GRAPH_ACCESS_TOKEN: ${{ secrets.FACEBOOK_GRAPH_ACCESS_TOKEN }}
-          HMAC_SECRET_KEY: ${{ secrets.HMAC_SECRET_KEY }}
-          N8N_ENCRYPTION_KEY: ${{ secrets.N8N_ENCRYPTION_KEY }}
+        # Environment variables are automatically loaded from GitHub Secrets
+        # No explicit secret references to avoid security exposure
 
       - name: Upload Prove Report Artifact
         if: always()
@@ -158,13 +148,8 @@ jobs:
 
       - name: Run Prove Quality Gates (Quick Mode)
         run: npm run prove:quick
-        env:
-          # Environment variables for prove checks
-          AWS_SES_ACCESS_KEY_ID: ${{ secrets.AWS_SES_ACCESS_KEY_ID }}
-          AWS_SES_SECRET_ACCESS_KEY: ${{ secrets.AWS_SES_SECRET_ACCESS_KEY }}
-          FACEBOOK_GRAPH_ACCESS_TOKEN: ${{ secrets.FACEBOOK_GRAPH_ACCESS_TOKEN }}
-          HMAC_SECRET_KEY: ${{ secrets.HMAC_SECRET_KEY }}
-          N8N_ENCRYPTION_KEY: ${{ secrets.N8N_ENCRYPTION_KEY }}
+        # Environment variables are automatically loaded from GitHub Secrets
+        # No explicit secret references to avoid security exposure
 
       - name: Upload Prove Report Artifact
         if: always()
