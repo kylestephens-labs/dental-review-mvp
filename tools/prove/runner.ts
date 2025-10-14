@@ -7,6 +7,7 @@ import { checkTrunk } from './checks/trunk.js';
 import { checkPreConflict } from './checks/preConflict.js';
 import { checkLint } from './checks/lint.js';
 import { checkTypecheck } from './checks/typecheck.js';
+import { checkEnvCheck } from './checks/envCheck.js';
 // import { checkCommitSize } from './checks/commit-size.js'; // Temporarily disabled
 import { checkCommitMsgConvention } from './checks/commit-msg-convention.js';
 // import { checkFeatureFlagLint } from './checks/feature-flag-lint.js'; // Temporarily disabled
@@ -278,8 +279,43 @@ export async function runAll(
       logger.info('Skipping pre-conflict check in quick mode');
     }
     
-    // Run basic checks (lint + typecheck) - always run these
-    logger.info('Running basic checks (lint + typecheck)...');
+    // Run basic checks (env + lint + typecheck) - always run these
+    logger.info('Running basic checks (env + lint + typecheck)...');
+    
+    // Run environment check
+    const envCheckStartTime = Date.now();
+    const envCheckResult = await checkEnvCheck(context);
+    const envCheckMs = Date.now() - envCheckStartTime;
+    
+    const envCheckCheckResult: CheckResult = {
+      id: 'env-check',
+      ok: envCheckResult.ok,
+      ms: envCheckMs,
+      reason: envCheckResult.reason,
+    };
+    
+    results.push(envCheckCheckResult);
+    
+    // If env check fails, stop here (fail-fast)
+    if (!envCheckResult.ok && failFast) {
+      logger.error('Critical check failed - stopping execution', {
+        checkId: 'env-check',
+        reason: envCheckResult.reason,
+      });
+      
+      const totalMs = Date.now() - startTime;
+      const successCount = results.filter(r => r.ok).length;
+      const failureCount = results.filter(r => !r.ok).length;
+
+      logger.error('Checks failed', {
+        total: results.length,
+        passed: successCount,
+        failed: failureCount,
+        totalMs,
+      });
+
+      return results;
+    }
     
     // Run lint check
     const lintStartTime = Date.now();
