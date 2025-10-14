@@ -79,21 +79,23 @@ function validateProblemAnalysis(): { ok: boolean; reason?: string; details?: st
   try {
     const content = readFileSync(problemAnalysisPath, 'utf8');
     
-    // Check for required sections
+    // Check for required sections (updated to match PROBLEM_ANALYSIS.md template)
     const hasAnalyze = content.includes('## Analyze');
-    const hasFix = content.includes('## Fix');
+    const hasRootCause = content.includes('## Identify Root Cause');
+    const hasFix = content.includes('## Fix Directly');
     const hasValidate = content.includes('## Validate');
     
-    if (!hasAnalyze || !hasFix || !hasValidate) {
+    if (!hasAnalyze || !hasRootCause || !hasFix || !hasValidate) {
       const missing = [];
       if (!hasAnalyze) missing.push('## Analyze');
-      if (!hasFix) missing.push('## Fix');
+      if (!hasRootCause) missing.push('## Identify Root Cause');
+      if (!hasFix) missing.push('## Fix Directly');
       if (!hasValidate) missing.push('## Validate');
       
       return {
         ok: false,
         reason: `Missing required sections: ${missing.join(', ')}`,
-        details: 'Non-functional tasks require all three sections: ## Analyze, ## Fix, ## Validate'
+        details: 'Non-functional tasks require all four sections: ## Analyze, ## Identify Root Cause, ## Fix Directly, ## Validate'
       };
     }
 
