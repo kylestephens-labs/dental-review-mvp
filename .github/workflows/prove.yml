@@ -141,54 +141,54 @@ jobs:
               });
             }
 
-  # TEMPORARILY DISABLED: Vercel deployment while building prove quality gates
-  # deploy:
-  #   name: Deploy to Production
-  #   runs-on: ubuntu-latest
-  #   needs: prove-quality-gates
-  #   if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-  #   
-  #   steps:
-  #   - name: Checkout code
-  #     uses: actions/checkout@v4
-  #     
-  #   - name: Set Production Feature Flags
-  #     run: |
-  #       # Set production feature flags (all disabled for initial deployment)
-  #       echo "VITE_FEATURE_ENHANCED_INTAKE_FORM=false" >> $GITHUB_ENV
-  #       echo "VITE_FEATURE_AUTO_SAVE=false" >> $GITHUB_ENV
-  #       echo "VITE_FEATURE_ADVANCED_ANALYTICS=false" >> $GITHUB_ENV
-  #       echo "VITE_FEATURE_DYNAMIC_CONTENT=false" >> $GITHUB_ENV
-  #       echo "VITE_FEATURE_GOOGLE_CALENDAR_INTEGRATION=false" >> $GITHUB_ENV
-  #       echo "VITE_FEATURE_OUTLOOK_INTEGRATION=false" >> $GITHUB_ENV
-  #       echo "VITE_FEATURE_CSV_UPLOAD_FEATURE=false" >> $GITHUB_ENV
-  #       echo "VITE_FEATURE_FRONT_DESK_MODE=false" >> $GITHUB_ENV
-  #       echo "VITE_FEATURE_REVIEW_INGESTION=false" >> $GITHUB_ENV
-  #       echo "VITE_FEATURE_WEEKLY_DIGEST=false" >> $GITHUB_ENV
-  #       
-  #   - name: Deploy to Vercel
-  #     uses: amondnet/vercel-action@v25
-  #     with:
-  #       vercel-token: ${{ secrets.VERCEL_TOKEN }}
-  #       vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
-  #       vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
-  #       vercel-args: '--prod'
-  #       
-  #   - name: Deployment Success
-  #     run: |
-  #       echo "🚀 Deployment to production successful!"
-  #       echo "🌐 Application is live and ready for users"
-  #       echo "📊 Feature flags status:"
-  #       echo "  - ENHANCED_INTAKE_FORM: $VITE_FEATURE_ENHANCED_INTAKE_FORM"
-  #       echo "  - AUTO_SAVE: $VITE_FEATURE_AUTO_SAVE"
-  #       echo "  - ADVANCED_ANALYTICS: $VITE_FEATURE_ADVANCED_ANALYTICS"
-  #       echo "  - DYNAMIC_CONTENT: $VITE_FEATURE_DYNAMIC_CONTENT"
-  #       echo "  - GOOGLE_CALENDAR_INTEGRATION: $VITE_FEATURE_GOOGLE_CALENDAR_INTEGRATION"
-  #       echo "  - OUTLOOK_INTEGRATION: $VITE_FEATURE_OUTLOOK_INTEGRATION"
-  #       echo "  - CSV_UPLOAD_FEATURE: $VITE_FEATURE_CSV_UPLOAD_FEATURE"
-  #       echo "  - FRONT_DESK_MODE: $VITE_FEATURE_FRONT_DESK_MODE"
-  #       echo "  - REVIEW_INGESTION: $VITE_FEATURE_REVIEW_INGESTION"
-  #       echo "  - WEEKLY_DIGEST: $VITE_FEATURE_WEEKLY_DIGEST"
+  # Deploy to Vercel (only on main branch after prove passes)
+  deploy:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    needs: prove-quality-gates
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set Production Feature Flags
+      run: |
+        # Set production feature flags (all disabled for initial deployment)
+        echo "VITE_FEATURE_ENHANCED_INTAKE_FORM=false" >> $GITHUB_ENV
+        echo "VITE_FEATURE_AUTO_SAVE=false" >> $GITHUB_ENV
+        echo "VITE_FEATURE_ADVANCED_ANALYTICS=false" >> $GITHUB_ENV
+        echo "VITE_FEATURE_DYNAMIC_CONTENT=false" >> $GITHUB_ENV
+        echo "VITE_FEATURE_GOOGLE_CALENDAR_INTEGRATION=false" >> $GITHUB_ENV
+        echo "VITE_FEATURE_OUTLOOK_INTEGRATION=false" >> $GITHUB_ENV
+        echo "VITE_FEATURE_CSV_UPLOAD_FEATURE=false" >> $GITHUB_ENV
+        echo "VITE_FEATURE_FRONT_DESK_MODE=false" >> $GITHUB_ENV
+        echo "VITE_FEATURE_REVIEW_INGESTION=false" >> $GITHUB_ENV
+        echo "VITE_FEATURE_WEEKLY_DIGEST=false" >> $GITHUB_ENV
+        
+    - name: Deploy to Vercel
+      uses: amondnet/vercel-action@v25
+      with:
+        vercel-token: ${{ secrets.VERCEL_TOKEN }}
+        vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+        vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
+        vercel-args: '--prod'
+        
+    - name: Deployment Success
+      run: |
+        echo "🚀 Deployment to production successful!"
+        echo "🌐 Application is live and ready for users"
+        echo "📊 Feature flags status:"
+        echo "  - ENHANCED_INTAKE_FORM: $VITE_FEATURE_ENHANCED_INTAKE_FORM"
+        echo "  - AUTO_SAVE: $VITE_FEATURE_AUTO_SAVE"
+        echo "  - ADVANCED_ANALYTICS: $VITE_FEATURE_ADVANCED_ANALYTICS"
+        echo "  - DYNAMIC_CONTENT: $VITE_FEATURE_DYNAMIC_CONTENT"
+        echo "  - GOOGLE_CALENDAR_INTEGRATION: $VITE_FEATURE_GOOGLE_CALENDAR_INTEGRATION"
+        echo "  - OUTLOOK_INTEGRATION: $VITE_FEATURE_OUTLOOK_INTEGRATION"
+        echo "  - CSV_UPLOAD_FEATURE: $VITE_FEATURE_CSV_UPLOAD_FEATURE"
+        echo "  - FRONT_DESK_MODE: $VITE_FEATURE_FRONT_DESK_MODE"
+        echo "  - REVIEW_INGESTION: $VITE_FEATURE_REVIEW_INGESTION"
+        echo "  - WEEKLY_DIGEST: $VITE_FEATURE_WEEKLY_DIGEST"
 
   # Auto-close urgent issues and handle rollbacks
   issue-management:
