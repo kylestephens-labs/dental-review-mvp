@@ -97,7 +97,7 @@ describe('toast Function', () => {
   test('should handle toast with action', () => {
     const result = toast({ 
       title: 'Test Toast',
-      action: React.createElement(ToastAction, { altText: 'Undo', onClick: vi.fn() }, 'Undo') as any
+      action: React.createElement(ToastAction, { altText: 'Undo', onClick: vi.fn() }, 'Undo')
     });
     
     expect(result.id).toBeDefined();
@@ -139,7 +139,7 @@ describe('toast Function', () => {
       title: 'Complete Toast',
       description: 'This toast has all properties',
       duration: 3000,
-      action: React.createElement(ToastAction, { altText: 'Action', onClick: vi.fn() }, 'Action') as any
+      action: React.createElement(ToastAction, { altText: 'Action', onClick: vi.fn() }, 'Action')
     });
     
     expect(result.id).toBeDefined();
