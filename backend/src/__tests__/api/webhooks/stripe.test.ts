@@ -68,7 +68,9 @@ describe('POST /webhooks/stripe', () => {
     it('should return 400 for invalid signature', async () => {
       const { verifyWebhookSignature } = await import('../../../utils/stripe');
       vi.mocked(verifyWebhookSignature).mockImplementation(() => {
-        throw new Error('Invalid signature');
+        const error = new Error('Invalid signature');
+        console.log('Stripe signature verification failed:', error);
+        throw error;
       });
 
       await POST(mockReq as Request, mockRes as Response);

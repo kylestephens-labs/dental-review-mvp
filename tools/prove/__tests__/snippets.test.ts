@@ -1,9 +1,19 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, beforeAll } from 'vitest';
 import { readFileSync, existsSync } from 'fs';
 import { join } from 'path';
+import { execSync } from 'child_process';
 
 describe('snippet generation', () => {
   const projectRoot = process.cwd();
+
+  beforeAll(() => {
+    // Generate snippets before running tests
+    try {
+      execSync('npm run generate-snippets', { cwd: projectRoot, stdio: 'pipe' });
+    } catch (error) {
+      console.warn('Failed to generate snippets:', error);
+    }
+  });
   
   describe('source file validation', () => {
     it('should have valid snippet source file', () => {
