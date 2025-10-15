@@ -1,0 +1,201 @@
+openapi: 3.0.3
+info:
+  title: Dental Practice Management API
+  description: REST API for the dental practice management system
+  version: 1.0.0
+  contact:
+    name: API Support
+    email: support@example.com
+servers:
+  - url: https://your-domain.com/api
+    description: Production server
+  - url: http://localhost:3000/api
+    description: Development server
+paths:
+  /healthz:
+    get:
+      summary: Health Check
+      description: Check if the API is running
+      operationId: healthCheck
+      tags:
+        - Health
+      responses:
+        '200':
+          description: API is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "ok"
+                  sha:
+                    type: string
+                    example: "abc123"
+                required:
+                  - status
+                  - sha
+  /webhooks/stripe:
+    post:
+      summary: Stripe Webhook
+      description: Handle Stripe webhook events
+      operationId: stripeWebhook
+      tags:
+        - Webhooks
+      security:
+        - StripeSignature: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                type:
+                  type: string
+                  example: "checkout.session.completed"
+                data:
+                  type: object
+                  properties:
+                    object:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                          example: "cs_1234567890"
+                        customer:
+                          type: string
+                          example: "cus_1234567890"
+                        amount_total:
+                          type: integer
+                          example: 24900
+              required:
+                - type
+                - data
+      responses:
+        '200':
+          description: Webhook processed successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  received:
+                    type: boolean
+                    example: true
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /onboard/{token}:
+    get:
+      summary: Onboarding Token Validation
+      description: Validate onboarding token and get practice information
+      operationId: validateOnboardingToken
+      tags:
+        - Onboarding
+      parameters:
+        - name: token
+          in: path
+          required: true
+          description: HMAC token for verification
+          schema:
+            type: string
+            example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+      responses:
+        '200':
+          description: Token is valid
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  valid:
+                    type: boolean
+                    example: true
+                  practice:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                        example: "practice_123"
+                      name:
+                        type: string
+                        example: "Dental Practice"
+                    required:
+                      - id
+                      - name
+                required:
+                  - valid
+                  - practice
+        '400':
+          description: Invalid token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Token not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+components:
+  securitySchemes:
+    StripeSignature:
+      type: apiKey
+      in: header
+      name: stripe-signature
+      description: Stripe webhook signature for verification
+  schemas:
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: object
+          properties:
+            code:
+              type: string
+              enum:
+                - VALIDATION_ERROR
+                - AUTHENTICATION_ERROR
+                - AUTHORIZATION_ERROR
+                - NOT_FOUND
+                - INTERNAL_ERROR
+              example: "VALIDATION_ERROR"
+            message:
+              type: string
+              example: "Invalid input data"
+            details:
+              type: object
+              properties:
+                field:
+                  type: string
+                  example: "email"
+                reason:
+                  type: string
+                  example: "Invalid email format"
+              additionalProperties: true
+          required:
+            - code
+            - message
+      required:
+        - error
+  security:
+    - StripeSignature: []
+tags:
+  - name: Health
+    description: Health check endpoints
+  - name: Webhooks
+    description: Webhook endpoints for external services
+  - name: Onboarding
+    description: Practice onboarding endpoints

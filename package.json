@@ -79,6 +79,8 @@
     "practices:install": "cp .mcp/scripts/pre-commit .git/hooks/pre-commit && chmod +x .git/hooks/pre-commit",
     "prove": "tsx tools/prove/cli.ts",
     "prove:quick": "tsx tools/prove/cli.ts --quick",
+    "update-prove-docs": "tsx tools/prove/scripts/generate-docs.ts",
+    "generate-snippets": "tsx tools/prove/scripts/generate-snippets.ts",
     "size-limit": "size-limit",
     "prepare": "husky"
   },
@@ -141,9 +143,11 @@
   "devDependencies": {
     "@eslint/js": "^9.32.0",
     "@playwright/test": "^1.56.0",
+    "@redocly/cli": "^1.0.0",
     "@size-limit/file": "^11.2.0",
     "@size-limit/preset-big-lib": "^11.2.0",
     "@tailwindcss/typography": "^0.5.16",
+    "@testcontainers/postgresql": "^11.7.1",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.0",
     "@types/jest": "^30.0.0",

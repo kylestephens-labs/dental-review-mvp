@@ -94,6 +94,27 @@ function loadConfigFromEnv(): Partial<ConfigInput> {
     };
   }
 
+  if (process.env.PROVE_ENABLE_SECURITY !== undefined) {
+    envConfig.toggles = {
+      ...envConfig.toggles || defaultConfig.toggles,
+      security: process.env.PROVE_ENABLE_SECURITY === 'true',
+    };
+  }
+
+  if (process.env.PROVE_ENABLE_CONTRACTS !== undefined) {
+    envConfig.toggles = {
+      ...envConfig.toggles || defaultConfig.toggles,
+      contracts: process.env.PROVE_ENABLE_CONTRACTS === 'true',
+    };
+  }
+
+  if (process.env.PROVE_ENABLE_DB_MIGRATIONS !== undefined) {
+    envConfig.toggles = {
+      ...envConfig.toggles || defaultConfig.toggles,
+      dbMigrations: process.env.PROVE_ENABLE_DB_MIGRATIONS === 'true',
+    };
+  }
+
   // Runner concurrency from environment
   if (process.env.PROVE_CONCURRENCY) {
     envConfig.runner = {

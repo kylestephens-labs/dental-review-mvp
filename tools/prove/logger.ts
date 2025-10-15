@@ -1,6 +1,9 @@
 // Structured logs (CI friendly)
 // Supports both human-readable and JSON output modes
 
+import { writeFileSync } from 'fs';
+import { join } from 'path';
+
 export interface LogEntry {
   level: 'header' | 'info' | 'success' | 'error' | 'result';
   message: string;
@@ -18,6 +21,20 @@ export interface ProveResult {
   }>;
   totalMs: number;
   success: boolean;
+}
+
+/**
+ * Pure helper function to format prove report data
+ */
+export function formatReport({ mode, checks, totalMs }: { mode: string; checks: Array<{ id: string; ok: boolean; ms: number; reason?: string }>; totalMs: number }): ProveResult {
+  const success = checks.every(check => check.ok);
+
+  return {
+    mode,
+    checks,
+    totalMs,
+    success
+  };
 }
 
 class Logger {
@@ -97,19 +114,21 @@ class Logger {
   // Generate final prove report
   generateReport(mode: string, checks: Array<{ id: string; ok: boolean; ms: number; reason?: string }>): ProveResult {
     const totalMs = Date.now() - this.startTime;
-    const success = checks.every(check => check.ok);
+    const report = formatReport({ mode, checks, totalMs });
 
-    const report: ProveResult = {
-      mode,
-      checks,
-      totalMs,
-      success
-    };
+    // Write report to JSON file
+    try {
+      const reportPath = join(process.cwd(), 'prove-report.json');
+      writeFileSync(reportPath, JSON.stringify(report, null, 2), 'utf8');
+      this.info(`Prove report written to prove-report.json`);
+    } catch (error) {
+      this.warn(`Failed to write prove-report.json: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
 
     if (this.isJsonMode) {
       console.log(JSON.stringify({ type: 'prove-report', ...report }));
     } else {
-      this.result(`Prove completed in ${totalMs}ms`, { success, mode, checks: checks.length });
+      this.result(`Prove completed in ${totalMs}ms`, { success: report.success, mode, checks: checks.length });
     }
 
     return report;

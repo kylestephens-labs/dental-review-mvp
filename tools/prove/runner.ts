@@ -22,6 +22,9 @@ import { checkCommitMsgConvention } from './checks/commit-msg-convention.js';
 // import { checkFeatureFlagLint } from './checks/feature-flag-lint.js'; // Temporarily disabled
 import { checkKillswitchRequired } from './checks/killswitch-required.js';
 import { checkDeliveryMode } from './checks/deliveryMode.js';
+import { checkSecurity } from './checks/security.js';
+import { checkContracts } from './checks/contracts.js';
+import { checkDbMigrations } from './checks/dbMigrations.js';
 
 export interface CheckResult {
   id: string;
@@ -74,8 +77,8 @@ function getExecutionPlan(context: ProveContext, quickMode: boolean) {
     );
   }
 
-  // Add coverage check if enabled
-  if (context.cfg.toggles.coverage) {
+  // Add coverage check if enabled and not in quick mode
+  if (context.cfg.toggles.coverage && !quickMode) {
     parallelChecks.push({ id: 'coverage', fn: checkCoverage });
   }
 
@@ -90,6 +93,21 @@ function getExecutionPlan(context: ProveContext, quickMode: boolean) {
   // Add size budget check if enabled and not in quick mode
   if (context.cfg.toggles.sizeBudget && !quickMode) {
     parallelChecks.push({ id: 'size-budget', fn: checkSizeBudget });
+  }
+
+  // Add security check if enabled and not in quick mode
+  if (context.cfg.toggles.security && !quickMode) {
+    parallelChecks.push({ id: 'security', fn: checkSecurity });
+  }
+
+  // Add contracts check if enabled and not in quick mode
+  if (context.cfg.toggles.contracts && !quickMode) {
+    parallelChecks.push({ id: 'contracts', fn: checkContracts });
+  }
+
+  // Add DB migrations check if enabled and not in quick mode
+  if (context.cfg.toggles.dbMigrations && !quickMode) {
+    parallelChecks.push({ id: 'db-migrations', fn: checkDbMigrations });
   }
 
   return { criticalChecks, parallelChecks };

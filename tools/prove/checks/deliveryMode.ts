@@ -1,5 +1,8 @@
 import { readFileSync, existsSync } from 'fs';
 import { join } from 'path';
+import type { ProveContext } from '../context.js';
+import type { CheckResult } from '../runner.js';
+import { readProblemAnalysis } from '../validation/problemAnalysis.js';
 
 export interface DeliveryModeContext {
   taskJson?: {
@@ -66,63 +69,63 @@ export function resolveMode(context: DeliveryModeContext): 'functional' | 'non-f
  * Validates that non-functional tasks have adequate problem analysis documentation
  */
 function validateProblemAnalysis(): { ok: boolean; reason?: string; details?: string } {
-  const problemAnalysisPath = 'tasks/PROBLEM_ANALYSIS.md';
-  
-  if (!existsSync(problemAnalysisPath)) {
-    return {
-      ok: false,
-      reason: 'Missing PROBLEM_ANALYSIS.md',
-      details: 'Non-functional tasks require tasks/PROBLEM_ANALYSIS.md with ## Analyze, ## Fix, ## Validate sections'
-    };
-  }
-
-  try {
-    const content = readFileSync(problemAnalysisPath, 'utf8');
-    
-    // Check for required sections (updated to match PROBLEM_ANALYSIS.md template)
-    const hasAnalyze = content.includes('## Analyze');
-    const hasRootCause = content.includes('## Identify Root Cause');
-    const hasFix = content.includes('## Fix Directly');
-    const hasValidate = content.includes('## Validate');
-    
-    if (!hasAnalyze || !hasRootCause || !hasFix || !hasValidate) {
-      const missing = [];
-      if (!hasAnalyze) missing.push('## Analyze');
-      if (!hasRootCause) missing.push('## Identify Root Cause');
-      if (!hasFix) missing.push('## Fix Directly');
-      if (!hasValidate) missing.push('## Validate');
-      
-      return {
-        ok: false,
-        reason: `Missing required sections: ${missing.join(', ')}`,
-        details: 'Non-functional tasks require all four sections: ## Analyze, ## Identify Root Cause, ## Fix Directly, ## Validate'
-      };
-    }
-
-    // Check minimum content length (200 chars trimmed)
-    const trimmedContent = content.trim();
-    if (trimmedContent.length < 200) {
-      return {
-        ok: false,
-        reason: `Insufficient content length: ${trimmedContent.length} chars (minimum 200)`,
-        details: 'Non-functional tasks require substantial analysis documentation (≥200 characters)'
-      };
-    }
-
-    return { ok: true };
-  } catch (error) {
-    return {
-      ok: false,
-      reason: 'Failed to read PROBLEM_ANALYSIS.md',
-      details: `Error: ${error instanceof Error ? error.message : 'Unknown error'}`
-    };
-  }
+  return readProblemAnalysis();
 }
 
 /**
- * Main delivery mode check function
+ * Convert ProveContext to DeliveryModeContext
  */
-export function checkDeliveryMode(context: DeliveryModeContext): DeliveryModeResult {
+function convertToDeliveryModeContext(context: ProveContext): DeliveryModeContext {
+  return {
+    taskJson: context.taskJson,
+    prLabels: context.git.prLabels,
+    prTitle: context.git.prTitle,
+    env: context.env
+  };
+}
+
+/**
+ * Main delivery mode check function - wrapper for ProveContext
+ */
+export async function checkDeliveryMode(context: ProveContext): Promise<CheckResult> {
+  // Use the context's mode instead of resolving it again
+  const mode = context.mode;
+  
+  // For functional tasks, just confirm mode (TDD outcomes enforced elsewhere)
+  if (mode === 'functional') {
+    return {
+      id: 'delivery-mode',
+      ok: true,
+      ms: 0, // Will be set by runner
+      reason: 'Functional mode resolved successfully'
+    };
+  }
+
+  // For non-functional tasks, require adequate problem analysis
+  const analysisResult = validateProblemAnalysis();
+  
+  if (!analysisResult.ok) {
+    return {
+      id: 'delivery-mode',
+      ok: false,
+      ms: 0, // Will be set by runner
+      reason: analysisResult.reason,
+      details: analysisResult.details
+    };
+  }
+
+  return {
+    id: 'delivery-mode',
+    ok: true,
+    ms: 0, // Will be set by runner
+    reason: 'Non-functional mode with adequate problem analysis'
+  };
+}
+
+/**
+ * Internal delivery mode check function
+ */
+function checkDeliveryModeInternal(context: DeliveryModeContext): DeliveryModeResult {
   const mode = resolveMode(context);
   
   // For functional tasks, just resolve mode (TDD outcomes enforced elsewhere)

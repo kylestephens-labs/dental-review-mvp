@@ -65,32 +65,96 @@ return { cfg, git, mode, env: process.env, isCI: !!process.env.CI, log };
 Every check receives the same context, so we never recompute diffs or config.
 
 ### 4. Runner Orchestration
-- Run hard blockers serially: `trunk`, `pre-conflict`, `delivery-mode`.
+- Run critical checks serially: `trunk`, `delivery-mode`, `commit-msg-convention`, `killswitch-required`, `pre-conflict` (full mode only).
 - Parallelise safe checks with [p-limit](https://www.npmjs.com/package/p-limit) to keep runtimes low.
+- Add mode-specific checks for functional tasks: `tdd-changed-has-tests`, `diff-coverage`.
+- Add optional checks based on configuration: `coverage`, `build-web`, `build-api`, `size-budget`.
 - Exit on first failure; print reason + details; exit code 1 for CI.
 
 ```ts
-const critical = ["trunk", "pre-conflict", "delivery-mode"];
+const critical = ["trunk", "delivery-mode", "commit-msg-convention", "killswitch-required"];
+if (!quickMode) critical.push("pre-conflict");
+
+const parallel = ["env-check", "typecheck", "lint", "tests"];
+if (mode === 'functional') parallel.push("tdd-changed-has-tests", "diff-coverage");
+if (cfg.toggles.coverage) parallel.push("coverage");
+if (!quickMode) parallel.push("build-web", "build-api");
+if (cfg.toggles.sizeBudget && !quickMode) parallel.push("size-budget");
+
 for (const check of criticalChecks) { ... }
 await Promise.all(parallelChecks.map(runWithLimit));
 ```
 
-## Check Catalogue
+<!-- @generated-start:check-catalogue -->
+### Check Catalogue
 
-| Gate | Check ID | Implementation Notes |
-| --- | --- | --- |
-| Trunk-Based Development | `trunk` | Verify `git rev-parse --abbrev-ref HEAD` is `main`. Fail if detached or different branch. |
-| Pre-Conflict Gate | `pre-conflict` | `git fetch --prune` + `git merge --no-commit --no-ff origin/main`. Abort and fail on conflict. Clean with `git merge --abort` in finally. |
-| Delivery Mode | `delivery-mode` | Read `tasks/TASK.json` (plan) or branch naming convention. Functional tasks → enforce TDD; non-functional → require `tasks/PROBLEM_ANALYSIS.md` sections (Analyze/Fix/Validate, length check). |
-| TDD Enforcement | `tdd-changed-has-tests` | If files under `src/**` changed, ensure globs in `cfg.paths.testGlobs` touched; compute diff via context. |
-| Environment | `env-check` | `await exec("npm run env:check")`. Pipe stderr/stdout to logger, fail on exit code. |
-| Type Safety | `typecheck` | `npm run typecheck` (tsc --noEmit). |
-| Code Quality | `lint` | `npm run lint` (eslint with `--max-warnings=0`). |
-| Tests | `tests` | `npm run test`. Pass `--coverage` if you need global coverage artifact for diff coverage. |
-| Diff Coverage | `diff-coverage` | Use [vitest coverage JSON](coverage/coverage-final.json) with `npx diff-cover`; thresholds configurable via `cfg.thresholds`. Only enforce for functional tasks. |
-| Build Verification | `build-web` | `npm run build`. If you add server builds later, include `build-api`. |
+#### Critical Checks (Serial, Fail-Fast)
+| Check | ID | Description | Quick Mode |
+| --- | --- | --- | --- |
+| Trunk-Based Development | `trunk` | Verify working on main branch as required by trunk-based development | ✅ |
+| Delivery Mode | `delivery-mode` | Read tasks/TASK.json (plan) or branch naming convention. Functional tasks → enforce TDD; non-functional → require tasks/PROBLEM_ANALYSIS.md sections (Analyze/Fix/Validate, length check) | ✅ |
+| Commit Message Convention | `commit-msg-convention` | Validate conventional commit format with task ID and mode tags | ✅ |
+| Kill-switch Required | `killswitch-required` | Check for kill-switch on feature commits (commits with feat: prefix) | ✅ |
+| Pre-conflict Merge Check | `pre-conflict` | Verify no merge conflicts exist before proceeding | ❌ |
 
-Add optional checks (`security`, `contracts`, `db-migrations`, `size`) behind config toggles so you can enable progressively without editing code.
+#### Parallel Checks (Concurrent)
+| Check | ID | Description | Quick Mode |
+| --- | --- | --- | --- |
+| Environment Variable Validation | `env-check` | Validate all required environment variables are present and properly formatted | ✅ |
+| ESLint | `lint` | Run ESLint with zero warnings policy | ✅ |
+| TypeScript Type Check | `typecheck` | Run TypeScript compiler to catch type errors | ✅ |
+| Test Suite | `tests` | Run Vitest test suite with coverage | ✅ |
+
+#### Mode-Specific Checks
+| Check | ID | Description | Quick Mode |
+| --- | --- | --- | --- |
+| TDD Changed Files Have Tests | `tdd-changed-has-tests` | Ensure all changed files have corresponding test files (functional mode only) | ✅ |
+| Diff Coverage | `diff-coverage` | Ensure changed lines meet coverage threshold (functional mode only) | ✅ |
+
+#### Optional Checks (Toggle-Controlled)
+| Check | ID | Description | Quick Mode |
+| --- | --- | --- | --- |
+| Global Coverage | `coverage` | Ensure overall test coverage meets threshold (coverage) | ❌ |
+| Web Build | `build-web` | Build the web application to verify it compiles successfully | ❌ |
+| API Build | `build-api` | Build the API to verify it compiles successfully | ❌ |
+| Size Budget | `size-budget` | Check that bundle size is within acceptable limits (sizeBudget) | ❌ |
+| Security Audit | `security` | Run npm audit to check for high/critical vulnerabilities (security) | ❌ |
+| API Contracts & Webhooks | `contracts` | Validate API specifications using redocly lint and run webhook signature tests (contracts) | ❌ |
+| Database Migrations | `db-migrations` | Validate database migrations by applying them to a Testcontainers PostgreSQL instance (dbMigrations) | ❌ |
+
+<!-- @generated-end:check-catalogue -->
+
+<!-- @generated-start:quick-mode-checks -->
+### Quick Mode Checks
+
+When using `--quick` flag, only the following checks run:
+
+#### Critical Checks
+| Check | ID | Description | Quick Mode |
+| --- | --- | --- | --- |
+| Trunk-Based Development | `trunk` | Verify working on main branch as required by trunk-based development | ✅ |
+| Delivery Mode | `delivery-mode` | Read tasks/TASK.json (plan) or branch naming convention. Functional tasks → enforce TDD; non-functional → require tasks/PROBLEM_ANALYSIS.md sections (Analyze/Fix/Validate, length check) | ✅ |
+| Commit Message Convention | `commit-msg-convention` | Validate conventional commit format with task ID and mode tags | ✅ |
+| Kill-switch Required | `killswitch-required` | Check for kill-switch on feature commits (commits with feat: prefix) | ✅ |
+
+#### Parallel Checks
+| Check | ID | Description | Quick Mode |
+| --- | --- | --- | --- |
+| Environment Variable Validation | `env-check` | Validate all required environment variables are present and properly formatted | ✅ |
+| ESLint | `lint` | Run ESLint with zero warnings policy | ✅ |
+| TypeScript Type Check | `typecheck` | Run TypeScript compiler to catch type errors | ✅ |
+| Test Suite | `tests` | Run Vitest test suite with coverage | ✅ |
+
+#### Mode-Specific Checks
+| Check | ID | Description | Quick Mode |
+| --- | --- | --- | --- |
+| TDD Changed Files Have Tests | `tdd-changed-has-tests` | Ensure all changed files have corresponding test files (functional mode only) | ✅ |
+| Diff Coverage | `diff-coverage` | Ensure changed lines meet coverage threshold (functional mode only) | ✅ |
+
+<!-- @generated-end:quick-mode-checks -->
+
+### Future Optional Checks
+Add optional checks (`security`, `contracts`, `db-migrations`) behind config toggles so you can enable progressively without editing code.
 
 ## GitHub Actions
 - Create `.github/workflows/prove.yml` (or fold into existing workflow) that:
@@ -130,7 +194,7 @@ Add optional checks (`security`, `contracts`, `db-migrations`, `size`) behind co
 ## Observability & DX Tips
 - **Logging**: `logger.ts` should print both human-readable lines and (optionally) JSON blocks (e.g., `::group::` / `::notice::` for GitHub). Include duration per check.
 - **Caching**: Consider caching `node_modules` and vitest coverage in CI to keep runtimes down.
-- **Fast loops**: Add `npm run prove:quick` (env/typecheck/lint/test) for WIP commits while the main `prove` includes the full battery.
+- **Fast loops**: Add `npm run prove:quick` (env/typecheck/lint/test + mode-specific checks) for WIP commits while the main `prove` includes the full battery.
 - **Education**: Link this file from `README.md` and the prompt enforcement script so new contributors (and models) see the expectation immediately.
 
 ## Hardening Add-ons
@@ -139,13 +203,27 @@ Add optional checks (`security`, `contracts`, `db-migrations`, `size`) behind co
   {
     "mode": "functional",
     "checks": [
-      { "id": "lint", "ok": true, "ms": 7312 },
-      { "id": "diff-coverage", "ok": false, "reason": "Changed lines 72%, need 85%" }
-    ]
+      { "id": "trunk", "ok": true, "ms": 8 },
+      { "id": "delivery-mode", "ok": true, "ms": 0, "reason": "Functional mode resolved successfully" },
+      { "id": "commit-msg-convention", "ok": true, "ms": 9 },
+      { "id": "killswitch-required", "ok": true, "ms": 18 },
+      { "id": "pre-conflict", "ok": true, "ms": 421 },
+      { "id": "env-check", "ok": true, "ms": 349 },
+      { "id": "tdd-changed-has-tests", "ok": true, "ms": 0 },
+      { "id": "diff-coverage", "ok": false, "ms": 0, "reason": "Changed lines 72%, need 85%" },
+      { "id": "coverage", "ok": false, "ms": 1, "reason": "Failed to read coverage file" },
+      { "id": "lint", "ok": true, "ms": 1111 },
+      { "id": "tests", "ok": false, "ms": 2076, "reason": "Tests failed with exit code 1" },
+      { "id": "typecheck", "ok": false, "ms": 2895, "reason": "TypeScript type check failed" },
+      { "id": "build-web", "ok": true, "ms": 5432 },
+      { "id": "build-api", "ok": true, "ms": 2100 }
+    ],
+    "totalMs": 3380,
+    "success": false
   }
   ```
   Upload the file as a CI artifact; locally, store it in `test-results/` so triage has machine-readable context.
-- **`prove:quick` inner-loop** – Add `{"scripts":{"prove:quick":"tsx tools/prove/cli.ts --quick"}}`. When `--quick` is present, the runner executes only env/typecheck/lint/unit checks; everything else stays behind the full run.
+- **`prove:quick` inner-loop** – Add `{"scripts":{"prove:quick":"tsx tools/prove/cli.ts --quick"}}`. When `--quick` is present, the runner executes only env/typecheck/lint/test + mode-specific checks; excludes pre-conflict, build, and size-budget checks.
 - **Strict exit semantics** – Ensure every check returns `{ ok, reason, details }`. When a gate fails, print one concise line (`[lint] Failed: missing semi`) followed by the captured command output block for immediate debugging.
 - **Mode guardrails in prompts** – Update Cursor/Windsurf snippets so they must: write or update `tasks/TASK.json`, run `npm run prove`, and paste the log before claiming completion.
 - **CI config immutability** – In CI, ignore env-based threshold overrides; trust only `prove.config.ts` committed with the PR. Reject runs that attempt to lower thresholds at runtime unless the override carries a signed/approved token.

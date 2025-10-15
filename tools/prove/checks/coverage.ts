@@ -14,25 +14,8 @@ export async function checkCoverage(context: ProveContext): Promise<CheckResult>
   const startTime = Date.now();
 
   try {
-    // TEMPORARILY DISABLED: Skip coverage in CI while building prove quality gates
-    // This will be re-enabled when tests are fixed in future tasks
-    if (context.isCI) {
-      logger.info('Skipping coverage check in CI - will be re-enabled in future tasks', {
-        message: 'Coverage check temporarily disabled while building prove quality gates',
-        status: 'skipped'
-      });
-      return {
-        id: 'coverage',
-        ok: true,
-        ms: Date.now() - startTime,
-        reason: 'skipped (temporarily disabled in CI)',
-        details: {
-          message: 'Coverage check temporarily disabled while building prove quality gates',
-          status: 'skipped',
-          isCI: true
-        }
-      };
-    }
+    // Run coverage check in both local and CI environments
+    // This ensures the prove system can catch coverage regressions
 
     // Check if coverage check is enabled
     if (!context.cfg.toggles.coverage) {

@@ -270,6 +270,68 @@ practices, settings, templates, patients, visits, review_requests, engagements, 
 
 ⸻
 
+6) Prove Quality Gates (Development Enforcement)
+
+The project includes a comprehensive quality gates system that enforces development practices and code quality standards. All code changes must pass these checks before merging to main.
+
+<!-- @generated-start:prove-checks-table -->
+### Check Catalogue
+
+#### Critical Checks (Serial, Fail-Fast)
+| Check | ID | Description | Quick Mode |
+| --- | --- | --- | --- |
+| Trunk-Based Development | `trunk` | Verify working on main branch as required by trunk-based development | ✅ |
+| Delivery Mode | `delivery-mode` | Read tasks/TASK.json (plan) or branch naming convention. Functional tasks → enforce TDD; non-functional → require tasks/PROBLEM_ANALYSIS.md sections (Analyze/Fix/Validate, length check) | ✅ |
+| Commit Message Convention | `commit-msg-convention` | Validate conventional commit format with task ID and mode tags | ✅ |
+| Kill-switch Required | `killswitch-required` | Check for kill-switch on feature commits (commits with feat: prefix) | ✅ |
+| Pre-conflict Merge Check | `pre-conflict` | Verify no merge conflicts exist before proceeding | ❌ |
+
+#### Parallel Checks (Concurrent)
+| Check | ID | Description | Quick Mode |
+| --- | --- | --- | --- |
+| Environment Variable Validation | `env-check` | Validate all required environment variables are present and properly formatted | ✅ |
+| ESLint | `lint` | Run ESLint with zero warnings policy | ✅ |
+| TypeScript Type Check | `typecheck` | Run TypeScript compiler to catch type errors | ✅ |
+| Test Suite | `tests` | Run Vitest test suite with coverage | ✅ |
+
+#### Mode-Specific Checks
+| Check | ID | Description | Quick Mode |
+| --- | --- | --- | --- |
+| TDD Changed Files Have Tests | `tdd-changed-has-tests` | Ensure all changed files have corresponding test files (functional mode only) | ✅ |
+| Diff Coverage | `diff-coverage` | Ensure changed lines meet coverage threshold (functional mode only) | ✅ |
+
+#### Optional Checks (Toggle-Controlled)
+| Check | ID | Description | Quick Mode |
+| --- | --- | --- | --- |
+| Global Coverage | `coverage` | Ensure overall test coverage meets threshold (coverage) | ❌ |
+| Web Build | `build-web` | Build the web application to verify it compiles successfully | ❌ |
+| API Build | `build-api` | Build the API to verify it compiles successfully | ❌ |
+| Size Budget | `size-budget` | Check that bundle size is within acceptable limits (sizeBudget) | ❌ |
+| Security Audit | `security` | Run npm audit to check for high/critical vulnerabilities (security) | ❌ |
+| API Contracts & Webhooks | `contracts` | Validate API specifications using redocly lint and run webhook signature tests (contracts) | ❌ |
+| Database Migrations | `db-migrations` | Validate database migrations by applying them to a Testcontainers PostgreSQL instance (dbMigrations) | ❌ |
+
+<!-- @generated-end:prove-checks-table -->
+
+**Non-Functional Task Enforcement:**
+- **Problem Analysis** - Requires `tasks/PROBLEM_ANALYSIS.md` with Analyze/Fix/Validate sections
+
+**Quick Mode:**
+- Excludes: pre-conflict, build-web, build-api, size-budget
+- Focuses on: env, typecheck, lint, tests, mode-specific checks
+
+**Configuration:**
+- Thresholds: diff coverage (85% functional, 60% refactor), global coverage (80%)
+- Toggles: coverage, diffCoverage, sizeBudget, security, contracts, dbMigrations
+- Concurrency: 4 parallel checks, 5min timeout, fail-fast enabled
+
+**Usage:**
+- Local: `npm run prove` (full) or `npm run prove:quick` (fast)
+- CI: GitHub Actions with `prove-report.json` artifact
+- Reports: Machine-readable JSON output for monitoring/dashboards
+
+⸻
+
 Done → Pilot → Scale
 	•	After completing tasks, onboard 2–3 pilot dentists; verify TTL ≤48h, median onboarding ≤2m, CTR ≥45%, opt-out <1%, reviews_added_30d ≥10 for guarantee cohort, deliverability failures trending down.
 	•	Expand outreach; maintain founder pricing for first 25 practices; monitor cost guardrail.

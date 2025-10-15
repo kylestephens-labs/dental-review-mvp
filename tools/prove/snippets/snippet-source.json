@@ -1,0 +1,258 @@
+{
+  "metadata": {
+    "version": "1.0.0",
+    "description": "Consolidated source for prove contract compliance snippets",
+    "lastUpdated": "2025-01-18T00:00:00Z",
+    "generatedBy": "tools/prove/scripts/generate-snippets.ts"
+  },
+  "snippets": {
+    "prove-functional": {
+      "prefix": "prove-functional",
+      "body": [
+        "## Prove Check Results",
+        "**Command:** `npm run prove`",
+        "**Status:** ✅ PASSED / ❌ FAILED",
+        "",
+        "**Logs:**",
+        "```",
+        "[Full prove output here]",
+        "```",
+        "",
+        "**Report:**",
+        "```json",
+        "[prove-report.json content here]",
+        "```"
+      ],
+      "description": "Prove functional task completion template"
+    },
+    "prove-non-functional": {
+      "prefix": "prove-non-functional",
+      "body": [
+        "## Prove Check Results",
+        "**Command:** `npm run prove`",
+        "**Status:** ✅ PASSED / ❌ FAILED",
+        "",
+        "**Logs:**",
+        "```",
+        "[Full prove output here]",
+        "```",
+        "",
+        "**Report:**",
+        "```json",
+        "[prove-report.json content here]",
+        "```"
+      ],
+      "description": "Prove non-functional task completion template"
+    },
+    "prove-quick": {
+      "prefix": "prove-quick",
+      "body": [
+        "## Prove Quick Check Results",
+        "**Command:** `npm run prove:quick`",
+        "**Status:** ✅ PASSED / ❌ FAILED",
+        "",
+        "**Logs:**",
+        "```",
+        "[Full prove:quick output here]",
+        "```"
+      ],
+      "description": "Prove quick mode template for development iteration"
+    },
+    "prove-full": {
+      "prefix": "prove-full",
+      "body": [
+        "## Prove Full Check Results",
+        "**Command:** `npm run prove`",
+        "**Status:** ✅ PASSED / ❌ FAILED",
+        "",
+        "**Logs:**",
+        "```",
+        "[Full prove output here]",
+        "```",
+        "",
+        "**Report:**",
+        "```json",
+        "[prove-report.json content here]",
+        "```"
+      ],
+      "description": "Prove full mode template for final validation"
+    },
+    "task-json-functional": {
+      "prefix": "task-json-functional",
+      "body": [
+        "{",
+        "  \"mode\": \"functional\",",
+        "  \"updatedAt\": \"${CURRENT_DATE}\",",
+        "  \"source\": \"manual\",",
+        "  \"note\": \"Functional task - requires TDD and diff coverage\"",
+        "}"
+      ],
+      "description": "TASK.json template for functional tasks"
+    },
+    "task-json-non-functional": {
+      "prefix": "task-json-non-functional",
+      "body": [
+        "{",
+        "  \"mode\": \"non-functional\",",
+        "  \"updatedAt\": \"${CURRENT_DATE}\",",
+        "  \"source\": \"manual\",",
+        "  \"note\": \"Non-functional task - requires PROBLEM_ANALYSIS.md\"",
+        "}"
+      ],
+      "description": "TASK.json template for non-functional tasks"
+    },
+    "problem-analysis-template": {
+      "prefix": "problem-analysis-template",
+      "body": [
+        "# Problem Analysis",
+        "",
+        "## Analyze",
+        "**What is the problem?**",
+        "- [Describe the current issue or situation]",
+        "- [What symptoms are you observing?]",
+        "- [What is the impact on the system/users?]",
+        "",
+        "## Identify Root Cause",
+        "**Why is this happening?**",
+        "- [What is the underlying cause of the problem?]",
+        "- [What specific component or configuration is failing?]",
+        "- [What dependencies or external factors are involved?]",
+        "",
+        "## Fix Directly",
+        "**What needs to be changed?**",
+        "- [List the specific changes required]",
+        "- [Include configuration updates, code changes, or process modifications]",
+        "- [Be specific about files, settings, or components to modify]",
+        "",
+        "## Validate",
+        "**How will you verify the fix works?**",
+        "- [What tests or checks will confirm the problem is resolved?]",
+        "- [How will you ensure no regressions were introduced?]",
+        "- [What monitoring or verification steps are needed?]"
+      ],
+      "description": "PROBLEM_ANALYSIS.md template for non-functional tasks"
+    }
+  },
+  "mcpSnippets": {
+    "prove-functional": {
+      "name": "prove-functional",
+      "description": "Prove functional task completion template",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": ["PASSED", "FAILED"],
+            "description": "Prove check status"
+          },
+          "logs": {
+            "type": "string",
+            "description": "Full prove output logs"
+          },
+          "report": {
+            "type": "string",
+            "description": "prove-report.json content"
+          }
+        },
+        "required": ["status", "logs", "report"]
+      }
+    },
+    "prove-non-functional": {
+      "name": "prove-non-functional",
+      "description": "Prove non-functional task completion template",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": ["PASSED", "FAILED"],
+            "description": "Prove check status"
+          },
+          "logs": {
+            "type": "string",
+            "description": "Full prove output logs"
+          },
+          "report": {
+            "type": "string",
+            "description": "prove-report.json content"
+          }
+        },
+        "required": ["status", "logs", "report"]
+      }
+    },
+    "prove-quick": {
+      "name": "prove-quick",
+      "description": "Prove quick mode template for development iteration",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": ["PASSED", "FAILED"],
+            "description": "Prove quick check status"
+          },
+          "logs": {
+            "type": "string",
+            "description": "Full prove:quick output logs"
+          }
+        },
+        "required": ["status", "logs"]
+      }
+    }
+  },
+  "taskTemplates": {
+    "functional": {
+      "name": "Functional Task",
+      "description": "Template for functional tasks requiring TDD and diff coverage",
+      "steps": [
+        "1. Set TASK.json mode to 'functional'",
+        "2. Write failing tests first (TDD red phase)",
+        "3. Implement minimal code to pass tests (TDD green phase)",
+        "4. Refactor while keeping tests passing (TDD refactor phase)",
+        "5. Run `npm run prove` and include results",
+        "6. Ensure diff coverage meets threshold"
+      ],
+      "requiredFiles": ["TASK.json", "test files", "implementation files"],
+      "proveCommand": "npm run prove"
+    },
+    "non-functional": {
+      "name": "Non-Functional Task",
+      "description": "Template for non-functional tasks requiring problem analysis",
+      "steps": [
+        "1. Set TASK.json mode to 'non-functional'",
+        "2. Create PROBLEM_ANALYSIS.md with Analyze/Fix/Validate sections",
+        "3. Implement the solution",
+        "4. Run `npm run prove` and include results",
+        "5. Ensure problem analysis is comprehensive (≥200 chars)"
+      ],
+      "requiredFiles": ["TASK.json", "PROBLEM_ANALYSIS.md", "implementation files"],
+      "proveCommand": "npm run prove"
+    }
+  },
+  "cursorRules": {
+    "title": "Prove Contract Compliance Rules",
+    "description": "Cursor-specific rules for prove contract compliance",
+    "rules": [
+      "All tasks must follow the prove contract",
+      "Functional tasks require TDD and diff coverage",
+      "Non-functional tasks require PROBLEM_ANALYSIS.md",
+      "Always run npm run prove and include logs",
+      "Never proceed without passing prove checks"
+    ],
+    "requiredResponseFormat": [
+      "## Prove Check Results",
+      "**Command:** `npm run prove`",
+      "**Status:** ✅ PASSED / ❌ FAILED",
+      "",
+      "**Logs:**",
+      "```",
+      "[Full prove output here]",
+      "```",
+      "",
+      "**Report:**",
+      "```json",
+      "[prove-report.json content here]",
+      "```"
+    ]
+  }
+}

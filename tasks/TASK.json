@@ -1,6 +1,0 @@
-{
-  "mode": "functional",
-  "updatedAt": "2025-01-18T00:00:00Z",
-  "source": "default",
-  "note": "This file is updated automatically by orchestrators per task. Mode resolution priority: PROVE_MODE env var > this file > PR labels > PR title tags > functional default"
-}

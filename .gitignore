@@ -69,3 +69,4 @@ Desktop.inicoverage/
 playwright-report/
 package-lock.json
 backend/package-lock.json
+prove-report.json
