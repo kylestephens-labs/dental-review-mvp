@@ -32,7 +32,32 @@ export default defineConfig({
         'tools/**/__tests__/**'
       ],
       thresholds: {
-        global: {
+        all: false,
+        'src/App.tsx': {
+          branches: 80,
+          functions: 80,
+          lines: 80,
+          statements: 80
+        },
+        'src/components/**/*.{ts,tsx}': {
+          branches: 80,
+          functions: 80,
+          lines: 80,
+          statements: 80
+        },
+        'src/hooks/**/*.{ts,tsx}': {
+          branches: 80,
+          functions: 80,
+          lines: 80,
+          statements: 80
+        },
+        'src/lib/**/*.{ts,tsx}': {
+          branches: 80,
+          functions: 80,
+          lines: 80,
+          statements: 80
+        },
+        'src/pages/**/*.{ts,tsx}': {
           branches: 80,
           functions: 80,
           lines: 80,
