@@ -1,5 +1,12 @@
-import { describe, test, expect, vi, beforeEach } from 'vitest';
-import { validateEnvironment } from '../env-check';
+import { describe, test, expect, vi, beforeEach, afterEach } from 'vitest';
+
+// Set SKIP_ENV_FILE flag before importing to prevent .env file loading
+vi.hoisted(() => {
+  process.env.SKIP_ENV_FILE = 'true';
+});
+
+// Import after setting the flag
+import { validateEnvironment, loadEnvFromFile } from '../env-check';
 
 describe('Environment Validation', () => {
   let originalEnv: NodeJS.ProcessEnv;
@@ -12,22 +19,6 @@ describe('Environment Validation', () => {
     Object.keys(process.env).forEach(key => {
       delete process.env[key];
     });
-    
-    // Set up valid environment variables for tests (matching validation rules)
-    process.env.STRIPE_SECRET_KEY = 'sk_test_12345678901234567890';
-    process.env.STRIPE_PUBLISHABLE_KEY = 'pk_test_12345678901234567890';
-    process.env.STRIPE_WEBHOOK_SECRET = 'whsec_test_12345678901234567890';
-    process.env.TWILIO_ACCOUNT_SID = 'AC12345678901234567890';
-    process.env.TWILIO_AUTH_TOKEN = 'auth_token_12345678901234567890';
-    process.env.AWS_ACCESS_KEY_ID = 'AKIA12345678901234567890';
-    process.env.AWS_SECRET_ACCESS_KEY = 'secret_key_12345678901234567890';
-    process.env.GOOGLE_PLACES_API_KEY = 'AIza12345678901234567890';
-    process.env.GOOGLE_CLIENTID = 'client_id_12345678901234567890';
-    process.env.GOOGLE_OATUH_SECRET = 'client_secret_12345678901234567890';
-    process.env.DATABASE_URL = 'postgres://user:pass@localhost:5432/database_name';
-    process.env.HMAC_SECRET = 'hmac_secret_12345678901234567890';
-    process.env.SUPABASE_URL = 'https://test.supabase.co';
-    process.env.SUPABASE_SERVICE_ROLE_KEY = 'service_role_key_12345678901234567890';
   });
 
   afterEach(() => {
@@ -37,16 +28,38 @@ describe('Environment Validation', () => {
 
   describe('validateEnvironment', () => {
     test('should pass when all required variables are present and valid', () => {
-      // Mock console.log to avoid output during tests
-      const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+      // Set up valid environment variables for this test
+      process.env.STRIPE_SECRET_KEY = 'sk_test_12345678901234567890';
+      process.env.STRIPE_PUBLISHABLE_KEY = 'pk_test_12345678901234567890';
+      process.env.STRIPE_WEBHOOK_SECRET = 'whsec_test_12345678901234567890';
+      process.env.TWILIO_ACCOUNT_SID = 'AC12345678901234567890';
+      process.env.TWILIO_AUTH_TOKEN = 'auth_token_12345678901234567890';
+      process.env.AWS_ACCESS_KEY_ID = 'AKIA12345678901234567890';
+      process.env.AWS_SECRET_ACCESS_KEY = 'secret_key_12345678901234567890';
+      process.env.GOOGLE_PLACES_API_KEY = 'AIza12345678901234567890';
+      process.env.GOOGLE_CLIENTID = 'client_id_12345678901234567890';
+      process.env.GOOGLE_OATUH_SECRET = 'client_secret_12345678901234567890';
+      process.env.DATABASE_URL = 'postgres://user:pass@localhost:5432/database_name';
+      process.env.HMAC_SECRET = 'hmac_secret_12345678901234567890';
+      process.env.SUPABASE_URL = 'https://test.supabase.co';
+      process.env.SUPABASE_SERVICE_ROLE_KEY = 'service_role_key_12345678901234567890';
+
+      // Mock console methods
+      const consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
       const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      
+      // Mock process.exit to prevent actual exit during tests
       const processExitSpy = vi.spyOn(process, 'exit').mockImplementation(() => {
-        throw new Error('process.exit called');
+        // Do nothing - just prevent actual exit
+        return undefined as never;
       });
 
       expect(() => validateEnvironment()).not.toThrow();
       
-      consoleSpy.mockRestore();
+      // Assert that success message is logged
+      expect(consoleLogSpy).toHaveBeenCalledWith('✅ All required environment variables are present and valid');
+      
+      consoleLogSpy.mockRestore();
       consoleErrorSpy.mockRestore();
       processExitSpy.mockRestore();
     });
@@ -58,15 +71,27 @@ describe('Environment Validation', () => {
       });
       // Missing all required variables
 
+      const consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
       const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
       const processExitSpy = vi.spyOn(process, 'exit').mockImplementation(() => {
-        throw new Error('process.exit called');
+        // Do nothing - just prevent actual exit
+        return undefined as never;
       });
 
-      expect(() => validateEnvironment()).toThrow('process.exit called');
+      expect(() => validateEnvironment()).not.toThrow();
       
+      // Assert that process.exit was called with 1
+      expect(processExitSpy).toHaveBeenCalledWith(1);
+      
+      // Assert that error messages were logged
       expect(consoleErrorSpy).toHaveBeenCalledWith('❌ Missing required environment variables:');
+      expect(consoleErrorSpy).toHaveBeenCalledWith('\n💡 Copy .env.example to .env and fill in your actual values');
+      expect(consoleErrorSpy).toHaveBeenCalledWith('📖 See .env.example for the required format');
       
+      // Assert that success message was NOT logged
+      expect(consoleLogSpy).not.toHaveBeenCalledWith('✅ All required environment variables are present and valid');
+      
+      consoleLogSpy.mockRestore();
       consoleErrorSpy.mockRestore();
       processExitSpy.mockRestore();
     });
@@ -77,24 +102,35 @@ describe('Environment Validation', () => {
       process.env.STRIPE_PUBLISHABLE_KEY = 'invalid_publishable_key';
       process.env.TWILIO_ACCOUNT_SID = 'AC123456789';
       process.env.TWILIO_AUTH_TOKEN = 'auth_token_123';
-      process.env.AWS_SES_ACCESS_KEY_ID = 'AKIA123456789';
-      process.env.AWS_SES_SECRET_ACCESS_KEY = 'secret_key_123';
+      process.env.AWS_ACCESS_KEY_ID = 'AKIA123456789';
+      process.env.AWS_SECRET_ACCESS_KEY = 'secret_key_123';
       process.env.GOOGLE_PLACES_API_KEY = 'AIza123456789';
-      process.env.GOOGLE_CALENDAR_CLIENT_ID = 'client_id_123';
-      process.env.GOOGLE_CALENDAR_CLIENT_SECRET = 'client_secret_123';
-      process.env.FACEBOOK_GRAPH_ACCESS_TOKEN = 'token_123';
+      process.env.GOOGLE_CLIENTID = 'client_id_123';
+      process.env.GOOGLE_OATUH_SECRET = 'client_secret_123';
       process.env.DATABASE_URL = 'invalid_database_url';
-      process.env.HMAC_SECRET_KEY = 'hmac_secret_123';
+      process.env.HMAC_SECRET = 'hmac_secret_123';
 
+      const consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
       const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
       const processExitSpy = vi.spyOn(process, 'exit').mockImplementation(() => {
-        throw new Error('process.exit called');
+        // Do nothing - just prevent actual exit
+        return undefined as never;
       });
 
-      expect(() => validateEnvironment()).toThrow('process.exit called');
+      expect(() => validateEnvironment()).not.toThrow();
       
+      // Assert that process.exit was called with 1
+      expect(processExitSpy).toHaveBeenCalledWith(1);
+      
+      // Assert that error messages were logged
       expect(consoleErrorSpy).toHaveBeenCalledWith('❌ Invalid environment variables:');
+      expect(consoleErrorSpy).toHaveBeenCalledWith('\n💡 Copy .env.example to .env and fill in your actual values');
+      expect(consoleErrorSpy).toHaveBeenCalledWith('📖 See .env.example for the required format');
       
+      // Assert that success message was NOT logged
+      expect(consoleLogSpy).not.toHaveBeenCalledWith('✅ All required environment variables are present and valid');
+      
+      consoleLogSpy.mockRestore();
       consoleErrorSpy.mockRestore();
       processExitSpy.mockRestore();
     });
@@ -105,24 +141,35 @@ describe('Environment Validation', () => {
       process.env.STRIPE_PUBLISHABLE_KEY = '';
       process.env.TWILIO_ACCOUNT_SID = 'AC123456789';
       process.env.TWILIO_AUTH_TOKEN = 'auth_token_123';
-      process.env.AWS_SES_ACCESS_KEY_ID = 'AKIA123456789';
-      process.env.AWS_SES_SECRET_ACCESS_KEY = 'secret_key_123';
+      process.env.AWS_ACCESS_KEY_ID = 'AKIA123456789';
+      process.env.AWS_SECRET_ACCESS_KEY = 'secret_key_123';
       process.env.GOOGLE_PLACES_API_KEY = 'AIza123456789';
-      process.env.GOOGLE_CALENDAR_CLIENT_ID = 'client_id_123';
-      process.env.GOOGLE_CALENDAR_CLIENT_SECRET = 'client_secret_123';
-      process.env.FACEBOOK_GRAPH_ACCESS_TOKEN = 'token_123';
+      process.env.GOOGLE_CLIENTID = 'client_id_123';
+      process.env.GOOGLE_OATUH_SECRET = 'client_secret_123';
       process.env.DATABASE_URL = 'postgres://user:pass@localhost:5432/db';
-      process.env.HMAC_SECRET_KEY = 'hmac_secret_123';
+      process.env.HMAC_SECRET = 'hmac_secret_123';
 
+      const consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
       const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
       const processExitSpy = vi.spyOn(process, 'exit').mockImplementation(() => {
-        throw new Error('process.exit called');
+        // Do nothing - just prevent actual exit
+        return undefined as never;
       });
 
-      expect(() => validateEnvironment()).toThrow('process.exit called');
+      expect(() => validateEnvironment()).not.toThrow();
       
+      // Assert that process.exit was called with 1
+      expect(processExitSpy).toHaveBeenCalledWith(1);
+      
+      // Assert that error messages were logged
       expect(consoleErrorSpy).toHaveBeenCalledWith('❌ Missing required environment variables:');
+      expect(consoleErrorSpy).toHaveBeenCalledWith('\n💡 Copy .env.example to .env and fill in your actual values');
+      expect(consoleErrorSpy).toHaveBeenCalledWith('📖 See .env.example for the required format');
       
+      // Assert that success message was NOT logged
+      expect(consoleLogSpy).not.toHaveBeenCalledWith('✅ All required environment variables are present and valid');
+      
+      consoleLogSpy.mockRestore();
       consoleErrorSpy.mockRestore();
       processExitSpy.mockRestore();
     });
@@ -133,22 +180,35 @@ describe('Environment Validation', () => {
       process.env.STRIPE_PUBLISHABLE_KEY = 'pk_test_123456789';
       process.env.TWILIO_ACCOUNT_SID = 'AC123456789';
       process.env.TWILIO_AUTH_TOKEN = 'auth_token_123';
-      process.env.AWS_SES_ACCESS_KEY_ID = 'AKIA123456789';
-      process.env.AWS_SES_SECRET_ACCESS_KEY = 'secret_key_123';
+      process.env.AWS_ACCESS_KEY_ID = 'AKIA123456789';
+      process.env.AWS_SECRET_ACCESS_KEY = 'secret_key_123';
       process.env.GOOGLE_PLACES_API_KEY = 'AIza123456789';
-      process.env.GOOGLE_CALENDAR_CLIENT_ID = 'client_id_123';
-      process.env.GOOGLE_CALENDAR_CLIENT_SECRET = 'client_secret_123';
-      process.env.FACEBOOK_GRAPH_ACCESS_TOKEN = 'token_123';
+      process.env.GOOGLE_CLIENTID = 'client_id_123';
+      process.env.GOOGLE_OATUH_SECRET = 'client_secret_123';
       process.env.DATABASE_URL = 'postgres://user:pass@localhost:5432/db';
-      process.env.HMAC_SECRET_KEY = 'hmac_secret_123';
+      process.env.HMAC_SECRET = 'hmac_secret_123';
 
+      const consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
       const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
       const processExitSpy = vi.spyOn(process, 'exit').mockImplementation(() => {
-        throw new Error('process.exit called');
+        // Do nothing - just prevent actual exit
+        return undefined as never;
       });
 
-      expect(() => validateEnvironment()).toThrow('process.exit called');
+      expect(() => validateEnvironment()).not.toThrow();
       
+      // Assert that process.exit was called with 1
+      expect(processExitSpy).toHaveBeenCalledWith(1);
+      
+      // Assert that error messages were logged
+      expect(consoleErrorSpy).toHaveBeenCalledWith('❌ Invalid environment variables:');
+      expect(consoleErrorSpy).toHaveBeenCalledWith('\n💡 Copy .env.example to .env and fill in your actual values');
+      expect(consoleErrorSpy).toHaveBeenCalledWith('📖 See .env.example for the required format');
+      
+      // Assert that success message was NOT logged
+      expect(consoleLogSpy).not.toHaveBeenCalledWith('✅ All required environment variables are present and valid');
+      
+      consoleLogSpy.mockRestore();
       consoleErrorSpy.mockRestore();
       processExitSpy.mockRestore();
     });
@@ -159,22 +219,35 @@ describe('Environment Validation', () => {
       process.env.STRIPE_PUBLISHABLE_KEY = 'pk_test_123456789';
       process.env.TWILIO_ACCOUNT_SID = 'AC123456789';
       process.env.TWILIO_AUTH_TOKEN = 'auth_token_123';
-      process.env.AWS_SES_ACCESS_KEY_ID = 'AKIA123456789';
-      process.env.AWS_SES_SECRET_ACCESS_KEY = 'secret_key_123';
+      process.env.AWS_ACCESS_KEY_ID = 'AKIA123456789';
+      process.env.AWS_SECRET_ACCESS_KEY = 'secret_key_123';
       process.env.GOOGLE_PLACES_API_KEY = 'AIza123456789';
-      process.env.GOOGLE_CALENDAR_CLIENT_ID = 'client_id_123';
-      process.env.GOOGLE_CALENDAR_CLIENT_SECRET = 'client_secret_123';
-      process.env.FACEBOOK_GRAPH_ACCESS_TOKEN = 'token_123';
+      process.env.GOOGLE_CLIENTID = 'client_id_123';
+      process.env.GOOGLE_OATUH_SECRET = 'client_secret_123';
       process.env.DATABASE_URL = 'mysql://user:pass@localhost:3306/db'; // Should start with postgres://
-      process.env.HMAC_SECRET_KEY = 'hmac_secret_123';
+      process.env.HMAC_SECRET = 'hmac_secret_123';
 
+      const consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
       const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
       const processExitSpy = vi.spyOn(process, 'exit').mockImplementation(() => {
-        throw new Error('process.exit called');
+        // Do nothing - just prevent actual exit
+        return undefined as never;
       });
 
-      expect(() => validateEnvironment()).toThrow('process.exit called');
+      expect(() => validateEnvironment()).not.toThrow();
       
+      // Assert that process.exit was called with 1
+      expect(processExitSpy).toHaveBeenCalledWith(1);
+      
+      // Assert that error messages were logged
+      expect(consoleErrorSpy).toHaveBeenCalledWith('❌ Invalid environment variables:');
+      expect(consoleErrorSpy).toHaveBeenCalledWith('\n💡 Copy .env.example to .env and fill in your actual values');
+      expect(consoleErrorSpy).toHaveBeenCalledWith('📖 See .env.example for the required format');
+      
+      // Assert that success message was NOT logged
+      expect(consoleLogSpy).not.toHaveBeenCalledWith('✅ All required environment variables are present and valid');
+      
+      consoleLogSpy.mockRestore();
       consoleErrorSpy.mockRestore();
       processExitSpy.mockRestore();
     });

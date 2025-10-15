@@ -6,39 +6,37 @@ import { insertEvent, getEventByStripeId } from '../../models/events';
 import { createToken } from '../../models/onboarding_tokens';
 import { generateMagicLinkToken } from '../../utils/hmac_token';
 import { sesClient } from '../../client/ses';
-import { HttpError } from '../../utils/errors';
 import { pool } from '../../config/database';
 
 export async function POST(req: Request, res: Response) {
+  // Get raw body for signature verification
+  const rawBody = req.body;
+  const signature = req.headers['stripe-signature'] as string | undefined;
+
+  if (!signature) {
+    return res.status(400).json({ error: 'Missing Stripe signature' });
+  }
+
+  let stripeEvent;
   try {
-    // Get raw body for signature verification
-    const rawBody = req.body;
-    const signature = req.headers['stripe-signature'] as string;
+    stripeEvent = verifyWebhookSignature(rawBody, signature);
+  } catch (error) {
+    console.error('Stripe signature verification failed:', error);
+    return res.status(400).json({ error: 'Invalid signature' });
+  }
 
-    if (!signature) {
-      throw new HttpError('Missing Stripe signature', 400);
-    }
+  // Only handle checkout.session.completed events
+  if (stripeEvent && stripeEvent.type !== 'checkout.session.completed') {
+    console.log(`Ignoring event type: ${stripeEvent.type}`);
+    return res.status(200).json({ received: true });
+  }
 
-    // Verify webhook signature
-    let stripeEvent;
-    try {
-      stripeEvent = verifyWebhookSignature(rawBody, signature);
-    } catch (error) {
-      console.error('Stripe signature verification failed:', error);
-      throw new HttpError('Invalid signature', 400);
-    }
+  if (!stripeEvent) {
+    console.error('Stripe webhook error: Missing event payload');
+    return res.status(400).json({ error: 'Invalid webhook payload' });
+  }
 
-    // Only handle checkout.session.completed events
-    if (stripeEvent && stripeEvent.type !== 'checkout.session.completed') {
-      console.log(`Ignoring event type: ${stripeEvent.type}`);
-      return res.status(200).json({ received: true });
-    }
-
-    // Ensure we have a valid stripe event
-    if (!stripeEvent) {
-      throw new HttpError('Invalid webhook payload', 400);
-    }
-
+  try {
     // Check for idempotency - prevent duplicate processing
     const existingEvent = await getEventByStripeId(stripeEvent.id);
     if (existingEvent) {
@@ -54,28 +52,38 @@ export async function POST(req: Request, res: Response) {
 
     // Use database transaction for atomicity
     const client = await pool().connect();
-    
+
     try {
       await client.query('BEGIN');
 
       // Create practice
-      const practice = await createPractice({
-        name: practiceName,
-        email: customerDetails.email || null,
-        phone: customerDetails.phone || null,
-        status: 'provisioning'
-      }, client);
+      const practice = await createPractice(
+        {
+          name: practiceName,
+          email: customerDetails.email || null,
+          phone: customerDetails.phone || null,
+          status: 'provisioning'
+        },
+        client
+      );
 
       // Create default settings
-      await createDefaultSettings(practice.id, {
-        billing_json: session
-      }, client);
+      await createDefaultSettings(
+        practice.id,
+        {
+          billing_json: session
+        },
+        client
+      );
 
       // Create magic link token
-      const { token, tokenId } = await createToken({
-        practice_id: practice.id,
-        expiry_days: 7
-      }, client);
+      const { tokenId } = await createToken(
+        {
+          practice_id: practice.id,
+          expiry_days: 7
+        },
+        client
+      );
 
       // Generate magic link
       const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
@@ -89,58 +97,60 @@ export async function POST(req: Request, res: Response) {
       );
 
       // Log events
-      await insertEvent({
-        practice_id: practice.id,
-        type: 'stripe_checkout',
-        actor: 'system',
-        payload_json: {
-          stripe_event_id: stripeEvent.id,
-          session_id: session.id,
-          customer_email: customerDetails.email
-        }
-      }, client);
+      await insertEvent(
+        {
+          practice_id: practice.id,
+          type: 'stripe_checkout',
+          actor: 'system',
+          payload_json: {
+            stripe_event_id: stripeEvent.id,
+            session_id: session.id,
+            customer_email: customerDetails.email
+          }
+        },
+        client
+      );
 
       if (emailResult.success) {
-        await insertEvent({
-          practice_id: practice.id,
-          type: 'onboarding_email_sent',
-          actor: 'system',
-          payload_json: {
-            message_id: emailResult.messageId,
-            token_id: tokenId
-          }
-        }, client);
+        await insertEvent(
+          {
+            practice_id: practice.id,
+            type: 'onboarding_email_sent',
+            actor: 'system',
+            payload_json: {
+              message_id: emailResult.messageId,
+              token_id: tokenId
+            }
+          },
+          client
+        );
       } else {
-        await insertEvent({
-          practice_id: practice.id,
-          type: emailResult.retryable ? 'onboarding_email_retry' : 'onboarding_email_failed',
-          actor: 'system',
-          payload_json: {
-            error: emailResult.error,
-            token_id: tokenId
-          }
-        }, client);
+        await insertEvent(
+          {
+            practice_id: practice.id,
+            type: emailResult.retryable ? 'onboarding_email_retry' : 'onboarding_email_failed',
+            actor: 'system',
+            payload_json: {
+              error: emailResult.error,
+              token_id: tokenId
+            }
+          },
+          client
+        );
       }
 
       await client.query('COMMIT');
-      
+
       console.log(`Successfully processed checkout for practice ${practice.id}`);
       return res.status(200).json({ received: true });
-
     } catch (error) {
       await client.query('ROLLBACK');
       throw error;
     } finally {
       client.release();
     }
-
   } catch (error) {
     console.error('Stripe webhook error:', error);
-    
-    if (error instanceof HttpError) {
-      return res.status(error.statusCode).json({ error: error.message });
-    }
-
     return res.status(500).json({ error: 'Internal server error' });
   }
 }

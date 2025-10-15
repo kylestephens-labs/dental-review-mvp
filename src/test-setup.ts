@@ -30,3 +30,6 @@ if (typeof import.meta !== 'undefined' && import.meta.env) {
     import.meta.env.VITE_SUPABASE_ANON_KEY = 'test_anon_key_123456789';
   }
 }
+
+// Note: Environment variables for tests should be set in individual test files
+// to allow full control over test environment setup

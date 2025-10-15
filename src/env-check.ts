@@ -2,19 +2,26 @@ import * as fs from 'fs';
 import * as path from 'path';
 
 // Load environment variables from .env file
-try {
-  const envFile = fs.readFileSync(path.join(process.cwd(), '.env'), 'utf8');
-  const envVars = envFile.split('\n').filter(line => line.trim() && !line.startsWith('#'));
-  
-  for (const line of envVars) {
-    const [key, ...valueParts] = line.split('=');
-    if (key && valueParts.length > 0) {
-      process.env[key.trim()] = valueParts.join('=').trim();
-    }
+export function loadEnvFromFile(envPath = path.join(process.cwd(), '.env')): void {
+  // Skip loading if SKIP_ENV_FILE flag is set (for tests)
+  if (process.env.SKIP_ENV_FILE === 'true') {
+    return;
   }
-} catch (error) {
-  // .env file doesn't exist, continue with system environment variables
-  console.log('No .env file found, using system environment variables');
+
+  try {
+    const envFile = fs.readFileSync(envPath, 'utf8');
+    const envVars = envFile.split('\n').filter(line => line.trim() && !line.startsWith('#'));
+    
+    for (const line of envVars) {
+      const [key, ...valueParts] = line.split('=');
+      if (key && valueParts.length > 0) {
+        process.env[key.trim()] = valueParts.join('=').trim();
+      }
+    }
+  } catch (error) {
+    // .env file doesn't exist, continue with system environment variables
+    console.log('No .env file found, using system environment variables');
+  }
 }
 
 interface EnvConfig {
@@ -111,12 +118,19 @@ export function validateEnvironment(): void {
     console.error('\n💡 Copy .env.example to .env and fill in your actual values');
     console.error('📖 See .env.example for the required format');
     process.exit(1);
+    return; // Prevent success message when exit is mocked during tests
   }
   
   console.log('✅ All required environment variables are present and valid');
 }
 
+// Bootstrap function that loads .env file and validates environment
+export function bootstrapEnv(): void {
+  loadEnvFromFile();
+  validateEnvironment();
+}
+
 // Run validation if this file is executed directly
 if (import.meta.url === `file://${process.argv[1]}`) {
-  validateEnvironment();
+  bootstrapEnv();
 }
