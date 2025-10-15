@@ -11,6 +11,9 @@ const mockCreateClient = vi.fn(() => ({
   }
 }));
 
+// Type the mock calls properly
+type MockCall = [string, string, object];
+
 vi.mock('@supabase/supabase-js', () => ({
   createClient: mockCreateClient
 }));
@@ -63,7 +66,7 @@ describe('Supabase Client', () => {
     test('should call createClient with three arguments', async () => {
       await import('../integrations/supabase/client');
       
-      const callArgs = mockCreateClient.mock.calls[0];
+      const callArgs = mockCreateClient.mock.calls[0] as unknown as MockCall;
       expect(callArgs).toHaveLength(3);
       expect(typeof callArgs[0]).toBe('string'); // URL
       expect(typeof callArgs[1]).toBe('string'); // Key
@@ -82,7 +85,8 @@ describe('Supabase Client', () => {
     test('should have correct auth configuration', async () => {
       await import('../integrations/supabase/client');
       
-      const config = mockCreateClient.mock.calls[0][2];
+      const callArgs = mockCreateClient.mock.calls[0] as unknown as MockCall;
+      const config = callArgs[2];
       expect(config).toEqual({
         auth: {
           persistSession: false
@@ -93,7 +97,8 @@ describe('Supabase Client', () => {
     test('should be configured for server-side rendering', async () => {
       await import('../integrations/supabase/client');
       
-      const config = mockCreateClient.mock.calls[0][2];
+      const callArgs = mockCreateClient.mock.calls[0] as unknown as MockCall;
+      const config = callArgs[2] as { auth: { persistSession: boolean } };
       expect(config.auth.persistSession).toBe(false);
     });
   });
@@ -113,7 +118,7 @@ describe('Supabase Client', () => {
     test('should not export default', async () => {
       const module = await import('../integrations/supabase/client');
       
-      expect(module.default).toBeUndefined();
+      expect('default' in module).toBe(false);
     });
   });
 

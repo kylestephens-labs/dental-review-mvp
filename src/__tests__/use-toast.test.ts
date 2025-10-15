@@ -1,6 +1,8 @@
 import { describe, test, expect, vi, beforeEach } from 'vitest';
 import { renderHook } from '@testing-library/react';
+import React from 'react';
 import { useToast, toast } from '../hooks/use-toast';
+import { ToastAction } from '../components/ui/toast';
 
 describe('useToast Hook', () => {
   beforeEach(() => {
@@ -95,10 +97,7 @@ describe('toast Function', () => {
   test('should handle toast with action', () => {
     const result = toast({ 
       title: 'Test Toast',
-      action: {
-        altText: 'Undo',
-        onClick: vi.fn()
-      }
+      action: React.createElement(ToastAction, { altText: 'Undo', onClick: vi.fn() }, 'Undo') as any
     });
     
     expect(result.id).toBeDefined();
@@ -115,7 +114,7 @@ describe('toast Function', () => {
   test('should handle update function', () => {
     const result = toast({ title: 'Test Toast' });
     
-    expect(() => result.update({ title: 'Updated Toast' })).not.toThrow();
+    expect(() => result.update({ id: result.id, title: 'Updated Toast' })).not.toThrow();
   });
 
   test('should handle multiple toast creation', () => {
@@ -140,10 +139,7 @@ describe('toast Function', () => {
       title: 'Complete Toast',
       description: 'This toast has all properties',
       duration: 3000,
-      action: {
-        altText: 'Action',
-        onClick: vi.fn()
-      }
+      action: React.createElement(ToastAction, { altText: 'Action', onClick: vi.fn() }, 'Action') as any
     });
     
     expect(result.id).toBeDefined();
