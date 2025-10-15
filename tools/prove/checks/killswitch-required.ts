@@ -1,8 +1,7 @@
 import { type ProveContext } from '../context.js';
 import { logger } from '../logger.js';
 import { exec } from '../utils/exec.js';
-import { readFile } from 'fs/promises';
-import { join } from 'path';
+import { FeatureFlagDetector, UnifiedFlagRegistry } from './shared/index.js';
 
 export interface KillswitchRequiredResult {
   ok: boolean;
@@ -13,11 +12,19 @@ export interface KillswitchRequiredResult {
     hasKillSwitch: boolean;
     changedFiles: string[];
     killSwitchPatterns: string[];
+    detectedPatterns: string[];
+    registeredFlags: string[];
+    unregisteredFlags: string[];
+    metrics?: {
+      detectionDuration: number;
+      patternMatchCount: number;
+      filesProcessed: number;
+    };
   };
 }
 
 /**
- * Check if feature commits require kill switches
+ * Check if feature commits require kill switches using enhanced pattern detection
  * @param context - Prove context
  * @returns Promise<KillswitchRequiredResult> - Check result
  */
@@ -65,7 +72,10 @@ export async function checkKillswitchRequired(context: ProveContext): Promise<Ki
           touchesProductionCode: false,
           hasKillSwitch: false,
           changedFiles: [],
-          killSwitchPatterns: []
+          killSwitchPatterns: [],
+          detectedPatterns: [],
+          registeredFlags: [],
+          unregisteredFlags: []
         }
       };
     }
@@ -87,7 +97,10 @@ export async function checkKillswitchRequired(context: ProveContext): Promise<Ki
           touchesProductionCode: false,
           hasKillSwitch: false,
           changedFiles: [],
-          killSwitchPatterns: []
+          killSwitchPatterns: [],
+          detectedPatterns: [],
+          registeredFlags: [],
+          unregisteredFlags: []
         }
       };
     }
@@ -109,7 +122,10 @@ export async function checkKillswitchRequired(context: ProveContext): Promise<Ki
           touchesProductionCode: false,
           hasKillSwitch: false,
           changedFiles: changedFiles,
-          killSwitchPatterns: []
+          killSwitchPatterns: [],
+          detectedPatterns: [],
+          registeredFlags: [],
+          unregisteredFlags: []
         }
       };
     }
@@ -118,20 +134,9 @@ export async function checkKillswitchRequired(context: ProveContext): Promise<Ki
       commitMessage: commitMessage.substring(0, 50) + '...'
     });
 
-    // Check if any changed files are production code
-    const productionCodePatterns = [
-      /^src\//,           // Frontend source code
-      /^backend\/src\//,  // Backend source code
-      /^api\//,           // API code
-      /^lib\//,           // Library code
-      /^components\//,    // React components
-      /^pages\//,         // Next.js pages
-      /^app\//,           // App directory
-      /\.(ts|tsx|js|jsx)$/ // TypeScript/JavaScript files
-    ];
-
+    // Use shared production code patterns from FeatureFlagDetector
     const productionFiles = changedFiles.filter(file => 
-      productionCodePatterns.some(pattern => pattern.test(file))
+      FeatureFlagDetector.PATTERNS.productionCode.some(pattern => pattern.test(file))
     );
 
     const touchesProductionCode = productionFiles.length > 0;
@@ -148,7 +153,10 @@ export async function checkKillswitchRequired(context: ProveContext): Promise<Ki
           touchesProductionCode: false,
           hasKillSwitch: false,
           changedFiles: changedFiles,
-          killSwitchPatterns: []
+          killSwitchPatterns: [],
+          detectedPatterns: [],
+          registeredFlags: [],
+          unregisteredFlags: []
         }
       };
     }
@@ -157,40 +165,68 @@ export async function checkKillswitchRequired(context: ProveContext): Promise<Ki
       productionFiles: productionFiles
     });
 
-    // Search for kill switch patterns in changed files
-    const killSwitchPatterns = [
-      /isEnabled\s*\(\s*['"`][^'"`]+['"`]\s*\)/g,  // Feature flag usage
-      /KILL_SWITCH_/g,                             // Kill switch constants
-      /featureFlag\s*[=:]/g,                       // Feature flag assignments
-      /toggle\s*[=:]/g,                            // Toggle assignments
-      /config\s*[=:].*enabled/g,                   // Config enabled flags
-      /process\.env\.[A-Z_]+_ENABLED/g,            // Environment variable flags
-      /import.*flags/g,                            // Flag imports
-      /from.*flags/g                               // Flag imports
+    // Enhanced kill switch patterns using shared detector
+    const enhancedKillSwitchPatterns = [
+      // Existing patterns
+      FeatureFlagDetector.PATTERNS.isEnabled,
+      FeatureFlagDetector.PATTERNS.killSwitch,
+      
+      // New enhanced patterns
+      FeatureFlagDetector.PATTERNS.useFeatureFlag,
+      FeatureFlagDetector.PATTERNS.isFeatureEnabled,
+      FeatureFlagDetector.PATTERNS.envVar,
+      FeatureFlagDetector.PATTERNS.config,
+      FeatureFlagDetector.PATTERNS.toggle,
+      FeatureFlagDetector.PATTERNS.import,
+      FeatureFlagDetector.PATTERNS.rollout
     ];
 
-    const foundKillSwitches: string[] = [];
+    // Use shared detector for pattern detection
+    const detectionResult = await FeatureFlagDetector.detectKillSwitchPatterns(
+      workingDirectory,
+      productionFiles,
+      enhancedKillSwitchPatterns
+    );
 
-    for (const file of productionFiles) {
-      try {
-        const filePath = join(workingDirectory, file);
-        const content = await readFile(filePath, 'utf-8');
-        
-        for (const pattern of killSwitchPatterns) {
-          const matches = content.match(pattern);
-          if (matches) {
-            foundKillSwitches.push(...matches);
-          }
-        }
-      } catch (error) {
-        logger.warn(`Failed to read file ${file}`, {
-          error: error instanceof Error ? error.message : String(error)
-        });
-        continue;
-      }
-    }
-
+    const foundKillSwitches = detectionResult.killSwitchPatterns;
     const hasKillSwitch = foundKillSwitches.length > 0;
+
+    // Load flag registry for validation
+    let registeredFlags: string[] = [];
+    let unregisteredFlags: string[] = [];
+    
+    try {
+      const registry = await UnifiedFlagRegistry.loadAllFlags(workingDirectory);
+      
+      // Extract flag names from detected patterns for validation
+      const flagNames = new Set<string>();
+      for (const pattern of foundKillSwitches) {
+        // Extract flag names from various patterns
+        const flagNameMatch = pattern.match(/['"`]([^'"`]+)['"`]/);
+        if (flagNameMatch) {
+          flagNames.add(flagNameMatch[1]);
+        }
+      }
+      
+      // Validate flags against registry
+      const flagNamesArray = Array.from(flagNames);
+      const validationResult = registry.validateFlags(flagNamesArray);
+      
+      registeredFlags = flagNamesArray.filter(flag => registry.isRegistered(flag));
+      unregisteredFlags = validationResult.missingFlags;
+      
+      logger.info('Flag validation completed', {
+        totalFlags: flagNamesArray.length,
+        registeredFlags: registeredFlags.length,
+        unregisteredFlags: unregisteredFlags.length,
+        validationErrors: validationResult.errors.length
+      });
+      
+    } catch (error) {
+      logger.warn('Failed to load flag registry for validation', {
+        error: error instanceof Error ? error.message : String(error)
+      });
+    }
 
     if (!hasKillSwitch) {
       const reason = `Feature commit touches production code but lacks kill switch. Found ${productionFiles.length} production files but no feature flags, toggles, or kill switches.`;
@@ -200,7 +236,8 @@ export async function checkKillswitchRequired(context: ProveContext): Promise<Ki
         touchesProductionCode: true,
         hasKillSwitch: false,
         productionFiles: productionFiles,
-        changedFiles: changedFiles
+        changedFiles: changedFiles,
+        metrics: detectionResult.metrics
       });
 
       return {
@@ -211,9 +248,21 @@ export async function checkKillswitchRequired(context: ProveContext): Promise<Ki
           touchesProductionCode: true,
           hasKillSwitch: false,
           changedFiles: changedFiles,
-          killSwitchPatterns: []
+          killSwitchPatterns: [],
+          detectedPatterns: [],
+          registeredFlags: [],
+          unregisteredFlags: [],
+          metrics: detectionResult.metrics
         }
       };
+    }
+
+    // Check if any detected flags are unregistered (warning, not failure)
+    if (unregisteredFlags.length > 0) {
+      logger.warn('Some kill-switch flags are not registered in flag registry', {
+        unregisteredFlags: unregisteredFlags,
+        registeredFlags: registeredFlags
+      });
     }
 
     logger.success('Kill-switch check passed', {
@@ -222,7 +271,10 @@ export async function checkKillswitchRequired(context: ProveContext): Promise<Ki
       touchesProductionCode: true,
       hasKillSwitch: true,
       killSwitchCount: foundKillSwitches.length,
-      productionFiles: productionFiles
+      productionFiles: productionFiles,
+      registeredFlags: registeredFlags.length,
+      unregisteredFlags: unregisteredFlags.length,
+      metrics: detectionResult.metrics
     });
 
     return {
@@ -232,7 +284,11 @@ export async function checkKillswitchRequired(context: ProveContext): Promise<Ki
         touchesProductionCode: true,
         hasKillSwitch: true,
         changedFiles: changedFiles,
-        killSwitchPatterns: foundKillSwitches
+        killSwitchPatterns: foundKillSwitches,
+        detectedPatterns: foundKillSwitches,
+        registeredFlags: registeredFlags,
+        unregisteredFlags: unregisteredFlags,
+        metrics: detectionResult.metrics
       }
     };
 
@@ -251,7 +307,10 @@ export async function checkKillswitchRequired(context: ProveContext): Promise<Ki
         touchesProductionCode: false,
         hasKillSwitch: false,
         changedFiles: [],
-        killSwitchPatterns: []
+        killSwitchPatterns: [],
+        detectedPatterns: [],
+        registeredFlags: [],
+        unregisteredFlags: []
       }
     };
   }

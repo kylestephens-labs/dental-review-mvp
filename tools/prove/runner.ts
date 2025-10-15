@@ -19,7 +19,7 @@ import { checkSizeBudget } from './checks/sizeBudget.js';
 import { executeCheck, handleCheckFailure, CHECK_CONFIGS } from './checks/runner-helper.js';
 // import { checkCommitSize } from './checks/commit-size.js'; // Temporarily disabled
 import { checkCommitMsgConvention } from './checks/commit-msg-convention.js';
-// import { checkFeatureFlagLint } from './checks/feature-flag-lint.js'; // Temporarily disabled
+import { checkFeatureFlagLint } from './checks/feature-flag-lint.js';
 import { checkKillswitchRequired } from './checks/killswitch-required.js';
 import { checkDeliveryMode } from './checks/deliveryMode.js';
 import { checkSecurity } from './checks/security.js';
@@ -67,6 +67,7 @@ function getExecutionPlan(context: ProveContext, quickMode: boolean) {
     { id: 'lint', fn: checkLint },
     { id: 'typecheck', fn: checkTypecheck },
     { id: 'tests', fn: checkTests }, // Tests run in parallel with other checks
+    { id: 'feature-flag-lint', fn: checkFeatureFlagLint },
   ];
 
   // Coverage-dependent checks that must wait for tests to complete

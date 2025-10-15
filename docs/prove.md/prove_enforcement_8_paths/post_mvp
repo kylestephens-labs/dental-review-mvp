@@ -1,0 +1,84 @@
+Short take: your Prove gates cover a lot—and they directly blunt most pains. There are a few places where you’re “good but not bullet-proof.” Here’s a tight audit with concrete upgrades.
+
+Audit: pain points vs. your gates
+
+Pain point	Status	Why	Small, surgical upgrade
+Hallucination	✅ Strong	typecheck, build, env-check, tests catch most fabrications	(optional) add lockfile/engines gate to stop env drift (see T37)
+Scope creep	✅ Strong	commit-size gate, diff-coverage (functional), tests-touched, pre-conflict	(optional) max new files + dep add justification check (T39b)
+Context drift	⚠️ Partial	ARCHITECTURE.md + TASK.json exist, but not verified per change	Context compliance gate: require TASK.json + link to affected components; fail if missing (T35)
+Spec drift / partial completion	⚠️ Partial	tests + diff-coverage help; API/webhook contracts are optional	Turn contracts on by default when API files change (T36)
+Env/dependency incoherence	⚠️ Partial	env-check + pinned Node in CI	Lockfile & engines gate; repro build check (T37)
+Bloat & scaffold inflation	⚠️ Partial	size-limit (optional) + commit-size	Add ts-prune/madge dead-code & circular-dep gate (T39)
+Semantic inconsistency	⚠️ Partial	type safety & tests help, but no invariant layer	Invariants: zod/typia at boundaries + property-based tests nightly (T41)
+Temporal regression	✅ Good	diff-coverage + nightly full prove	(optional) flakiness sweep: rerun failed tests N times in CI (T40)
+Prompt sensitivity/variance	⚠️ Partial	delivery-mode + prove log help	Prompt compliance gate: verify presence/hash of SENIOR_ENGINEER_PROMPT.md; fail if agent reply lacks PROVE LOG (T35b)
+Verification black holes	✅ Strong	prove-report.json + required CI check	(optional) keep report as PR artifact & link in template (already planned)
+Model capability mismatch	⚠️ Partial	not captured today	Model provenance note in PR: require MODEL= in commit/PR (T42)
+Human trust erosion	✅ Strong	objective, mechanical gates	Add runbook links in failure messages for fastest fix path (DX)
+
+
+⸻
+
+Add these tiny tasks (all < ~50 LOC each)
+
+T35 — Context compliance gate
+	•	Goal: Stop context drift by requiring task metadata.
+	•	Do: Fail if PR lacks: tasks/TASK.json (mode/id/title) and a “Touched Areas” list in the PR body (components/paths).
+	•	Test: Remove either → Prove fails with a crisp message.
+
+T35b — Prompt compliance gate
+	•	Goal: Make agents follow the canonical task template.
+	•	Do: Check repo contains docs/SENIOR_ENGINEER_PROMPT.md; if CI payload indicates AI commit/PR, require a PROVE_LOG section or an attached artifact reference.
+	•	Test: AI PR without log → fail; with log → pass.
+
+T36 — Auto-enable contracts when APIs change
+	•	Goal: Prevent API/webhook shape drift.
+	•	Do: If diff touches backend/src/api/** or contracts/**, run OpenAPI lint + webhook signature tests (Stripe/Twilio). Else skip.
+	•	Test: Break a response schema → fail.
+
+T37 — Lockfile & engines gate
+	•	Goal: Eliminate env incoherence.
+	•	Do:
+	•	Verify presence & changes to package-lock.json match package.json (no orphan adds).
+	•	Fail if Node version ≠ .nvmrc/engines.node.
+	•	CI installs with npm ci (already done).
+	•	Test: Edit dep without lockfile update → fail.
+
+T39 — Dead-code / circular-dep sweep
+	•	Goal: Block silent rot & spaghetti.
+	•	Do: Add ts-prune to fail on newly unused exports; add madge to fail on new circulars in changed modules.
+	•	Test: Add unused export or create a cycle → fail.
+
+T39b — Dependency add justification (lightweight)
+	•	Goal: Keep bloat in check.
+	•	Do: If package.json deps change, require commit body section: “Why stdlib isn’t enough + size + last update + license”. Otherwise fail.
+	•	Test: Add dep without section → fail.
+
+T40 — Flaky test sweeper (fast)
+	•	Goal: Stabilize trust signals.
+	•	Do: On CI failure, rerun failed tests up to 2x (vitest --retry 2) and mark tests as flaky in report. Nightly can run --repeat 3 to detect flakiness proactively.
+	•	Test: Introduce nondeterministic test; flakiness reported.
+
+T41 — Nightly mutation/property tests
+	•	Goal: Ensure tests have teeth.
+	•	Do: Nightly job runs stryker (or a small property-based test suite on critical modules).
+	•	Test: Kill a condition; mutation score below threshold → nightly fails.
+
+T42 — Model provenance requirement
+	•	Goal: Make capability visible.
+	•	Do: Require MODEL=<name> in PR body. Store into prove-report.json.
+	•	Test: Missing → fail with “Add MODEL=… to PR body.”
+
+⸻
+
+Two toggles worth flipping to “on by default”
+	•	Contracts on API change (T36) — this closes your biggest remaining spec-drift gap.
+	•	Lockfile/engines (T37) — cheap, high-value; stops “works on my machine” issues cold.
+
+⸻
+
+If you do nothing else
+
+Implement T36 + T37 now. They’re tiny, mechanical, and plug the most common “surprise” gaps left after your current gates.
+
+Want me to spit out Cursor-ready micro-prompts for T36 and T37 (exact diffs, files, tests to run)?
