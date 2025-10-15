@@ -16,14 +16,20 @@ export default defineConfig({
       provider: 'v8',
       reporter: ['text', 'json', 'html'],
       reportsDirectory: './coverage',
-      include: ['src/**/*.{ts,tsx}'],
+      include: [
+        'src/**/*.{ts,tsx}',
+        'tools/**/*.{ts,tsx}'
+      ],
       exclude: [
         'src/**/*.test.{ts,tsx}',
         'src/**/*.spec.{ts,tsx}',
         'src/**/__tests__/**',
         'src/**/test-setup.ts',
         'src/**/main.tsx',
-        'src/**/vite-env.d.ts'
+        'src/**/vite-env.d.ts',
+        'tools/**/*.test.{ts,tsx}',
+        'tools/**/*.spec.{ts,tsx}',
+        'tools/**/__tests__/**'
       ],
       thresholds: {
         global: {
