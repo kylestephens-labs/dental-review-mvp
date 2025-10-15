@@ -13,3 +13,6 @@ export type {
   ValidationResult, 
   RegistryMetrics 
 } from './flag-registry.js';
+
+export { ErrorMessageBuilder, ErrorMessageUtils } from './error-messages.js';
+export type { ErrorContext } from './error-messages.js';

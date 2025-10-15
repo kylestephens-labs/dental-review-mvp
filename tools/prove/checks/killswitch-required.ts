@@ -1,7 +1,7 @@
 import { type ProveContext } from '../context.js';
 import { logger } from '../logger.js';
 import { exec } from '../utils/exec.js';
-import { FeatureFlagDetector, UnifiedFlagRegistry } from './shared/index.js';
+import { FeatureFlagDetector, UnifiedFlagRegistry, ErrorMessageBuilder, ErrorMessageUtils, type ErrorContext } from './shared/index.js';
 
 export interface KillswitchRequiredResult {
   ok: boolean;
@@ -257,7 +257,14 @@ export async function checkKillswitchRequired(context: ProveContext): Promise<Ki
     }
 
     if (!hasKillSwitch) {
-      const reason = `Feature commit touches production code but lacks kill switch. Found ${productionFiles.length} production files but no feature flags, toggles, or kill switches.`;
+      // Build enhanced error message with suggestions
+      const errorContext: ErrorContext = {
+        filePath: productionFiles[0], // Show first production file as example
+        detectedPatterns: [],
+        suggestions: ErrorMessageBuilder.getKillSwitchSuggestions('useFeatureFlag')
+      };
+      
+      const reason = ErrorMessageBuilder.buildKillSwitchError(errorContext);
       
       logger.error('Kill-switch check failed', {
         isFeatureCommit: true,
@@ -287,7 +294,14 @@ export async function checkKillswitchRequired(context: ProveContext): Promise<Ki
 
     // Check if any detected flags are unregistered (fail the check)
     if (unregisteredFlags.length > 0) {
-      const reason = `Kill-switch flags not registered in flag registry: ${unregisteredFlags.join(', ')}. Add these flags to the flag registry first before using them as kill-switches.`;
+      // Build enhanced error message for unregistered flags
+      const errorContext: ErrorContext = {
+        unregisteredFlags: unregisteredFlags,
+        filePath: productionFiles[0], // Show first production file as example
+        detectedPatterns: foundKillSwitches
+      };
+      
+      const reason = ErrorMessageBuilder.buildFlagRegistrationError(errorContext);
       
       logger.error('Kill-switch check failed - unregistered flags detected', {
         unregisteredFlags: unregisteredFlags,

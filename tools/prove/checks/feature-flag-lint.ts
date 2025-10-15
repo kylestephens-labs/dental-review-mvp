@@ -5,6 +5,7 @@ import { type ProveContext } from '../context.js';
 import { logger } from '../logger.js';
 import { FeatureFlagDetector } from './shared/feature-flag-detector.js';
 import { UnifiedFlagRegistry } from './shared/flag-registry.js';
+import { ErrorMessageBuilder, ErrorMessageUtils, type ErrorContext } from './shared/error-messages.js';
 
 export interface FeatureFlagLintResult {
   ok: boolean;
@@ -108,18 +109,15 @@ export async function checkFeatureFlagLint(context: ProveContext): Promise<Featu
         }
       }
 
-      const issues = [];
-      if (unregisteredFlags.length > 0) {
-        issues.push(`unregistered: ${unregisteredFlags.join(', ')}`);
-      }
-      if (missingOwnerFlags.length > 0) {
-        issues.push(`missing owner: ${missingOwnerFlags.join(', ')}`);
-      }
-      if (missingExpiryFlags.length > 0) {
-        issues.push(`missing expiry: ${missingExpiryFlags.join(', ')}`);
-      }
+      // Build enhanced error message with specific guidance
+      const errorContext: ErrorContext = {
+        unregisteredFlags: unregisteredFlags,
+        missingOwner: missingOwnerFlags,
+        missingExpiry: missingExpiryFlags,
+        filePath: flagUsages[0]?.filePath // Show first file as example
+      };
       
-      const reason = `Found flags with ${issues.join('; ')}. Please register them and add required metadata to the flag registry.`;
+      const reason = ErrorMessageBuilder.buildFlagLintError(errorContext);
       
       logger.error('Feature flag lint check failed', {
         unregisteredFlags,
@@ -195,7 +193,14 @@ export async function checkFeatureFlagLint(context: ProveContext): Promise<Featu
     };
 
   } catch (error) {
-    const reason = `Feature flag lint check failed: ${error instanceof Error ? error.message : String(error)}`;
+    const errorContext: ErrorContext = {
+      filePath: 'unknown'
+    };
+    
+    const reason = ErrorMessageBuilder.buildGenericError(
+      `Feature flag lint check failed: ${error instanceof Error ? error.message : String(error)}`,
+      errorContext
+    );
     
     logger.error('Feature flag lint check failed with error', {
       error: reason
