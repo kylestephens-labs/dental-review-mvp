@@ -19,3 +19,14 @@ if (typeof import.meta !== 'undefined' && import.meta.env) {
     }
   });
 }
+
+// Ensure Vite environment variables are available for tests
+if (typeof import.meta !== 'undefined' && import.meta.env) {
+  // Set default test values for Supabase if not already set
+  if (!import.meta.env.VITE_SUPABASE_URL) {
+    import.meta.env.VITE_SUPABASE_URL = 'https://test.supabase.co';
+  }
+  if (!import.meta.env.VITE_SUPABASE_ANON_KEY) {
+    import.meta.env.VITE_SUPABASE_ANON_KEY = 'test_anon_key_123456789';
+  }
+}

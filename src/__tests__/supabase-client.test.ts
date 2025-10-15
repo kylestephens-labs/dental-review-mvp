@@ -25,6 +25,15 @@ describe('Supabase Client', () => {
     // Set up environment variables for supabase client
     process.env.VITE_SUPABASE_URL = 'https://test.supabase.co';
     process.env.VITE_SUPABASE_ANON_KEY = 'test_anon_key_123456789';
+    
+    // Also mock import.meta.env for Vite environment
+    Object.defineProperty(import.meta, 'env', {
+      value: {
+        VITE_SUPABASE_URL: 'https://test.supabase.co',
+        VITE_SUPABASE_ANON_KEY: 'test_anon_key_123456789',
+      },
+      writable: true,
+    });
   });
 
   afterEach(() => {
@@ -71,6 +80,14 @@ describe('Supabase Client', () => {
       expect(typeof callArgs[0]).toBe('string'); // URL
       expect(typeof callArgs[1]).toBe('string'); // Key
       expect(typeof callArgs[2]).toBe('object'); // Config
+    });
+
+    test('should call createClient with correct URL and key values', async () => {
+      await import('../integrations/supabase/client');
+      
+      const callArgs = mockCreateClient.mock.calls[0] as unknown as MockCall;
+      expect(callArgs[0]).toBe('https://test.supabase.co');
+      expect(callArgs[1]).toBe('test_anon_key_123456789');
     });
   });
 
