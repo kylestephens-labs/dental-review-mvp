@@ -194,11 +194,12 @@ export async function checkKillswitchRequired(context: ProveContext): Promise<Ki
     // Load flag registry for validation
     let registeredFlags: string[] = [];
     let unregisteredFlags: string[] = [];
+    let registry: UnifiedFlagRegistry | null = null;
     
     try {
-      const registry = await UnifiedFlagRegistry.loadAllFlags(workingDirectory);
+      registry = await UnifiedFlagRegistry.loadAllFlags(workingDirectory);
       
-      // Extract flag names from detected patterns for validation
+      // Enhanced flag extraction from various kill-switch patterns
       const flagNames = new Set<string>();
       for (const pattern of foundKillSwitches) {
         // Extract flag names from various patterns
@@ -206,26 +207,53 @@ export async function checkKillswitchRequired(context: ProveContext): Promise<Ki
         if (flagNameMatch) {
           flagNames.add(flagNameMatch[1]);
         }
+        
+        // Extract from KILL_SWITCH_ patterns
+        const killSwitchMatch = pattern.match(/KILL_SWITCH_([A-Z_]+)/);
+        if (killSwitchMatch) {
+          flagNames.add(killSwitchMatch[1]);
+        }
+        
+        // Extract from environment variable patterns
+        const envVarMatch = pattern.match(/process\.env\.([A-Z_]+_ENABLED)/);
+        if (envVarMatch) {
+          flagNames.add(envVarMatch[1]);
+        }
+        
+        // Extract from config patterns
+        const configMatch = pattern.match(/config\s*[=:].*\.([a-zA-Z_]+)/);
+        if (configMatch) {
+          flagNames.add(configMatch[1]);
+        }
+        
+        // Extract from toggle patterns
+        const toggleMatch = pattern.match(/toggle\s*[=:].*\.([a-zA-Z_]+)/);
+        if (toggleMatch) {
+          flagNames.add(toggleMatch[1]);
+        }
       }
       
       // Validate flags against registry
       const flagNamesArray = Array.from(flagNames);
       const validationResult = registry.validateFlags(flagNamesArray);
       
-      registeredFlags = flagNamesArray.filter(flag => registry.isRegistered(flag));
+      registeredFlags = flagNamesArray.filter(flag => registry!.isRegistered(flag));
       unregisteredFlags = validationResult.missingFlags;
       
       logger.info('Flag validation completed', {
         totalFlags: flagNamesArray.length,
         registeredFlags: registeredFlags.length,
         unregisteredFlags: unregisteredFlags.length,
-        validationErrors: validationResult.errors.length
+        validationErrors: validationResult.errors.length,
+        extractedFlags: flagNamesArray
       });
       
     } catch (error) {
       logger.warn('Failed to load flag registry for validation', {
         error: error instanceof Error ? error.message : String(error)
       });
+      // If registry loading fails, we can't validate flags, so we'll continue without validation
+      // This maintains backward compatibility while providing enhanced validation when possible
     }
 
     if (!hasKillSwitch) {
@@ -257,25 +285,60 @@ export async function checkKillswitchRequired(context: ProveContext): Promise<Ki
       };
     }
 
-    // Check if any detected flags are unregistered (warning, not failure)
+    // Check if any detected flags are unregistered (fail the check)
     if (unregisteredFlags.length > 0) {
-      logger.warn('Some kill-switch flags are not registered in flag registry', {
+      const reason = `Kill-switch flags not registered in flag registry: ${unregisteredFlags.join(', ')}. Add these flags to the flag registry first before using them as kill-switches.`;
+      
+      logger.error('Kill-switch check failed - unregistered flags detected', {
         unregisteredFlags: unregisteredFlags,
-        registeredFlags: registeredFlags
+        registeredFlags: registeredFlags,
+        totalFlags: unregisteredFlags.length + registeredFlags.length
       });
+
+      return {
+        ok: false,
+        reason,
+        details: {
+          isFeatureCommit: true,
+          touchesProductionCode: true,
+          hasKillSwitch: true,
+          changedFiles: changedFiles,
+          killSwitchPatterns: foundKillSwitches,
+          detectedPatterns: foundKillSwitches,
+          registeredFlags: registeredFlags,
+          unregisteredFlags: unregisteredFlags,
+          metrics: detectionResult.metrics
+        }
+      };
     }
 
-    logger.success('Kill-switch check passed', {
-      message: 'Feature commit includes kill switches',
-      isFeatureCommit: true,
-      touchesProductionCode: true,
-      hasKillSwitch: true,
-      killSwitchCount: foundKillSwitches.length,
-      productionFiles: productionFiles,
-      registeredFlags: registeredFlags.length,
-      unregisteredFlags: unregisteredFlags.length,
-      metrics: detectionResult.metrics
-    });
+    // Log success with flag validation details
+    if (registry && registeredFlags.length > 0) {
+      logger.success('Kill-switch check passed - all flags properly registered', {
+        message: 'Feature commit includes kill switches with valid flag registration',
+        isFeatureCommit: true,
+        touchesProductionCode: true,
+        hasKillSwitch: true,
+        killSwitchCount: foundKillSwitches.length,
+        productionFiles: productionFiles,
+        registeredFlags: registeredFlags.length,
+        unregisteredFlags: unregisteredFlags.length,
+        validatedFlags: registeredFlags,
+        metrics: detectionResult.metrics
+      });
+    } else {
+      logger.success('Kill-switch check passed', {
+        message: 'Feature commit includes kill switches',
+        isFeatureCommit: true,
+        touchesProductionCode: true,
+        hasKillSwitch: true,
+        killSwitchCount: foundKillSwitches.length,
+        productionFiles: productionFiles,
+        registeredFlags: registeredFlags.length,
+        unregisteredFlags: unregisteredFlags.length,
+        metrics: detectionResult.metrics
+      });
+    }
 
     return {
       ok: true,
