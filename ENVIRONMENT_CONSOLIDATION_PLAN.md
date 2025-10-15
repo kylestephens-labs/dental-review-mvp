@@ -8,7 +8,7 @@
 3. **`.env.local`** (4 lines) - Local overrides
 4. **`n8n-core.env`** (12 lines) - n8n production configuration
 5. **`n8n-local.env`** (6 lines) - n8n local configuration
-6. **`mcp-orchestrator/env.example`** (29 lines) - MCP orchestrator template
+6. **~~`mcp-orchestrator/env.example`~~** (29 lines) - ~~MCP orchestrator template~~ ✅ **MIGRATED TO SEPARATE REPO**
 
 ### **The Problems**
 1. **Scattered Configuration**: Environment variables spread across 5 files
@@ -57,14 +57,10 @@
 **Content**: Minimal n8n local variables
 **Status**: Merge into main template
 
-### **6. `mcp-orchestrator/env.example` (MCP Template)**
-**Purpose**: MCP orchestrator configuration
-**Key Variables**:
-- Server config (PORT, NODE_ENV, LOG_LEVEL)
-- Database (DATABASE_URL)
-- External services (STRIPE_*, TWILIO_*, SES_*)
-- Security (JWT_SECRET, HMAC_SECRET)
-**Status**: Merge into main template
+### **6. ~~`mcp-orchestrator/env.example` (MCP Template)~~** ✅ **MIGRATED**
+**Purpose**: ~~MCP orchestrator configuration~~ (moved to separate repo)
+**Key Variables**: ~~Server config, Database, External services, Security~~ (now in mcp-orchestrator repo)
+**Status**: ✅ **Successfully migrated to separate repository**
 
 ## 🚀 **Consolidation Plan**
 
@@ -227,7 +223,7 @@ Delete the redundant environment files:
 rm -f .env.local
 rm -f n8n-core.env
 rm -f n8n-local.env
-rm -f mcp-orchestrator/env.example
+# rm -f mcp-orchestrator/env.example  # ✅ Already migrated to separate repo
 ```
 
 ## 📊 **Expected Results**

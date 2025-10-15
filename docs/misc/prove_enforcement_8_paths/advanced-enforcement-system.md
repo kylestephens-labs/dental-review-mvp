@@ -223,7 +223,7 @@ enforcement_containers = {
 
 ## 📚 **Related Documentation**
 
-- [MCP Orchestrator Specification](./mcp-orchestrator-spec.md)
+- ~~[MCP Orchestrator Specification](./mcp-orchestrator-spec.md)~~ ✅ **MIGRATED TO SEPARATE REPO**
 - [Architecture Documentation](../dentist_project/architecture.md)
 - [Workflow Guidelines](../rules/00-100x-workflow.md)
 - [Prompt Compliance Solution](./prompt-compliance-solution.md)

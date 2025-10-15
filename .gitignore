@@ -70,3 +70,6 @@ playwright-report/
 package-lock.json
 backend/package-lock.json
 prove-report.json
+
+# MCP Orchestrator backups (migrated to separate repo)
+# mcp-orchestrator-backup*.tar.gz

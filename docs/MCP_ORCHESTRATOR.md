@@ -2,60 +2,27 @@
 
 ## 🎯 **Overview**
 
-Simple task management system for the dental practice MVP. Focus on delivery, not orchestration.
+The MCP Orchestrator has been migrated to a separate repository for better maintainability and separation of concerns.
 
-## 📋 **Task Tracking**
+## 📍 **New Location**
 
-### **Current Status**
-- **Ready**: Tasks ready to work on
-- **In Progress**: Currently being worked on  
-- **Completed**: Finished and verified
+The MCP Orchestrator is now available at:
+**https://github.com/kylestephens-labs/mcp-orchestrator**
 
-### **Task File**
-All tasks are tracked in `.mcp/tasks/task-tracking.md`
+## 🔄 **Migration Status**
 
-## 🚀 **How to Work**
+✅ **COMPLETED**: MCP Orchestrator successfully migrated to separate repository
+- All orchestrator functionality moved to dedicated repo
+- Main project cleaned of orchestrator dependencies
+- Prove Quality Gate system unaffected and fully functional
 
-### **1. Pick a Task**
-```bash
-# Open task tracking file
-code .mcp/tasks/task-tracking.md
+## 🚀 **Benefits of Migration**
 
-# Find a "Ready" task
-# Update status to "In Progress" and assign to yourself
-```
+- ✅ **Separation of Concerns**: Orchestrator logic isolated from main project
+- ✅ **Independent Development**: Can evolve orchestrator without affecting main project
+- ✅ **Cleaner Codebase**: Main project focused on dental practice functionality
+- ✅ **Better Maintainability**: Each repository has clear, focused purpose
 
-### **2. Work on Task**
-- **Functional tasks**: Use TDD (Red → Green → Refactor)
-- **Non-functional tasks**: Use Problem Analysis (Analyze → Fix → Validate)
+## 📋 **Task Management**
 
-### **3. Update Status**
-```bash
-# When done, update status to "Completed"
-# Move to next task
-```
-
-## 📊 **Task Types**
-
-### **Functional Tasks**
-- Require code implementation
-- Use TDD approach
-- Need unit tests
-- Examples: API endpoints, business logic, integrations
-
-### **Non-Functional Tasks**
-- Manual verification, configuration, documentation
-- Use Problem Analysis approach
-- No code required
-- Examples: Manual checks, setup, documentation
-
-## 🎯 **Current Tasks**
-
-See `.mcp/tasks/task-tracking.md` for complete task list with priorities and status.
-
-## 🚀 **Benefits**
-
-- ✅ **Simple**: One file, three statuses
-- ✅ **Clear**: Easy to see what's ready
-- ✅ **Focused**: Work on tasks, not orchestration
-- ✅ **Effective**: 90% less complexity than before
+For task management and orchestration, please refer to the dedicated MCP Orchestrator repository at the link above.

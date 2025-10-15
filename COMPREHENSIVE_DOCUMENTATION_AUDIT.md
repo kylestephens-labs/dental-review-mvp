@@ -60,7 +60,7 @@
 ✅ docs/runbook-stripe-sku.md (KEEP - operational runbook)
 
 ❌ docs/ mcp/langgraph-comparison.md
-❌ docs/ mcp/mcp-orchestrator-spec.md
+~~❌ docs/ mcp/mcp-orchestrator-spec.md~~ ✅ **MIGRATED**
 ❌ docs/ mcp/tasks.md
 → CONSOLIDATE TO: docs/MCP_ORCHESTRATOR.md
 
@@ -87,10 +87,10 @@
 → CONSOLIDATE TO: docs/INFRASTRUCTURE.md, docs/FEATURE_FLAGS.md, docs/TESTING.md
 ```
 
-### **6. mcp-orchestrator/ Directory (1 file)**
+### **6. ~~mcp-orchestrator/ Directory~~** ✅ **MIGRATED**
 ```
-❌ mcp-orchestrator/README.md
-→ CONSOLIDATE TO: docs/MCP_ORCHESTRATOR.md
+~~❌ mcp-orchestrator/README.md~~ ✅ **MIGRATED TO SEPARATE REPO**
+→ ~~CONSOLIDATE TO: docs/MCP_ORCHESTRATOR.md~~ (no longer needed)
 ```
 
 ### **7. Additional Files (3 text files)**
@@ -133,7 +133,7 @@ docs/
 - **Content**: All workflow rules, TDD, trunk-based development, git workflow
 
 ### **2. MCP Orchestrator (32 files → 1)**
-- **Source**: `.mcp/*.md`, `mcp-orchestrator/README.md`, `docs/ mcp/*.md`
+- **Source**: `.mcp/*.md`, ~~`mcp-orchestrator/README.md`~~ (migrated), `docs/ mcp/*.md`
 - **Target**: `docs/MCP_ORCHESTRATOR.md`
 - **Content**: Task management, orchestration, completed tasks
 

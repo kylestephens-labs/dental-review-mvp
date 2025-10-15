@@ -30,7 +30,7 @@ check_context_files() {
     "docs/dentist_project/business_plan"
     "docs/dentist_project/MVP"
     "docs/dentist_project/tasks.md"
-    "docs/ mcp/mcp-orchestrator-spec.md"
+    # "docs/ mcp/mcp-orchestrator-spec.md"  # Migrated to separate repo
     ".mcp/README.md"
     ".rules/00-100x-workflow.md"
     ".rules/02-trunk-based-development.md"

@@ -66,20 +66,25 @@ function getExecutionPlan(context: ProveContext, quickMode: boolean) {
     { id: 'env-check', fn: checkEnvCheck },
     { id: 'lint', fn: checkLint },
     { id: 'typecheck', fn: checkTypecheck },
-    { id: 'tests', fn: checkTests },
+    { id: 'tests', fn: checkTests }, // Tests run in parallel with other checks
   ];
+
+  // Coverage-dependent checks that must wait for tests to complete
+  const coverageDependentChecks = [];
 
   // Add mode-specific checks
   if (context.mode === 'functional') {
     parallelChecks.push(
-      { id: 'tdd-changed-has-tests', fn: checkTddChangedHasTests },
-      { id: 'diff-coverage', fn: checkDiffCoverage }
+      { id: 'tdd-changed-has-tests', fn: checkTddChangedHasTests }
     );
+    // Move diff-coverage to coverage-dependent checks
+    coverageDependentChecks.push({ id: 'diff-coverage', fn: checkDiffCoverage });
   }
 
   // Add coverage check if enabled and not in quick mode
   if (context.cfg.toggles.coverage && !quickMode) {
-    parallelChecks.push({ id: 'coverage', fn: checkCoverage });
+    // Move coverage to coverage-dependent checks
+    coverageDependentChecks.push({ id: 'coverage', fn: checkCoverage });
   }
 
   // Add build checks if not in quick mode
@@ -110,7 +115,7 @@ function getExecutionPlan(context: ProveContext, quickMode: boolean) {
     parallelChecks.push({ id: 'db-migrations', fn: checkDbMigrations });
   }
 
-  return { criticalChecks, parallelChecks };
+  return { criticalChecks, parallelChecks, coverageDependentChecks };
 }
 
 /**
@@ -143,7 +148,7 @@ export async function runAll(
 
   try {
     // Get execution plan
-    const { criticalChecks, parallelChecks } = getExecutionPlan(context, quickMode);
+    const { criticalChecks, parallelChecks, coverageDependentChecks } = getExecutionPlan(context, quickMode);
 
     // Run critical checks serially (fail-fast)
     logger.info('Running critical checks serially...');
@@ -283,6 +288,46 @@ export async function runAll(
       });
 
       return results;
+    }
+
+    // Run coverage-dependent checks after tests complete
+    if (coverageDependentChecks.length > 0) {
+      logger.info('Running coverage-dependent checks...', {
+        coverageDependentChecks: coverageDependentChecks.length,
+      });
+
+      for (const { id, fn } of coverageDependentChecks) {
+        const checkStartTime = Date.now();
+        const checkResult = await fn(context);
+        const checkMs = Date.now() - checkStartTime;
+        
+        const result: CheckResult = {
+          id,
+          ok: checkResult.ok,
+          ms: checkMs,
+          reason: checkResult.reason,
+        };
+        
+        results.push(result);
+        
+        // Check for failure and fail-fast if needed
+        if (!checkResult.ok && failFast) {
+          const totalMs = Date.now() - startTime;
+          const successCount = results.filter(r => r.ok).length;
+          const failureCount = results.filter(r => !r.ok).length;
+
+          logger.error('Coverage-dependent check failed', {
+            checkId: id,
+            reason: checkResult.reason,
+            total: results.length,
+            passed: successCount,
+            failed: failureCount,
+            totalMs,
+          });
+
+          return results;
+        }
+      }
     }
     
     const totalMs = Date.now() - startTime;

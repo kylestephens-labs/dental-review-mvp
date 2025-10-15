@@ -1,6 +1,13 @@
 // Test setup file - configure testing library matchers
 import '@testing-library/jest-dom';
 
+// Polyfill ResizeObserver for tests
+global.ResizeObserver = class ResizeObserver {
+  observe() {}
+  unobserve() {}
+  disconnect() {}
+};
+
 // Clear VITE_FEATURE_* environment variables in tests to prevent interference
 // This allows tests to use updateFeatureFlag mutations without env overrides
 if (typeof process !== 'undefined' && process.env) {
