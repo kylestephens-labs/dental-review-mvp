@@ -5,7 +5,7 @@ export interface FeatureFlag {
   description: string;
   createdAt: string;
   updatedAt: string;
-  environments: ('development' | 'staging' | 'production')[];
+  environments: ('development' | 'staging' | 'production' | 'test')[]; // 'test' bypasses env override to honor config mutations
   dependencies?: string[];
   metrics?: {
     successRate?: number;
@@ -32,7 +32,7 @@ export const featureFlagConfig: FeatureFlagConfig = {
       description: 'Basic intake form functionality',
       createdAt: '2024-01-01T00:00:00Z',
       updatedAt: '2024-01-01T00:00:00Z',
-      environments: ['development', 'staging', 'production']
+      environments: ['development', 'staging', 'production', 'test']
     },
     
     // New features (disabled by default)
@@ -43,7 +43,7 @@ export const featureFlagConfig: FeatureFlagConfig = {
       description: 'Enhanced intake form with validation and auto-save',
       createdAt: '2024-10-12T00:00:00Z',
       updatedAt: '2024-10-12T00:00:00Z',
-      environments: ['development', 'staging', 'production']
+      environments: ['development', 'staging', 'production', 'test']
     },
     
     DYNAMIC_CONTENT: {
@@ -53,7 +53,7 @@ export const featureFlagConfig: FeatureFlagConfig = {
       description: 'Dynamic content generation based on user preferences',
       createdAt: '2024-10-12T00:00:00Z',
       updatedAt: '2024-10-12T00:00:00Z',
-      environments: ['development', 'staging', 'production']
+      environments: ['development', 'staging', 'production', 'test']
     },
     
     ADVANCED_ANALYTICS: {
@@ -63,7 +63,7 @@ export const featureFlagConfig: FeatureFlagConfig = {
       description: 'Enhanced analytics and tracking',
       createdAt: '2024-10-12T00:00:00Z',
       updatedAt: '2024-10-12T00:00:00Z',
-      environments: ['development', 'staging', 'production']
+      environments: ['development', 'staging', 'production', 'test']
     },
     
     AUTO_SAVE: {
@@ -73,7 +73,7 @@ export const featureFlagConfig: FeatureFlagConfig = {
       description: 'Auto-save form data to prevent data loss',
       createdAt: '2024-10-12T00:00:00Z',
       updatedAt: '2024-10-12T00:00:00Z',
-      environments: ['development', 'staging', 'production']
+      environments: ['development', 'staging', 'production', 'test']
     },
 
     // Dental Project Feature Flags (from tasks.md analysis)
@@ -84,7 +84,7 @@ export const featureFlagConfig: FeatureFlagConfig = {
       description: 'Google Calendar OAuth and data ingestion',
       createdAt: '2024-10-12T00:00:00Z',
       updatedAt: '2024-10-12T00:00:00Z',
-      environments: ['development', 'staging', 'production']
+      environments: ['development', 'staging', 'production', 'test']
     },
 
     OUTLOOK_INTEGRATION: {
@@ -94,7 +94,7 @@ export const featureFlagConfig: FeatureFlagConfig = {
       description: 'Outlook/Graph OAuth and data ingestion',
       createdAt: '2024-10-12T00:00:00Z',
       updatedAt: '2024-10-12T00:00:00Z',
-      environments: ['development', 'staging', 'production']
+      environments: ['development', 'staging', 'production', 'test']
     },
 
     CSV_UPLOAD_FEATURE: {
@@ -104,7 +104,7 @@ export const featureFlagConfig: FeatureFlagConfig = {
       description: 'CSV upload endpoint for patient data',
       createdAt: '2024-10-12T00:00:00Z',
       updatedAt: '2024-10-12T00:00:00Z',
-      environments: ['development', 'staging', 'production']
+      environments: ['development', 'staging', 'production', 'test']
     },
 
     FRONT_DESK_MODE: {
@@ -114,7 +114,7 @@ export const featureFlagConfig: FeatureFlagConfig = {
       description: 'Front-Desk POST endpoint for manual patient entry',
       createdAt: '2024-10-12T00:00:00Z',
       updatedAt: '2024-10-12T00:00:00Z',
-      environments: ['development', 'staging', 'production']
+      environments: ['development', 'staging', 'production', 'test']
     },
 
     REVIEW_INGESTION: {
@@ -124,7 +124,7 @@ export const featureFlagConfig: FeatureFlagConfig = {
       description: 'Nightly reviews fetch and upsert from Google Places',
       createdAt: '2024-10-12T00:00:00Z',
       updatedAt: '2024-10-12T00:00:00Z',
-      environments: ['development', 'staging', 'production']
+      environments: ['development', 'staging', 'production', 'test']
     },
 
     WEEKLY_DIGEST: {
@@ -134,7 +134,7 @@ export const featureFlagConfig: FeatureFlagConfig = {
       description: 'Weekly digest email with metrics and top quotes',
       createdAt: '2024-10-12T00:00:00Z',
       updatedAt: '2024-10-12T00:00:00Z',
-      environments: ['development', 'staging', 'production']
+      environments: ['development', 'staging', 'production', 'test']
     }
   },
   
@@ -149,7 +149,7 @@ export function isFeatureEnabled(
   userId?: string,
   environment?: string
 ): boolean {
-  // Check environment variables first (production)
+  // Check environment variables first (all environments)
   // Handle both Vite (import.meta.env) and Node.js (process.env) environments
   const envFlag = typeof import.meta !== 'undefined' && import.meta.env 
     ? import.meta.env[`VITE_FEATURE_${flagName}`]
@@ -158,7 +158,7 @@ export function isFeatureEnabled(
     return envFlag === 'true';
   }
 
-  // Fall back to local config (development)
+  // Fall back to local config (development/test)
   const flag = featureFlagConfig.flags[flagName];
   if (!flag) {
     console.warn(`Feature flag '${flagName}' not found`);
@@ -170,22 +170,25 @@ export function isFeatureEnabled(
     (typeof import.meta !== 'undefined' && import.meta.env 
       ? import.meta.env.MODE 
       : process.env.NODE_ENV) || 'development';
-  if (!flag.environments.includes(currentEnv as 'development' | 'production' | 'test')) {
+  if (!flag.environments.includes(currentEnv as 'development' | 'staging' | 'production' | 'test')) {
     return false;
   }
   
   if (!flag.enabled) return false;
   
   // Handle rollout percentage
-  if (flag.rolloutPercentage && userId) {
-    const hash = userId.split('').reduce((a, b) => {
-      a = ((a << 5) - a) + b.charCodeAt(0);
-      return a & a;
-    }, 0);
+  if (flag.rolloutPercentage !== undefined && userId) {
+    // FNV-1a hash function for consistent user distribution
+    let hash = 2166136261;
+    for (let i = 0; i < userId.length; i++) {
+      hash ^= userId.charCodeAt(i);
+      hash *= 16777619;
+    }
     return Math.abs(hash) % 100 < flag.rolloutPercentage;
   }
   
-  return flag.rolloutPercentage === 100 || !flag.rolloutPercentage;
+  // If no userId provided, honor rolloutPercentage: 100% = enabled, 0% = disabled, undefined = enabled
+  return flag.rolloutPercentage === 100 || flag.rolloutPercentage === undefined;
 }
 
 export function updateFeatureFlag(

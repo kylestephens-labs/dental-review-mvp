@@ -13,7 +13,8 @@ describe('Feature Flags', () => {
       const flag = featureFlagConfig.flags[flagName];
       updateFeatureFlag(flagName, {
         enabled: flagName === 'BASIC_INTAKE_FORM',
-        rolloutPercentage: flagName === 'BASIC_INTAKE_FORM' ? 100 : 0
+        rolloutPercentage: flagName === 'BASIC_INTAKE_FORM' ? 100 : 0,
+        environments: ['development', 'staging', 'production', 'test']
       });
     });
   });
