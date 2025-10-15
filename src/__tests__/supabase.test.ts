@@ -15,7 +15,14 @@ import { submitLead } from '../lib/supabase';
 import { supabase } from '@/integrations/supabase/client';
 
 // Cast to mock for type safety
-const mockSupabase = supabase as any;
+const mockSupabase = supabase as unknown as {
+  from: ReturnType<typeof vi.fn>;
+  auth: {
+    signInWithPassword: ReturnType<typeof vi.fn>;
+    signUp: ReturnType<typeof vi.fn>;
+    signOut: ReturnType<typeof vi.fn>;
+  };
+};
 
 describe('Supabase Integration', () => {
   beforeEach(() => {
@@ -109,7 +116,7 @@ describe('Supabase Integration', () => {
     });
 
     test('should handle null lead data', async () => {
-      const nullLeadData = null as any;
+      const nullLeadData = null as unknown as Record<string, unknown>;
 
       const mockInsert = vi.fn().mockReturnValue({ error: null });
       mockSupabase.from.mockReturnValue({ insert: mockInsert });

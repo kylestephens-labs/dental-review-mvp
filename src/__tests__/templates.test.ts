@@ -86,7 +86,7 @@ describe('Template System', () => {
     const esTemplate = JSON.parse(readFileSync(esTemplatePath, 'utf-8'));
     
     // ADA compliance checks
-    const checkADACompliance = (template: any) => {
+    const checkADACompliance = (template: { body: string }) => {
       const body = template.body;
       
       // Should not contain all caps (harder to read)

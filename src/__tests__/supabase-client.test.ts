@@ -18,6 +18,10 @@ vi.mock('@supabase/supabase-js', () => ({
 describe('Supabase Client', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    
+    // Set up environment variables for supabase client
+    process.env.VITE_SUPABASE_URL = 'https://test.supabase.co';
+    process.env.VITE_SUPABASE_ANON_KEY = 'test_anon_key_123456789';
   });
 
   afterEach(() => {
