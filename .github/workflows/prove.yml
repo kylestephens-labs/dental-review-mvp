@@ -36,8 +36,13 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Set Feature Flag Environment Variables
+      - name: Load CI Environment Variables
         run: |
+          # Load CI-safe environment variables for prove checks
+          set -a
+          source .github/env/ci.env
+          set +a
+          
           # Set feature flags as environment variables for CI testing
           cat << EOF >> $GITHUB_ENV
           VITE_FEATURE_ENHANCED_INTAKE_FORM=false
@@ -399,8 +404,13 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Set Feature Flag Environment Variables
+      - name: Load CI Environment Variables
         run: |
+          # Load CI-safe environment variables for prove checks
+          set -a
+          source .github/env/ci.env
+          set +a
+          
           # Set feature flags as environment variables for CI testing
           cat << EOF >> $GITHUB_ENV
           VITE_FEATURE_ENHANCED_INTAKE_FORM=false
