@@ -44,7 +44,7 @@ jobs:
           set +a
           
           # Export all environment variables to GITHUB_ENV for subsequent steps
-          cat .github/env/ci.env >> $GITHUB_ENV
+          grep -v '^#' .github/env/ci.env | grep -v '^\s*$' >> $GITHUB_ENV
           
           # Set feature flags as environment variables for CI testing
           cat << EOF >> $GITHUB_ENV
@@ -415,7 +415,7 @@ jobs:
           set +a
           
           # Export all environment variables to GITHUB_ENV for subsequent steps
-          cat .github/env/ci.env >> $GITHUB_ENV
+          grep -v '^#' .github/env/ci.env | grep -v '^\s*$' >> $GITHUB_ENV
           
           # Set feature flags as environment variables for CI testing
           cat << EOF >> $GITHUB_ENV
