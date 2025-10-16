@@ -17,6 +17,8 @@ import { checkBuildWeb } from './checks/buildWeb.js';
 import { checkBuildApi } from './checks/buildApi.js';
 import { checkSizeBudget } from './checks/sizeBudget.js';
 import { executeCheck, handleCheckFailure, CHECK_CONFIGS } from './checks/runner-helper.js';
+import { type CheckResult as BaseCheckResult } from './checks/base.js';
+import { CHECK_FUNCTIONS } from './checks/index.js';
 // import { checkCommitSize } from './checks/commit-size.js'; // Temporarily disabled
 import { checkCommitMsgConvention } from './checks/commit-msg-convention.js';
 import { checkFeatureFlagLint } from './checks/feature-flag-lint.js';
@@ -62,7 +64,7 @@ function getExecutionPlan(context: ProveContext, quickMode: boolean) {
   }
 
   // Define parallel checks that can run concurrently
-  const parallelChecks = [
+  const parallelChecks: Array<{ id: string; fn: (context: ProveContext) => Promise<BaseCheckResult> }> = [
     { id: 'env-check', fn: checkEnvCheck },
     { id: 'lint', fn: checkLint },
     { id: 'typecheck', fn: checkTypecheck },
@@ -71,7 +73,7 @@ function getExecutionPlan(context: ProveContext, quickMode: boolean) {
   ];
 
   // Coverage-dependent checks that must wait for tests to complete
-  const coverageDependentChecks = [];
+  const coverageDependentChecks: Array<{ id: string; fn: (context: ProveContext) => Promise<BaseCheckResult> }> = [];
 
   // Add mode-specific checks
   if (context.mode === 'functional') {
@@ -217,9 +219,9 @@ export async function runAll(
     const processNextCheck = async (): Promise<void> => {
       while (checkQueue.length > 0 && !hasFailed) {
         const { id, fn } = checkQueue.shift()!;
+        const checkStartTime = Date.now();
         
         try {
-          const checkStartTime = Date.now();
           const checkResult = await fn(context);
           const checkMs = Date.now() - checkStartTime;
           
@@ -285,7 +287,7 @@ export async function runAll(
         passed: successCount,
         failed: failureCount,
         totalMs,
-        firstFailure: firstFailure.id,
+        firstFailure: firstFailure ? (firstFailure as CheckResult).id : undefined,
       });
 
       return results;
@@ -371,16 +373,14 @@ export async function runSerial(
     const startTime = Date.now();
     
     try {
-      // TODO: Implement actual check execution
       logger.info(`Running check: ${checkId}`);
       
-      // Placeholder implementation
-      const result: CheckResult = {
-        id: checkId,
-        ok: true,
-        ms: Date.now() - startTime,
-        reason: 'Skeleton implementation',
-      };
+      // Execute actual check based on checkId
+      const checkFn = CHECK_FUNCTIONS[checkId as keyof typeof CHECK_FUNCTIONS];
+      if (!checkFn) {
+        throw new Error(`Check function not found for: ${checkId}`);
+      }
+      const result = await executeCheck(context, { id: checkId, name: checkId }, checkFn, false);
       
       results.push(result);
       
@@ -434,14 +434,12 @@ export async function runParallel(
       try {
         logger.info(`Running parallel check: ${checkId}`);
         
-        // TODO: Implement actual check execution based on checkId
-        // For now, return a placeholder result
-        const result: CheckResult = {
-          id: checkId,
-          ok: true,
-          ms: Date.now() - startTime,
-          reason: 'Skeleton implementation',
-        };
+        // Execute actual check based on checkId
+        const checkFn = CHECK_FUNCTIONS[checkId as keyof typeof CHECK_FUNCTIONS];
+        if (!checkFn) {
+          throw new Error(`Check function not found for: ${checkId}`);
+        }
+        const result = await executeCheck(context, { id: checkId, name: checkId }, checkFn, false);
         
         return result;
       } catch (error) {
@@ -479,8 +477,8 @@ export function registerCheck(
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   _checkFn: (context: ProveContext) => Promise<CheckResult>
 ): void {
-  // TODO: Implement check registry
-  logger.info(`Registering check: ${id}`);
+  // Check registry is managed through CHECK_FUNCTIONS in checks/index.ts
+  logger.info(`Check ${id} is available through CHECK_FUNCTIONS registry`);
 }
 
 /**
@@ -488,8 +486,8 @@ export function registerCheck(
  * @returns string[] - Array of registered check IDs
  */
 export function getRegisteredChecks(): string[] {
-  // TODO: Implement check registry
-  return [];
+  // Return all available check IDs from the registry
+  return Object.keys(CHECK_FUNCTIONS);
 }
 
 /**
@@ -505,16 +503,14 @@ export async function runCheck(
   const startTime = Date.now();
   
   try {
-    // TODO: Implement actual check execution
     logger.info(`Running check: ${checkId}`);
     
-    // Placeholder implementation
-    const result: CheckResult = {
-      id: checkId,
-      ok: true,
-      ms: Date.now() - startTime,
-      reason: 'Skeleton implementation',
-    };
+    // Execute actual check based on checkId
+    const checkFn = CHECK_FUNCTIONS[checkId as keyof typeof CHECK_FUNCTIONS];
+    if (!checkFn) {
+      throw new Error(`Check function not found for: ${checkId}`);
+    }
+    const result = await executeCheck(context, { id: checkId, name: checkId }, checkFn, false);
     
     return result;
   } catch (error) {

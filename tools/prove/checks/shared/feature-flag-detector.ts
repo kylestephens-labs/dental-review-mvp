@@ -72,28 +72,28 @@ export class FeatureFlagDetector {
     productionCode: RegExp[];
   } | null = null;
 
-  // Pattern source strings for caching
+  // Pattern source strings for caching - optimized for performance and accuracy
   private static readonly PATTERN_SOURCES = {
-    // Feature flag usage patterns - more specific to avoid matching example text
-    useFeatureFlag: '(?:^|[^a-zA-Z_])useFeatureFlag\\s*\\(\\s*[\'"`]([^\'"`]+)[\'"`]',
-    isEnabled: '(?:^|[^a-zA-Z_])isEnabled\\s*\\(\\s*[\'"`]([^\'"`]+)[\'"`]',
-    isFeatureEnabled: '(?:^|[^a-zA-Z_])isFeatureEnabled\\s*\\(\\s*[\'"`]([^\'"`]+)[\'"`]',
+    // Feature flag usage patterns - optimized to reduce false positives
+    useFeatureFlag: '(?:^|[^a-zA-Z_])useFeatureFlag\\s*\\(\\s*[\'"`]([^\'"`]+)[\'"`](?=\\s*[;,)])',
+    isEnabled: '(?:^|[^a-zA-Z_])isEnabled\\s*\\(\\s*[\'"`]([^\'"`]+)[\'"`](?=\\s*[;,)])',
+    isFeatureEnabled: '(?:^|[^a-zA-Z_])isFeatureEnabled\\s*\\(\\s*[\'"`]([^\'"`]+)[\'"`](?=\\s*[;,)])',
     
-    // Kill switch patterns - more specific to avoid matching example text
+    // Kill switch patterns - simplified for better performance
     killSwitch: '(?:^|[^a-zA-Z_])KILL_SWITCH_[A-Z_]+',
     envVar: '(?:^|[^a-zA-Z_])process\\.env\\.[A-Z_]+_ENABLED',
     config: '(?:^|[^a-zA-Z_])config\\s*[=:].*enabled',
     toggle: '(?:^|[^a-zA-Z_])toggle\\s*[=:]',
-    import: '(?:^|[^a-zA-Z_])import.*flags|from.*flags',
+    import: '(?:^|[^a-zA-Z_])import.*flags|from.*flags(?=\\s*[;\\n])',
     rollout: '(?:^|[^a-zA-Z_])rolloutPercentage\\s*:\\s*\\d+',
     
-    // Feature flag configuration patterns
+    // Feature flag configuration patterns - optimized
     flagConfig: 'export const featureFlagConfig[^=]*=\\s*{([\\s\\S]*?)};',
     frontendFlags: 'export const FRONTEND_FLAGS[^=]*=\\s*{([\\s\\S]*?)};',
     backendFlags: 'export const BACKEND_FLAGS[^=]*=\\s*{([\\s\\S]*?)};',
     flagDefinition: '(\\w+):\\s*{',
     
-    // Production code patterns
+    // Production code patterns - optimized for better matching
     productionCode: [
       '^src/',           // Frontend source code
       '^backend/src/',  // Backend source code
@@ -654,35 +654,115 @@ export class FeatureFlagDetector {
   }
 
   /**
-   * Filter out comment lines from content
+   * Filter out comment lines and false positive patterns from content
    */
   static filterComments(content: string): string {
     const lines = content.split('\n').filter(line => {
       const trimmed = line.trim();
-      return !trimmed.startsWith('//') && 
-             !trimmed.startsWith('*') && 
-             !trimmed.startsWith('/*') &&
-             !trimmed.startsWith('#') &&
-             !line.includes('* Usage:') &&
-             !line.includes('* The ESLint rule');
+      
+      // Basic comment filtering
+      if (trimmed.startsWith('//') || 
+          trimmed.startsWith('*') || 
+          trimmed.startsWith('/*') ||
+          trimmed.startsWith('#') ||
+          trimmed.startsWith('<!--')) {
+        return false;
+      }
+      
+      // Documentation and example filtering
+      if (line.includes('* Usage:') ||
+          line.includes('* The ESLint rule') ||
+          line.includes('* Each flag must have') ||
+          line.includes('* The linter will enforce') ||
+          line.includes('Example:') ||
+          line.includes('Usage:') ||
+          line.includes('TODO:') ||
+          line.includes('FIXME:') ||
+          line.includes('NOTE:')) {
+        return false;
+      }
+      
+      // Import statement filtering (not actual usage)
+      if (trimmed.startsWith('import ') && 
+          (trimmed.includes('useFeatureFlag') || 
+           trimmed.includes('isEnabled') || 
+           trimmed.includes('isFeatureEnabled'))) {
+        return false;
+      }
+      
+      // Type definition filtering
+      if (trimmed.startsWith('type ') || 
+          trimmed.startsWith('interface ') || 
+          trimmed.startsWith('declare ')) {
+        return false;
+      }
+      
+      // Configuration example filtering
+      if (line.includes('config') && 
+          (line.includes('example') || 
+           line.includes('sample') || 
+           line.includes('template'))) {
+        return false;
+      }
+      
+      return true;
     });
     
     return lines.join('\n');
   }
 
   /**
-   * Check if a line is a comment
+   * Check if a line is a comment or false positive
    */
   private static isCommentLine(line: string): boolean {
     const trimmed = line.trim();
-    return trimmed.startsWith('//') || 
-           trimmed.startsWith('*') || 
-           trimmed.startsWith('/*') ||
-           trimmed.startsWith('#') ||
-           line.includes('* Usage:') ||
-           line.includes('* The ESLint rule') ||
-           line.includes('* Each flag must have') ||
-           line.includes('* The linter will enforce');
+    
+    // Basic comment patterns
+    if (trimmed.startsWith('//') || 
+        trimmed.startsWith('*') || 
+        trimmed.startsWith('/*') ||
+        trimmed.startsWith('#') ||
+        trimmed.startsWith('<!--')) {
+      return true;
+    }
+    
+    // Documentation and example patterns
+    if (line.includes('* Usage:') ||
+        line.includes('* The ESLint rule') ||
+        line.includes('* Each flag must have') ||
+        line.includes('* The linter will enforce') ||
+        line.includes('Example:') ||
+        line.includes('Usage:') ||
+        line.includes('TODO:') ||
+        line.includes('FIXME:') ||
+        line.includes('NOTE:')) {
+      return true;
+    }
+    
+    // Import statement patterns (not actual usage)
+    if (trimmed.startsWith('import ') && 
+        (trimmed.includes('useFeatureFlag') || 
+         trimmed.includes('isEnabled') || 
+         trimmed.includes('isFeatureEnabled'))) {
+      return true;
+    }
+    
+    // Type definition patterns
+    if (trimmed.startsWith('type ') || 
+        trimmed.startsWith('interface ') || 
+        trimmed.startsWith('declare ')) {
+      return true;
+    }
+    
+    // Configuration example patterns
+    if (line.includes('config') && 
+        (line.includes('example') || 
+         line.includes('sample') || 
+         line.includes('template'))) {
+      return true;
+    }
+    
+    return false;
   }
 
   /**
@@ -721,5 +801,64 @@ export class FeatureFlagDetector {
         patternMatchingDuration: 0
       }
     };
+  }
+
+  /**
+   * Analyze false positives in detection results
+   */
+  static async analyzeFalsePositives(
+    workingDirectory: string,
+    files: string[],
+    patterns: RegExp[]
+  ): Promise<{
+    analysis: import('./false-positive-analyzer.js').FalsePositiveAnalysis;
+    optimizedPatterns: RegExp[];
+  }> {
+    const { FalsePositiveAnalyzer } = await import('./false-positive-analyzer.js');
+    
+    // Run false positive analysis
+    const analysis = await FalsePositiveAnalyzer.analyzeFalsePositives(
+      workingDirectory,
+      files,
+      patterns
+    );
+
+    // Generate optimized patterns based on analysis
+    const optimizedPatterns = this.generateOptimizedPatterns(patterns, analysis);
+
+    logger.info('False positive analysis completed', {
+      totalMatches: analysis.totalMatches,
+      falsePositives: analysis.falsePositives,
+      falsePositiveRate: `${analysis.falsePositiveRate.toFixed(2)}%`,
+      suggestions: analysis.suggestions.length
+    });
+
+    return {
+      analysis,
+      optimizedPatterns
+    };
+  }
+
+  /**
+   * Generate optimized patterns based on false positive analysis
+   */
+  private static generateOptimizedPatterns(
+    originalPatterns: RegExp[],
+    analysis: import('./false-positive-analyzer.js').FalsePositiveAnalysis
+  ): RegExp[] {
+    // For now, return original patterns
+    // In a more sophisticated implementation, we could:
+    // - Adjust pattern specificity based on false positive rates
+    // - Add additional filtering based on common false positive patterns
+    // - Implement pattern confidence scoring
+    
+    if (analysis.falsePositiveRate > 50) {
+      logger.warn('High false positive rate detected', {
+        rate: `${analysis.falsePositiveRate.toFixed(2)}%`,
+        suggestion: 'Consider pattern optimization'
+      });
+    }
+
+    return originalPatterns;
   }
 }

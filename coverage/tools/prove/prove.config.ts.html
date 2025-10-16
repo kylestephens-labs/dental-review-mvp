@@ -1,0 +1,1060 @@
+
+<!doctype html>
+<html lang="en">
+
+<head>
+    <title>Code coverage report for tools/prove/prove.config.ts</title>
+    <meta charset="utf-8" />
+    <link rel="stylesheet" href="../../prettify.css" />
+    <link rel="stylesheet" href="../../base.css" />
+    <link rel="shortcut icon" type="image/x-icon" href="../../favicon.png" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style type='text/css'>
+        .coverage-summary .sorter {
+            background-image: url(../../sort-arrow-sprite.png);
+        }
+    </style>
+</head>
+    
+<body>
+<div class='wrapper'>
+    <div class='pad1'>
+        <h1><a href="../../index.html">All files</a> / <a href="index.html">tools/prove</a> prove.config.ts</h1>
+        <div class='clearfix'>
+            
+            <div class='fl pad1y space-right2'>
+                <span class="strong">0% </span>
+                <span class="quiet">Statements</span>
+                <span class='fraction'>0/237</span>
+            </div>
+        
+            
+            <div class='fl pad1y space-right2'>
+                <span class="strong">0% </span>
+                <span class="quiet">Branches</span>
+                <span class='fraction'>0/1</span>
+            </div>
+        
+            
+            <div class='fl pad1y space-right2'>
+                <span class="strong">0% </span>
+                <span class="quiet">Functions</span>
+                <span class='fraction'>0/1</span>
+            </div>
+        
+            
+            <div class='fl pad1y space-right2'>
+                <span class="strong">0% </span>
+                <span class="quiet">Lines</span>
+                <span class='fraction'>0/237</span>
+            </div>
+        
+            
+        </div>
+        <p class="quiet">
+            Press <em>n</em> or <em>j</em> to go to the next uncovered block, <em>b</em>, <em>p</em> or <em>k</em> for the previous block.
+        </p>
+        <template id="filterTemplate">
+            <div class="quiet">
+                Filter:
+                <input type="search" id="fileSearch">
+            </div>
+        </template>
+    </div>
+    <div class='status-line low'></div>
+    <pre><table class="coverage">
+<tr><td class="line-count quiet"><a name='L1'></a><a href='#L1'>1</a>
+<a name='L2'></a><a href='#L2'>2</a>
+<a name='L3'></a><a href='#L3'>3</a>
+<a name='L4'></a><a href='#L4'>4</a>
+<a name='L5'></a><a href='#L5'>5</a>
+<a name='L6'></a><a href='#L6'>6</a>
+<a name='L7'></a><a href='#L7'>7</a>
+<a name='L8'></a><a href='#L8'>8</a>
+<a name='L9'></a><a href='#L9'>9</a>
+<a name='L10'></a><a href='#L10'>10</a>
+<a name='L11'></a><a href='#L11'>11</a>
+<a name='L12'></a><a href='#L12'>12</a>
+<a name='L13'></a><a href='#L13'>13</a>
+<a name='L14'></a><a href='#L14'>14</a>
+<a name='L15'></a><a href='#L15'>15</a>
+<a name='L16'></a><a href='#L16'>16</a>
+<a name='L17'></a><a href='#L17'>17</a>
+<a name='L18'></a><a href='#L18'>18</a>
+<a name='L19'></a><a href='#L19'>19</a>
+<a name='L20'></a><a href='#L20'>20</a>
+<a name='L21'></a><a href='#L21'>21</a>
+<a name='L22'></a><a href='#L22'>22</a>
+<a name='L23'></a><a href='#L23'>23</a>
+<a name='L24'></a><a href='#L24'>24</a>
+<a name='L25'></a><a href='#L25'>25</a>
+<a name='L26'></a><a href='#L26'>26</a>
+<a name='L27'></a><a href='#L27'>27</a>
+<a name='L28'></a><a href='#L28'>28</a>
+<a name='L29'></a><a href='#L29'>29</a>
+<a name='L30'></a><a href='#L30'>30</a>
+<a name='L31'></a><a href='#L31'>31</a>
+<a name='L32'></a><a href='#L32'>32</a>
+<a name='L33'></a><a href='#L33'>33</a>
+<a name='L34'></a><a href='#L34'>34</a>
+<a name='L35'></a><a href='#L35'>35</a>
+<a name='L36'></a><a href='#L36'>36</a>
+<a name='L37'></a><a href='#L37'>37</a>
+<a name='L38'></a><a href='#L38'>38</a>
+<a name='L39'></a><a href='#L39'>39</a>
+<a name='L40'></a><a href='#L40'>40</a>
+<a name='L41'></a><a href='#L41'>41</a>
+<a name='L42'></a><a href='#L42'>42</a>
+<a name='L43'></a><a href='#L43'>43</a>
+<a name='L44'></a><a href='#L44'>44</a>
+<a name='L45'></a><a href='#L45'>45</a>
+<a name='L46'></a><a href='#L46'>46</a>
+<a name='L47'></a><a href='#L47'>47</a>
+<a name='L48'></a><a href='#L48'>48</a>
+<a name='L49'></a><a href='#L49'>49</a>
+<a name='L50'></a><a href='#L50'>50</a>
+<a name='L51'></a><a href='#L51'>51</a>
+<a name='L52'></a><a href='#L52'>52</a>
+<a name='L53'></a><a href='#L53'>53</a>
+<a name='L54'></a><a href='#L54'>54</a>
+<a name='L55'></a><a href='#L55'>55</a>
+<a name='L56'></a><a href='#L56'>56</a>
+<a name='L57'></a><a href='#L57'>57</a>
+<a name='L58'></a><a href='#L58'>58</a>
+<a name='L59'></a><a href='#L59'>59</a>
+<a name='L60'></a><a href='#L60'>60</a>
+<a name='L61'></a><a href='#L61'>61</a>
+<a name='L62'></a><a href='#L62'>62</a>
+<a name='L63'></a><a href='#L63'>63</a>
+<a name='L64'></a><a href='#L64'>64</a>
+<a name='L65'></a><a href='#L65'>65</a>
+<a name='L66'></a><a href='#L66'>66</a>
+<a name='L67'></a><a href='#L67'>67</a>
+<a name='L68'></a><a href='#L68'>68</a>
+<a name='L69'></a><a href='#L69'>69</a>
+<a name='L70'></a><a href='#L70'>70</a>
+<a name='L71'></a><a href='#L71'>71</a>
+<a name='L72'></a><a href='#L72'>72</a>
+<a name='L73'></a><a href='#L73'>73</a>
+<a name='L74'></a><a href='#L74'>74</a>
+<a name='L75'></a><a href='#L75'>75</a>
+<a name='L76'></a><a href='#L76'>76</a>
+<a name='L77'></a><a href='#L77'>77</a>
+<a name='L78'></a><a href='#L78'>78</a>
+<a name='L79'></a><a href='#L79'>79</a>
+<a name='L80'></a><a href='#L80'>80</a>
+<a name='L81'></a><a href='#L81'>81</a>
+<a name='L82'></a><a href='#L82'>82</a>
+<a name='L83'></a><a href='#L83'>83</a>
+<a name='L84'></a><a href='#L84'>84</a>
+<a name='L85'></a><a href='#L85'>85</a>
+<a name='L86'></a><a href='#L86'>86</a>
+<a name='L87'></a><a href='#L87'>87</a>
+<a name='L88'></a><a href='#L88'>88</a>
+<a name='L89'></a><a href='#L89'>89</a>
+<a name='L90'></a><a href='#L90'>90</a>
+<a name='L91'></a><a href='#L91'>91</a>
+<a name='L92'></a><a href='#L92'>92</a>
+<a name='L93'></a><a href='#L93'>93</a>
+<a name='L94'></a><a href='#L94'>94</a>
+<a name='L95'></a><a href='#L95'>95</a>
+<a name='L96'></a><a href='#L96'>96</a>
+<a name='L97'></a><a href='#L97'>97</a>
+<a name='L98'></a><a href='#L98'>98</a>
+<a name='L99'></a><a href='#L99'>99</a>
+<a name='L100'></a><a href='#L100'>100</a>
+<a name='L101'></a><a href='#L101'>101</a>
+<a name='L102'></a><a href='#L102'>102</a>
+<a name='L103'></a><a href='#L103'>103</a>
+<a name='L104'></a><a href='#L104'>104</a>
+<a name='L105'></a><a href='#L105'>105</a>
+<a name='L106'></a><a href='#L106'>106</a>
+<a name='L107'></a><a href='#L107'>107</a>
+<a name='L108'></a><a href='#L108'>108</a>
+<a name='L109'></a><a href='#L109'>109</a>
+<a name='L110'></a><a href='#L110'>110</a>
+<a name='L111'></a><a href='#L111'>111</a>
+<a name='L112'></a><a href='#L112'>112</a>
+<a name='L113'></a><a href='#L113'>113</a>
+<a name='L114'></a><a href='#L114'>114</a>
+<a name='L115'></a><a href='#L115'>115</a>
+<a name='L116'></a><a href='#L116'>116</a>
+<a name='L117'></a><a href='#L117'>117</a>
+<a name='L118'></a><a href='#L118'>118</a>
+<a name='L119'></a><a href='#L119'>119</a>
+<a name='L120'></a><a href='#L120'>120</a>
+<a name='L121'></a><a href='#L121'>121</a>
+<a name='L122'></a><a href='#L122'>122</a>
+<a name='L123'></a><a href='#L123'>123</a>
+<a name='L124'></a><a href='#L124'>124</a>
+<a name='L125'></a><a href='#L125'>125</a>
+<a name='L126'></a><a href='#L126'>126</a>
+<a name='L127'></a><a href='#L127'>127</a>
+<a name='L128'></a><a href='#L128'>128</a>
+<a name='L129'></a><a href='#L129'>129</a>
+<a name='L130'></a><a href='#L130'>130</a>
+<a name='L131'></a><a href='#L131'>131</a>
+<a name='L132'></a><a href='#L132'>132</a>
+<a name='L133'></a><a href='#L133'>133</a>
+<a name='L134'></a><a href='#L134'>134</a>
+<a name='L135'></a><a href='#L135'>135</a>
+<a name='L136'></a><a href='#L136'>136</a>
+<a name='L137'></a><a href='#L137'>137</a>
+<a name='L138'></a><a href='#L138'>138</a>
+<a name='L139'></a><a href='#L139'>139</a>
+<a name='L140'></a><a href='#L140'>140</a>
+<a name='L141'></a><a href='#L141'>141</a>
+<a name='L142'></a><a href='#L142'>142</a>
+<a name='L143'></a><a href='#L143'>143</a>
+<a name='L144'></a><a href='#L144'>144</a>
+<a name='L145'></a><a href='#L145'>145</a>
+<a name='L146'></a><a href='#L146'>146</a>
+<a name='L147'></a><a href='#L147'>147</a>
+<a name='L148'></a><a href='#L148'>148</a>
+<a name='L149'></a><a href='#L149'>149</a>
+<a name='L150'></a><a href='#L150'>150</a>
+<a name='L151'></a><a href='#L151'>151</a>
+<a name='L152'></a><a href='#L152'>152</a>
+<a name='L153'></a><a href='#L153'>153</a>
+<a name='L154'></a><a href='#L154'>154</a>
+<a name='L155'></a><a href='#L155'>155</a>
+<a name='L156'></a><a href='#L156'>156</a>
+<a name='L157'></a><a href='#L157'>157</a>
+<a name='L158'></a><a href='#L158'>158</a>
+<a name='L159'></a><a href='#L159'>159</a>
+<a name='L160'></a><a href='#L160'>160</a>
+<a name='L161'></a><a href='#L161'>161</a>
+<a name='L162'></a><a href='#L162'>162</a>
+<a name='L163'></a><a href='#L163'>163</a>
+<a name='L164'></a><a href='#L164'>164</a>
+<a name='L165'></a><a href='#L165'>165</a>
+<a name='L166'></a><a href='#L166'>166</a>
+<a name='L167'></a><a href='#L167'>167</a>
+<a name='L168'></a><a href='#L168'>168</a>
+<a name='L169'></a><a href='#L169'>169</a>
+<a name='L170'></a><a href='#L170'>170</a>
+<a name='L171'></a><a href='#L171'>171</a>
+<a name='L172'></a><a href='#L172'>172</a>
+<a name='L173'></a><a href='#L173'>173</a>
+<a name='L174'></a><a href='#L174'>174</a>
+<a name='L175'></a><a href='#L175'>175</a>
+<a name='L176'></a><a href='#L176'>176</a>
+<a name='L177'></a><a href='#L177'>177</a>
+<a name='L178'></a><a href='#L178'>178</a>
+<a name='L179'></a><a href='#L179'>179</a>
+<a name='L180'></a><a href='#L180'>180</a>
+<a name='L181'></a><a href='#L181'>181</a>
+<a name='L182'></a><a href='#L182'>182</a>
+<a name='L183'></a><a href='#L183'>183</a>
+<a name='L184'></a><a href='#L184'>184</a>
+<a name='L185'></a><a href='#L185'>185</a>
+<a name='L186'></a><a href='#L186'>186</a>
+<a name='L187'></a><a href='#L187'>187</a>
+<a name='L188'></a><a href='#L188'>188</a>
+<a name='L189'></a><a href='#L189'>189</a>
+<a name='L190'></a><a href='#L190'>190</a>
+<a name='L191'></a><a href='#L191'>191</a>
+<a name='L192'></a><a href='#L192'>192</a>
+<a name='L193'></a><a href='#L193'>193</a>
+<a name='L194'></a><a href='#L194'>194</a>
+<a name='L195'></a><a href='#L195'>195</a>
+<a name='L196'></a><a href='#L196'>196</a>
+<a name='L197'></a><a href='#L197'>197</a>
+<a name='L198'></a><a href='#L198'>198</a>
+<a name='L199'></a><a href='#L199'>199</a>
+<a name='L200'></a><a href='#L200'>200</a>
+<a name='L201'></a><a href='#L201'>201</a>
+<a name='L202'></a><a href='#L202'>202</a>
+<a name='L203'></a><a href='#L203'>203</a>
+<a name='L204'></a><a href='#L204'>204</a>
+<a name='L205'></a><a href='#L205'>205</a>
+<a name='L206'></a><a href='#L206'>206</a>
+<a name='L207'></a><a href='#L207'>207</a>
+<a name='L208'></a><a href='#L208'>208</a>
+<a name='L209'></a><a href='#L209'>209</a>
+<a name='L210'></a><a href='#L210'>210</a>
+<a name='L211'></a><a href='#L211'>211</a>
+<a name='L212'></a><a href='#L212'>212</a>
+<a name='L213'></a><a href='#L213'>213</a>
+<a name='L214'></a><a href='#L214'>214</a>
+<a name='L215'></a><a href='#L215'>215</a>
+<a name='L216'></a><a href='#L216'>216</a>
+<a name='L217'></a><a href='#L217'>217</a>
+<a name='L218'></a><a href='#L218'>218</a>
+<a name='L219'></a><a href='#L219'>219</a>
+<a name='L220'></a><a href='#L220'>220</a>
+<a name='L221'></a><a href='#L221'>221</a>
+<a name='L222'></a><a href='#L222'>222</a>
+<a name='L223'></a><a href='#L223'>223</a>
+<a name='L224'></a><a href='#L224'>224</a>
+<a name='L225'></a><a href='#L225'>225</a>
+<a name='L226'></a><a href='#L226'>226</a>
+<a name='L227'></a><a href='#L227'>227</a>
+<a name='L228'></a><a href='#L228'>228</a>
+<a name='L229'></a><a href='#L229'>229</a>
+<a name='L230'></a><a href='#L230'>230</a>
+<a name='L231'></a><a href='#L231'>231</a>
+<a name='L232'></a><a href='#L232'>232</a>
+<a name='L233'></a><a href='#L233'>233</a>
+<a name='L234'></a><a href='#L234'>234</a>
+<a name='L235'></a><a href='#L235'>235</a>
+<a name='L236'></a><a href='#L236'>236</a>
+<a name='L237'></a><a href='#L237'>237</a>
+<a name='L238'></a><a href='#L238'>238</a>
+<a name='L239'></a><a href='#L239'>239</a>
+<a name='L240'></a><a href='#L240'>240</a>
+<a name='L241'></a><a href='#L241'>241</a>
+<a name='L242'></a><a href='#L242'>242</a>
+<a name='L243'></a><a href='#L243'>243</a>
+<a name='L244'></a><a href='#L244'>244</a>
+<a name='L245'></a><a href='#L245'>245</a>
+<a name='L246'></a><a href='#L246'>246</a>
+<a name='L247'></a><a href='#L247'>247</a>
+<a name='L248'></a><a href='#L248'>248</a>
+<a name='L249'></a><a href='#L249'>249</a>
+<a name='L250'></a><a href='#L250'>250</a>
+<a name='L251'></a><a href='#L251'>251</a>
+<a name='L252'></a><a href='#L252'>252</a>
+<a name='L253'></a><a href='#L253'>253</a>
+<a name='L254'></a><a href='#L254'>254</a>
+<a name='L255'></a><a href='#L255'>255</a>
+<a name='L256'></a><a href='#L256'>256</a>
+<a name='L257'></a><a href='#L257'>257</a>
+<a name='L258'></a><a href='#L258'>258</a>
+<a name='L259'></a><a href='#L259'>259</a>
+<a name='L260'></a><a href='#L260'>260</a>
+<a name='L261'></a><a href='#L261'>261</a>
+<a name='L262'></a><a href='#L262'>262</a>
+<a name='L263'></a><a href='#L263'>263</a>
+<a name='L264'></a><a href='#L264'>264</a>
+<a name='L265'></a><a href='#L265'>265</a>
+<a name='L266'></a><a href='#L266'>266</a>
+<a name='L267'></a><a href='#L267'>267</a>
+<a name='L268'></a><a href='#L268'>268</a>
+<a name='L269'></a><a href='#L269'>269</a>
+<a name='L270'></a><a href='#L270'>270</a>
+<a name='L271'></a><a href='#L271'>271</a>
+<a name='L272'></a><a href='#L272'>272</a>
+<a name='L273'></a><a href='#L273'>273</a>
+<a name='L274'></a><a href='#L274'>274</a>
+<a name='L275'></a><a href='#L275'>275</a>
+<a name='L276'></a><a href='#L276'>276</a>
+<a name='L277'></a><a href='#L277'>277</a>
+<a name='L278'></a><a href='#L278'>278</a>
+<a name='L279'></a><a href='#L279'>279</a>
+<a name='L280'></a><a href='#L280'>280</a>
+<a name='L281'></a><a href='#L281'>281</a>
+<a name='L282'></a><a href='#L282'>282</a>
+<a name='L283'></a><a href='#L283'>283</a>
+<a name='L284'></a><a href='#L284'>284</a>
+<a name='L285'></a><a href='#L285'>285</a>
+<a name='L286'></a><a href='#L286'>286</a>
+<a name='L287'></a><a href='#L287'>287</a>
+<a name='L288'></a><a href='#L288'>288</a>
+<a name='L289'></a><a href='#L289'>289</a>
+<a name='L290'></a><a href='#L290'>290</a>
+<a name='L291'></a><a href='#L291'>291</a>
+<a name='L292'></a><a href='#L292'>292</a>
+<a name='L293'></a><a href='#L293'>293</a>
+<a name='L294'></a><a href='#L294'>294</a>
+<a name='L295'></a><a href='#L295'>295</a>
+<a name='L296'></a><a href='#L296'>296</a>
+<a name='L297'></a><a href='#L297'>297</a>
+<a name='L298'></a><a href='#L298'>298</a>
+<a name='L299'></a><a href='#L299'>299</a>
+<a name='L300'></a><a href='#L300'>300</a>
+<a name='L301'></a><a href='#L301'>301</a>
+<a name='L302'></a><a href='#L302'>302</a>
+<a name='L303'></a><a href='#L303'>303</a>
+<a name='L304'></a><a href='#L304'>304</a>
+<a name='L305'></a><a href='#L305'>305</a>
+<a name='L306'></a><a href='#L306'>306</a>
+<a name='L307'></a><a href='#L307'>307</a>
+<a name='L308'></a><a href='#L308'>308</a>
+<a name='L309'></a><a href='#L309'>309</a>
+<a name='L310'></a><a href='#L310'>310</a>
+<a name='L311'></a><a href='#L311'>311</a>
+<a name='L312'></a><a href='#L312'>312</a>
+<a name='L313'></a><a href='#L313'>313</a>
+<a name='L314'></a><a href='#L314'>314</a>
+<a name='L315'></a><a href='#L315'>315</a>
+<a name='L316'></a><a href='#L316'>316</a>
+<a name='L317'></a><a href='#L317'>317</a>
+<a name='L318'></a><a href='#L318'>318</a>
+<a name='L319'></a><a href='#L319'>319</a>
+<a name='L320'></a><a href='#L320'>320</a>
+<a name='L321'></a><a href='#L321'>321</a>
+<a name='L322'></a><a href='#L322'>322</a>
+<a name='L323'></a><a href='#L323'>323</a>
+<a name='L324'></a><a href='#L324'>324</a>
+<a name='L325'></a><a href='#L325'>325</a>
+<a name='L326'></a><a href='#L326'>326</a></td><td class="line-coverage quiet"><span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js"><span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" ><span class="branch-0 cbranch-no" title="branch not covered" >// Central thresholds/toggles configuration</span></span></span>
+// Default configuration values for prove quality gates
+// Enhanced with comprehensive validation and documentation
+&nbsp;
+import { z } from 'zod';
+import { logger } from './logger.js';
+&nbsp;
+// Configuration validation schemas
+<span class="cstat-no" title="statement not covered" >const ConfigValidationSchema = z.object({</span>
+<span class="cstat-no" title="statement not covered" >  thresholds: z.object({</span>
+<span class="cstat-no" title="statement not covered" >    diffCoverageFunctional: z.number().min(0).max(100),</span>
+<span class="cstat-no" title="statement not covered" >    diffCoverageFunctionalRefactor: z.number().min(0).max(100),</span>
+<span class="cstat-no" title="statement not covered" >    globalCoverage: z.number().min(0).max(100),</span>
+<span class="cstat-no" title="statement not covered" >    maxWarnings: z.number().min(0),</span>
+<span class="cstat-no" title="statement not covered" >    maxCommitSize: z.number().min(1),</span>
+<span class="cstat-no" title="statement not covered" >  }),</span>
+<span class="cstat-no" title="statement not covered" >  paths: z.object({</span>
+<span class="cstat-no" title="statement not covered" >    srcGlobs: z.array(z.string()).min(1),</span>
+<span class="cstat-no" title="statement not covered" >    testGlobs: z.array(z.string()).min(1),</span>
+<span class="cstat-no" title="statement not covered" >    coverageFile: z.string().min(1),</span>
+<span class="cstat-no" title="statement not covered" >    proveReportFile: z.string().min(1),</span>
+<span class="cstat-no" title="statement not covered" >  }),</span>
+<span class="cstat-no" title="statement not covered" >  git: z.object({</span>
+<span class="cstat-no" title="statement not covered" >    baseRefFallback: z.string().min(1),</span>
+<span class="cstat-no" title="statement not covered" >    requireMainBranch: z.boolean(),</span>
+<span class="cstat-no" title="statement not covered" >    enablePreConflictCheck: z.boolean(),</span>
+<span class="cstat-no" title="statement not covered" >  }),</span>
+<span class="cstat-no" title="statement not covered" >  runner: z.object({</span>
+<span class="cstat-no" title="statement not covered" >    concurrency: z.number().min(1).max(20),</span>
+<span class="cstat-no" title="statement not covered" >    timeout: z.number().min(1000),</span>
+<span class="cstat-no" title="statement not covered" >    failFast: z.boolean(),</span>
+<span class="cstat-no" title="statement not covered" >  }),</span>
+<span class="cstat-no" title="statement not covered" >  toggles: z.object({</span>
+<span class="cstat-no" title="statement not covered" >    coverage: z.boolean(),</span>
+<span class="cstat-no" title="statement not covered" >    diffCoverage: z.boolean(),</span>
+<span class="cstat-no" title="statement not covered" >    sizeBudget: z.boolean(),</span>
+<span class="cstat-no" title="statement not covered" >    security: z.boolean(),</span>
+<span class="cstat-no" title="statement not covered" >    contracts: z.boolean(),</span>
+<span class="cstat-no" title="statement not covered" >    dbMigrations: z.boolean(),</span>
+<span class="cstat-no" title="statement not covered" >  }),</span>
+<span class="cstat-no" title="statement not covered" >  featureFlags: z.object({</span>
+<span class="cstat-no" title="statement not covered" >    enableTelemetry: z.boolean(),</span>
+<span class="cstat-no" title="statement not covered" >    enableRolloutValidation: z.boolean(),</span>
+<span class="cstat-no" title="statement not covered" >    enableSharedDetection: z.boolean(),</span>
+<span class="cstat-no" title="statement not covered" >    registryCacheTimeout: z.number().min(1000).max(300000),</span>
+<span class="cstat-no" title="statement not covered" >    detectionTimeout: z.number().min(1000).max(60000),</span>
+<span class="cstat-no" title="statement not covered" >    enableGradualRolloutValidation: z.boolean(),</span>
+<span class="cstat-no" title="statement not covered" >    enableFlagRegistrationValidation: z.boolean(),</span>
+<span class="cstat-no" title="statement not covered" >  }),</span>
+<span class="cstat-no" title="statement not covered" >  killSwitch: z.object({</span>
+<span class="cstat-no" title="statement not covered" >    enableRegistrationValidation: z.boolean(),</span>
+<span class="cstat-no" title="statement not covered" >    enableEnhancedPatterns: z.boolean(),</span>
+<span class="cstat-no" title="statement not covered" >    enableSharedDetection: z.boolean(),</span>
+<span class="cstat-no" title="statement not covered" >    enableRolloutValidation: z.boolean(),</span>
+<span class="cstat-no" title="statement not covered" >    enableErrorMessages: z.boolean(),</span>
+<span class="cstat-no" title="statement not covered" >    patternDetectionTimeout: z.number().min(1000).max(30000),</span>
+<span class="cstat-no" title="statement not covered" >  }),</span>
+<span class="cstat-no" title="statement not covered" >  modes: z.object({</span>
+<span class="cstat-no" title="statement not covered" >    functional: z.object({</span>
+<span class="cstat-no" title="statement not covered" >      requireTdd: z.boolean(),</span>
+<span class="cstat-no" title="statement not covered" >      requireDiffCoverage: z.boolean(),</span>
+<span class="cstat-no" title="statement not covered" >      requireTests: z.boolean(),</span>
+<span class="cstat-no" title="statement not covered" >    }),</span>
+<span class="cstat-no" title="statement not covered" >    nonFunctional: z.object({</span>
+<span class="cstat-no" title="statement not covered" >      requireProblemAnalysis: z.boolean(),</span>
+<span class="cstat-no" title="statement not covered" >      requireProblemAnalysisMinLength: z.number().min(0),</span>
+<span class="cstat-no" title="statement not covered" >      requireTdd: z.boolean(),</span>
+<span class="cstat-no" title="statement not covered" >      requireDiffCoverage: z.boolean(),</span>
+<span class="cstat-no" title="statement not covered" >      requireTests: z.boolean(),</span>
+<span class="cstat-no" title="statement not covered" >    }),</span>
+<span class="cstat-no" title="statement not covered" >  }),</span>
+<span class="cstat-no" title="statement not covered" >  checkTimeouts: z.object({</span>
+<span class="cstat-no" title="statement not covered" >    typecheck: z.number().min(1000),</span>
+<span class="cstat-no" title="statement not covered" >    lint: z.number().min(1000),</span>
+<span class="cstat-no" title="statement not covered" >    tests: z.number().min(1000),</span>
+<span class="cstat-no" title="statement not covered" >    build: z.number().min(1000),</span>
+<span class="cstat-no" title="statement not covered" >    coverage: z.number().min(1000),</span>
+<span class="cstat-no" title="statement not covered" >  }),</span>
+<span class="cstat-no" title="statement not covered" >});</span>
+&nbsp;
+<span class="cstat-no" title="statement not covered" >export const defaultConfig = {</span>
+  // Thresholds
+<span class="cstat-no" title="statement not covered" >  thresholds: {</span>
+<span class="cstat-no" title="statement not covered" >    diffCoverageFunctional: 85, // 85% coverage required for functional tasks</span>
+<span class="cstat-no" title="statement not covered" >    diffCoverageFunctionalRefactor: 60, // 60% for refactor tasks</span>
+<span class="cstat-no" title="statement not covered" >    globalCoverage: 25, // Global coverage threshold (adjusted for current state)</span>
+<span class="cstat-no" title="statement not covered" >    maxWarnings: 0, // ESLint max warnings</span>
+<span class="cstat-no" title="statement not covered" >    maxCommitSize: 300, // Max lines of code per commit</span>
+<span class="cstat-no" title="statement not covered" >  },</span>
+&nbsp;
+  // Paths
+<span class="cstat-no" title="statement not covered" >  paths: {</span>
+<span class="cstat-no" title="statement not covered" >    srcGlobs: ['src/**/*.{ts,tsx,js,jsx}'],</span>
+<span class="cstat-no" title="statement not covered" >    testGlobs: ['src/**/*.{test,spec}.{ts,tsx,js,jsx}', 'tests/**/*.{test,spec}.{ts,tsx,js,jsx}'],</span>
+<span class="cstat-no" title="statement not covered" >    coverageFile: 'coverage/coverage-final.json',</span>
+<span class="cstat-no" title="statement not covered" >    proveReportFile: 'prove-report.json',</span>
+<span class="cstat-no" title="statement not covered" >  },</span>
+&nbsp;
+  // Git configuration
+<span class="cstat-no" title="statement not covered" >  git: {</span>
+<span class="cstat-no" title="statement not covered" >    baseRefFallback: 'origin/main',</span>
+<span class="cstat-no" title="statement not covered" >    requireMainBranch: true,</span>
+<span class="cstat-no" title="statement not covered" >    enablePreConflictCheck: true,</span>
+<span class="cstat-no" title="statement not covered" >  },</span>
+&nbsp;
+  // Runner configuration
+<span class="cstat-no" title="statement not covered" >  runner: {</span>
+<span class="cstat-no" title="statement not covered" >    concurrency: 4, // Max parallel checks</span>
+<span class="cstat-no" title="statement not covered" >    timeout: 300000, // 5 minutes timeout per check</span>
+<span class="cstat-no" title="statement not covered" >    failFast: true, // Stop on first failure</span>
+<span class="cstat-no" title="statement not covered" >  },</span>
+&nbsp;
+  // Feature toggles
+<span class="cstat-no" title="statement not covered" >  toggles: {</span>
+<span class="cstat-no" title="statement not covered" >    coverage: true, // Enable global coverage check</span>
+<span class="cstat-no" title="statement not covered" >    diffCoverage: true, // Enable diff coverage check</span>
+<span class="cstat-no" title="statement not covered" >    sizeBudget: false, // Enable bundle size checks</span>
+<span class="cstat-no" title="statement not covered" >    security: false, // Enable security scans</span>
+<span class="cstat-no" title="statement not covered" >    contracts: false, // Enable API contract validation</span>
+<span class="cstat-no" title="statement not covered" >    dbMigrations: false, // Enable database migration checks</span>
+<span class="cstat-no" title="statement not covered" >  },</span>
+&nbsp;
+  // Feature flag configuration
+<span class="cstat-no" title="statement not covered" >  featureFlags: {</span>
+<span class="cstat-no" title="statement not covered" >    enableTelemetry: true, // Enable telemetry collection for feature flags</span>
+<span class="cstat-no" title="statement not covered" >    enableRolloutValidation: true, // Enable rollout configuration validation</span>
+<span class="cstat-no" title="statement not covered" >    enableSharedDetection: true, // Use shared detection utilities</span>
+<span class="cstat-no" title="statement not covered" >    registryCacheTimeout: 30000, // 30 seconds cache timeout for flag registry</span>
+<span class="cstat-no" title="statement not covered" >    detectionTimeout: 10000, // 10 seconds timeout for pattern detection</span>
+<span class="cstat-no" title="statement not covered" >    enableGradualRolloutValidation: true, // Enable gradual rollout safety checks</span>
+<span class="cstat-no" title="statement not covered" >    enableFlagRegistrationValidation: true, // Enable flag registration validation</span>
+<span class="cstat-no" title="statement not covered" >  },</span>
+&nbsp;
+  // Kill-switch configuration
+<span class="cstat-no" title="statement not covered" >  killSwitch: {</span>
+<span class="cstat-no" title="statement not covered" >    enableRegistrationValidation: true, // Enable kill-switch flag registration validation</span>
+<span class="cstat-no" title="statement not covered" >    enableEnhancedPatterns: true, // Enable enhanced pattern detection</span>
+<span class="cstat-no" title="statement not covered" >    enableSharedDetection: true, // Use shared detection utilities</span>
+<span class="cstat-no" title="statement not covered" >    enableRolloutValidation: true, // Enable rollout validation for kill-switches</span>
+<span class="cstat-no" title="statement not covered" >    enableErrorMessages: true, // Enable enhanced error messages</span>
+<span class="cstat-no" title="statement not covered" >    patternDetectionTimeout: 5000, // 5 seconds timeout for pattern detection</span>
+<span class="cstat-no" title="statement not covered" >  },</span>
+&nbsp;
+  // Mode-specific settings
+<span class="cstat-no" title="statement not covered" >  modes: {</span>
+<span class="cstat-no" title="statement not covered" >    functional: {</span>
+<span class="cstat-no" title="statement not covered" >      requireTdd: true,</span>
+<span class="cstat-no" title="statement not covered" >      requireDiffCoverage: true,</span>
+<span class="cstat-no" title="statement not covered" >      requireTests: true,</span>
+<span class="cstat-no" title="statement not covered" >    },</span>
+<span class="cstat-no" title="statement not covered" >    nonFunctional: {</span>
+<span class="cstat-no" title="statement not covered" >      requireProblemAnalysis: true,</span>
+<span class="cstat-no" title="statement not covered" >      requireProblemAnalysisMinLength: 200,</span>
+<span class="cstat-no" title="statement not covered" >      requireTdd: false,</span>
+<span class="cstat-no" title="statement not covered" >      requireDiffCoverage: false,</span>
+<span class="cstat-no" title="statement not covered" >      requireTests: false,</span>
+<span class="cstat-no" title="statement not covered" >    },</span>
+<span class="cstat-no" title="statement not covered" >  },</span>
+&nbsp;
+  // Check-specific timeouts (ms)
+<span class="cstat-no" title="statement not covered" >  checkTimeouts: {</span>
+<span class="cstat-no" title="statement not covered" >    typecheck: 60000, // 1 minute</span>
+<span class="cstat-no" title="statement not covered" >    lint: 30000, // 30 seconds</span>
+<span class="cstat-no" title="statement not covered" >    tests: 120000, // 2 minutes</span>
+<span class="cstat-no" title="statement not covered" >    build: 180000, // 3 minutes</span>
+<span class="cstat-no" title="statement not covered" >    coverage: 60000, // 1 minute</span>
+<span class="cstat-no" title="statement not covered" >  },</span>
+<span class="cstat-no" title="statement not covered" >} as const;</span>
+&nbsp;
+export type ProveConfig = typeof defaultConfig;
+&nbsp;
+/**
+ * Validate configuration against schema
+ */
+<span class="cstat-no" title="statement not covered" >export function validateConfig(config: ProveConfig): {</span>
+  isValid: boolean;
+  errors: string[];
+  warnings: string[];
+<span class="cstat-no" title="statement not covered" >} {</span>
+<span class="cstat-no" title="statement not covered" >  const errors: string[] = [];</span>
+<span class="cstat-no" title="statement not covered" >  const warnings: string[] = [];</span>
+&nbsp;
+<span class="cstat-no" title="statement not covered" >  try {</span>
+<span class="cstat-no" title="statement not covered" >    ConfigValidationSchema.parse(config);</span>
+<span class="cstat-no" title="statement not covered" >  } catch (error) {</span>
+<span class="cstat-no" title="statement not covered" >    if (error instanceof z.ZodError) {</span>
+<span class="cstat-no" title="statement not covered" >      errors.push(...error.errors.map(e =&gt; `${e.path.join('.')}: ${e.message}`));</span>
+<span class="cstat-no" title="statement not covered" >    }</span>
+<span class="cstat-no" title="statement not covered" >  }</span>
+&nbsp;
+  // Additional validation checks
+<span class="cstat-no" title="statement not covered" >  if (config.thresholds.diffCoverageFunctional &lt; 80) {</span>
+<span class="cstat-no" title="statement not covered" >    warnings.push('Consider higher coverage threshold for functional tasks (recommended: 80%+)');</span>
+<span class="cstat-no" title="statement not covered" >  }</span>
+&nbsp;
+<span class="cstat-no" title="statement not covered" >  if (config.thresholds.globalCoverage &lt; 30) {</span>
+<span class="cstat-no" title="statement not covered" >    warnings.push('Consider higher global coverage threshold (recommended: 30%+)');</span>
+<span class="cstat-no" title="statement not covered" >  }</span>
+&nbsp;
+<span class="cstat-no" title="statement not covered" >  if (config.runner.concurrency &gt; 8) {</span>
+<span class="cstat-no" title="statement not covered" >    warnings.push('High concurrency may impact performance (recommended: ≤8)');</span>
+<span class="cstat-no" title="statement not covered" >  }</span>
+&nbsp;
+<span class="cstat-no" title="statement not covered" >  if (config.runner.timeout &gt; 300000) {</span>
+<span class="cstat-no" title="statement not covered" >    warnings.push('Long timeouts may delay feedback (recommended: ≤300s)');</span>
+<span class="cstat-no" title="statement not covered" >  }</span>
+&nbsp;
+<span class="cstat-no" title="statement not covered" >  if (!config.toggles.security) {</span>
+<span class="cstat-no" title="statement not covered" >    warnings.push('Security checks are disabled - consider enabling for better code quality');</span>
+<span class="cstat-no" title="statement not covered" >  }</span>
+&nbsp;
+<span class="cstat-no" title="statement not covered" >  if (config.thresholds.maxCommitSize &gt; 500) {</span>
+<span class="cstat-no" title="statement not covered" >    warnings.push('Large commit size may impact code review quality (recommended: ≤500 lines)');</span>
+<span class="cstat-no" title="statement not covered" >  }</span>
+&nbsp;
+<span class="cstat-no" title="statement not covered" >  return {</span>
+<span class="cstat-no" title="statement not covered" >    isValid: errors.length === 0,</span>
+<span class="cstat-no" title="statement not covered" >    errors,</span>
+<span class="cstat-no" title="statement not covered" >    warnings,</span>
+<span class="cstat-no" title="statement not covered" >  };</span>
+<span class="cstat-no" title="statement not covered" >}</span>
+&nbsp;
+/**
+ * Get configuration documentation
+ */
+<span class="cstat-no" title="statement not covered" >export function getConfigDocumentation(): string {</span>
+<span class="cstat-no" title="statement not covered" >  return `</span>
+# Prove Configuration Documentation
+&nbsp;
+## Overview
+This configuration defines the behavior and thresholds for the Prove Quality Gates system.
+&nbsp;
+## Thresholds
+<span class="cstat-no" title="statement not covered" >- **Diff Coverage (Functional)**: ${defaultConfig.thresholds.diffCoverageFunctional}% - Coverage required for functional tasks</span>
+<span class="cstat-no" title="statement not covered" >- **Diff Coverage (Refactor)**: ${defaultConfig.thresholds.diffCoverageFunctionalRefactor}% - Coverage required for refactor tasks</span>
+<span class="cstat-no" title="statement not covered" >- **Global Coverage**: ${defaultConfig.thresholds.globalCoverage}% - Minimum global coverage threshold</span>
+<span class="cstat-no" title="statement not covered" >- **Max Warnings**: ${defaultConfig.thresholds.maxWarnings} - Maximum ESLint warnings allowed</span>
+<span class="cstat-no" title="statement not covered" >- **Max Commit Size**: ${defaultConfig.thresholds.maxCommitSize} lines - Maximum lines per commit</span>
+&nbsp;
+## Toggles
+<span class="cstat-no" title="statement not covered" >- **Coverage**: ${defaultConfig.toggles.coverage ? 'Enabled' : 'Disabled'} - Global coverage check</span>
+<span class="cstat-no" title="statement not covered" >- **Diff Coverage**: ${defaultConfig.toggles.diffCoverage ? 'Enabled' : 'Disabled'} - Diff coverage check</span>
+<span class="cstat-no" title="statement not covered" >- **Size Budget**: ${defaultConfig.toggles.sizeBudget ? 'Enabled' : 'Disabled'} - Bundle size checks</span>
+<span class="cstat-no" title="statement not covered" >- **Security**: ${defaultConfig.toggles.security ? 'Enabled' : 'Disabled'} - Security scans</span>
+<span class="cstat-no" title="statement not covered" >- **Contracts**: ${defaultConfig.toggles.contracts ? 'Enabled' : 'Disabled'} - API contract validation</span>
+<span class="cstat-no" title="statement not covered" >- **DB Migrations**: ${defaultConfig.toggles.dbMigrations ? 'Enabled' : 'Disabled'} - Database migration checks</span>
+&nbsp;
+## Runner Configuration
+<span class="cstat-no" title="statement not covered" >- **Concurrency**: ${defaultConfig.runner.concurrency} - Maximum parallel checks</span>
+<span class="cstat-no" title="statement not covered" >- **Timeout**: ${defaultConfig.runner.timeout}ms - Timeout per check</span>
+<span class="cstat-no" title="statement not covered" >- **Fail Fast**: ${defaultConfig.runner.failFast ? 'Enabled' : 'Disabled'} - Stop on first failure</span>
+&nbsp;
+## Feature Flags
+<span class="cstat-no" title="statement not covered" >- **Telemetry**: ${defaultConfig.featureFlags.enableTelemetry ? 'Enabled' : 'Disabled'} - Telemetry collection</span>
+<span class="cstat-no" title="statement not covered" >- **Rollout Validation**: ${defaultConfig.featureFlags.enableRolloutValidation ? 'Enabled' : 'Disabled'} - Rollout configuration validation</span>
+<span class="cstat-no" title="statement not covered" >- **Shared Detection**: ${defaultConfig.featureFlags.enableSharedDetection ? 'Enabled' : 'Disabled'} - Shared detection utilities</span>
+<span class="cstat-no" title="statement not covered" >- **Registry Cache Timeout**: ${defaultConfig.featureFlags.registryCacheTimeout}ms - Flag registry cache timeout</span>
+<span class="cstat-no" title="statement not covered" >- **Detection Timeout**: ${defaultConfig.featureFlags.detectionTimeout}ms - Pattern detection timeout</span>
+<span class="cstat-no" title="statement not covered" >- **Gradual Rollout Validation**: ${defaultConfig.featureFlags.enableGradualRolloutValidation ? 'Enabled' : 'Disabled'} - Gradual rollout safety checks</span>
+<span class="cstat-no" title="statement not covered" >- **Flag Registration Validation**: ${defaultConfig.featureFlags.enableFlagRegistrationValidation ? 'Enabled' : 'Disabled'} - Flag registration validation</span>
+&nbsp;
+## Kill-Switch Configuration
+<span class="cstat-no" title="statement not covered" >- **Registration Validation**: ${defaultConfig.killSwitch.enableRegistrationValidation ? 'Enabled' : 'Disabled'} - Kill-switch flag registration validation</span>
+<span class="cstat-no" title="statement not covered" >- **Enhanced Patterns**: ${defaultConfig.killSwitch.enableEnhancedPatterns ? 'Enabled' : 'Disabled'} - Enhanced pattern detection</span>
+<span class="cstat-no" title="statement not covered" >- **Shared Detection**: ${defaultConfig.killSwitch.enableSharedDetection ? 'Enabled' : 'Disabled'} - Shared detection utilities</span>
+<span class="cstat-no" title="statement not covered" >- **Rollout Validation**: ${defaultConfig.killSwitch.enableRolloutValidation ? 'Enabled' : 'Disabled'} - Rollout validation for kill-switches</span>
+<span class="cstat-no" title="statement not covered" >- **Error Messages**: ${defaultConfig.killSwitch.enableErrorMessages ? 'Enabled' : 'Disabled'} - Enhanced error messages</span>
+<span class="cstat-no" title="statement not covered" >- **Pattern Detection Timeout**: ${defaultConfig.killSwitch.patternDetectionTimeout}ms - Pattern detection timeout</span>
+&nbsp;
+## Mode-Specific Settings
+&nbsp;
+### Functional Mode
+<span class="cstat-no" title="statement not covered" >- **Require TDD**: ${defaultConfig.modes.functional.requireTdd ? 'Yes' : 'No'} - Test-driven development required</span>
+<span class="cstat-no" title="statement not covered" >- **Require Diff Coverage**: ${defaultConfig.modes.functional.requireDiffCoverage ? 'Yes' : 'No'} - Diff coverage required</span>
+<span class="cstat-no" title="statement not covered" >- **Require Tests**: ${defaultConfig.modes.functional.requireTests ? 'Yes' : 'No'} - Tests required</span>
+&nbsp;
+### Non-Functional Mode
+<span class="cstat-no" title="statement not covered" >- **Require Problem Analysis**: ${defaultConfig.modes.nonFunctional.requireProblemAnalysis ? 'Yes' : 'No'} - Problem analysis required</span>
+<span class="cstat-no" title="statement not covered" >- **Min Analysis Length**: ${defaultConfig.modes.nonFunctional.requireProblemAnalysisMinLength} characters - Minimum problem analysis length</span>
+<span class="cstat-no" title="statement not covered" >- **Require TDD**: ${defaultConfig.modes.nonFunctional.requireTdd ? 'Yes' : 'No'} - Test-driven development required</span>
+<span class="cstat-no" title="statement not covered" >- **Require Diff Coverage**: ${defaultConfig.modes.nonFunctional.requireDiffCoverage ? 'Yes' : 'No'} - Diff coverage required</span>
+<span class="cstat-no" title="statement not covered" >- **Require Tests**: ${defaultConfig.modes.nonFunctional.requireTests ? 'Yes' : 'No'} - Tests required</span>
+&nbsp;
+## Check Timeouts
+<span class="cstat-no" title="statement not covered" >- **Typecheck**: ${defaultConfig.checkTimeouts.typecheck}ms - TypeScript type checking</span>
+<span class="cstat-no" title="statement not covered" >- **Lint**: ${defaultConfig.checkTimeouts.lint}ms - ESLint checking</span>
+<span class="cstat-no" title="statement not covered" >- **Tests**: ${defaultConfig.checkTimeouts.tests}ms - Test execution</span>
+<span class="cstat-no" title="statement not covered" >- **Build**: ${defaultConfig.checkTimeouts.build}ms - Build process</span>
+<span class="cstat-no" title="statement not covered" >- **Coverage**: ${defaultConfig.checkTimeouts.coverage}ms - Coverage analysis</span>
+&nbsp;
+## Environment Variables
+You can override configuration values using environment variables:
+- \`PROVE_DIFF_COVERAGE_FUNCTIONAL\` - Override functional diff coverage threshold
+- \`PROVE_GLOBAL_COVERAGE\` - Override global coverage threshold
+- \`PROVE_ENABLE_COVERAGE\` - Enable/disable coverage checks
+- \`PROVE_ENABLE_DIFF_COVERAGE\` - Enable/disable diff coverage checks
+- \`PROVE_ENABLE_SECURITY\` - Enable/disable security checks
+- \`PROVE_ENABLE_CONTRACTS\` - Enable/disable contract validation
+- \`PROVE_ENABLE_DB_MIGRATIONS\` - Enable/disable database migration checks
+- \`PROVE_CONCURRENCY\` - Override runner concurrency
+`;
+<span class="cstat-no" title="statement not covered" >}</span>
+&nbsp;
+/**
+ * Initialize configuration with validation
+ */
+<span class="cstat-no" title="statement not covered" >export function initializeConfig(): ProveConfig {</span>
+<span class="cstat-no" title="statement not covered" >  const validation = validateConfig(defaultConfig);</span>
+  
+<span class="cstat-no" title="statement not covered" >  if (!validation.isValid) {</span>
+<span class="cstat-no" title="statement not covered" >    logger.error('Configuration validation failed', { errors: validation.errors });</span>
+<span class="cstat-no" title="statement not covered" >    throw new Error('Invalid configuration');</span>
+<span class="cstat-no" title="statement not covered" >  }</span>
+&nbsp;
+<span class="cstat-no" title="statement not covered" >  if (validation.warnings.length &gt; 0) {</span>
+<span class="cstat-no" title="statement not covered" >    logger.warn('Configuration warnings', { warnings: validation.warnings });</span>
+<span class="cstat-no" title="statement not covered" >  }</span>
+&nbsp;
+<span class="cstat-no" title="statement not covered" >  logger.info('Configuration initialized successfully', {</span>
+<span class="cstat-no" title="statement not covered" >    thresholds: defaultConfig.thresholds,</span>
+<span class="cstat-no" title="statement not covered" >    toggles: defaultConfig.toggles,</span>
+<span class="cstat-no" title="statement not covered" >    concurrency: defaultConfig.runner.concurrency,</span>
+<span class="cstat-no" title="statement not covered" >  });</span>
+&nbsp;
+<span class="cstat-no" title="statement not covered" >  return defaultConfig;</span>
+<span class="cstat-no" title="statement not covered" >}</span></pre></td></tr></table></pre>
+
+                <div class='push'></div><!-- for sticky footer -->
+            </div><!-- /wrapper -->
+            <div class='footer quiet pad2 space-top1 center small'>
+                Code coverage generated by
+                <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
+                at 2025-10-16T02:05:44.640Z
+            </div>
+        <script src="../../prettify.js"></script>
+        <script>
+            window.onload = function () {
+                prettyPrint();
+            };
+        </script>
+        <script src="../../sorter.js"></script>
+        <script src="../../block-navigation.js"></script>
+    </body>
+</html>
+    

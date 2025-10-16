@@ -3,6 +3,9 @@
  * Provides consistent, actionable error messages across all checks
  */
 
+import { ErrorContextEnhancer, type EnhancedErrorContext } from './error-context-enhancer.js';
+import { logger } from '../../logger.js';
+
 export interface ErrorContext {
   filePath?: string;
   lineNumber?: number;
@@ -19,88 +22,145 @@ export interface ErrorContext {
 
 export class ErrorMessageBuilder {
   /**
-   * Build kill-switch specific error messages with actionable suggestions
+   * Build enhanced kill-switch specific error messages with actionable suggestions
    */
   static buildKillSwitchError(context: ErrorContext): string {
-    const { filePath, lineNumber, detectedPatterns = [], suggestions = [] } = context;
+    const enhancedContext = ErrorContextEnhancer.enhanceErrorContext(context, 'kill-switch-missing');
+    return this.buildEnhancedKillSwitchError(enhancedContext);
+  }
+
+  /**
+   * Build enhanced kill-switch error with rich context
+   */
+  private static buildEnhancedKillSwitchError(context: EnhancedErrorContext): string {
+    const { filePath, lineNumber, detectedPatterns = [], suggestions = [], codeSnippets = [], quickFixes = [], documentationLinks = [], troubleshootingSteps = [] } = context;
     
-    let message = "🚨 Feature commit requires a kill switch for safety.\n\n";
+    let message = this.buildErrorHeader('Feature commit requires a kill switch for safety', context);
     
+    // Add file location with enhanced formatting
     if (filePath) {
-      message += `📍 File: ${filePath}`;
-      if (lineNumber) {
-        message += `:${lineNumber}`;
-      }
-      message += "\n\n";
+      message += this.formatFileLocation(filePath, lineNumber);
     }
     
-    message += "💡 Add one of these kill-switch patterns:\n";
+    // Add severity indicator
+    message += this.formatSeverityIndicator(context.severity);
     
-    if (suggestions.length > 0) {
-      suggestions.forEach((suggestion, index) => {
-        message += `   ${index + 1}. ${suggestion}\n`;
-      });
-    } else {
-      // Default suggestions if none provided
-      message += `   1. const { isEnabled } = useFeatureFlag("FEATURE_NAME");\n`;
-      message += `   2. if (isEnabled("FEATURE_NAME")) { /* feature code */ }\n`;
-      message += `   3. process.env.FEATURE_NAME_ENABLED === "true"\n`;
-      message += `   4. const KILL_SWITCH_FEATURE_NAME = true;\n`;
-      message += `   5. config.features.featureName\n`;
-    }
-    
+    // Add detected patterns with better formatting
     if (detectedPatterns.length > 0) {
-      message += `\n🔍 Detected patterns: ${detectedPatterns.join(", ")}\n`;
+      message += `\n🔍 Detected patterns: ${this.formatPatternList(detectedPatterns)}\n`;
     }
     
-    message += "\n📚 Learn more: https://docs.example.com/feature-flags#kill-switches";
+    // Add code snippets
+    if (codeSnippets.length > 0) {
+      message += "\n💻 Code examples:\n";
+      codeSnippets.forEach((snippet, index) => {
+        message += `\n${index + 1}. ${snippet.description || 'Example'}\n`;
+        message += this.formatCodeBlock(snippet.code, snippet.language);
+      });
+    }
+    
+    // Add suggestions with better formatting
+    message += "\n💡 Recommended kill-switch patterns:\n";
+    const displaySuggestions = suggestions.length > 0 ? suggestions : this.getDefaultKillSwitchSuggestions();
+    displaySuggestions.forEach((suggestion, index) => {
+      message += `   ${index + 1}. ${suggestion}\n`;
+    });
+    
+    // Add quick fixes
+    if (quickFixes.length > 0) {
+      message += "\n⚡ Quick fixes:\n";
+      quickFixes.forEach((fix, index) => {
+        message += `   ${index + 1}. ${fix.title} (${Math.round(fix.confidence * 100)}% confidence)\n`;
+        message += `      ${fix.description}\n`;
+        if (fix.code) {
+          message += `      ${this.formatCodeBlock(fix.code, 'typescript', true)}\n`;
+        }
+      });
+    }
+    
+    // Add troubleshooting steps
+    if (troubleshootingSteps.length > 0) {
+      message += "\n🔧 Troubleshooting steps:\n";
+      troubleshootingSteps.forEach(step => {
+        message += `   ${step.step}. ${step.title}\n`;
+        message += `      ${step.description}\n`;
+        if (step.expectedOutcome) {
+          message += `      Expected: ${step.expectedOutcome}\n`;
+        }
+        if (step.verificationCommand) {
+          message += `      Verify: ${step.verificationCommand}\n`;
+        }
+      });
+    }
+    
+    // Add documentation links
+    if (documentationLinks.length > 0) {
+      message += "\n📚 Documentation:\n";
+      documentationLinks.forEach(link => {
+        message += `   • ${link.title}: ${link.url}\n`;
+        message += `     ${link.description}\n`;
+      });
+    }
     
     return message;
   }
 
   /**
-   * Build feature flag lint specific error messages
+   * Build enhanced feature flag lint specific error messages
    */
   static buildFlagLintError(context: ErrorContext): string {
+    const enhancedContext = ErrorContextEnhancer.enhanceErrorContext(context, 'flag-lint-error');
+    return this.buildEnhancedFlagLintError(enhancedContext);
+  }
+
+  /**
+   * Build enhanced flag lint error with rich context
+   */
+  private static buildEnhancedFlagLintError(context: EnhancedErrorContext): string {
     const { 
       unregisteredFlags = [], 
       missingOwner = [], 
       missingExpiry = [], 
       missingMetadata = [],
       invalidValues = [],
-      filePath 
+      filePath,
+      quickFixes = [],
+      documentationLinks = [],
+      troubleshootingSteps = []
     } = context;
     
-    let message = "🚨 Feature flag validation failed.\n\n";
+    let message = this.buildErrorHeader('Feature flag validation failed', context);
     
     if (filePath) {
-      message += `📍 File: ${filePath}\n\n`;
+      message += this.formatFileLocation(filePath);
     }
+    
+    message += this.formatSeverityIndicator(context.severity);
     
     const errors = [];
     
     if (unregisteredFlags.length > 0) {
-      errors.push(`❌ Unregistered flags: ${unregisteredFlags.join(", ")}`);
+      errors.push(`❌ Unregistered flags: ${this.formatFlagList(unregisteredFlags)}`);
       errors.push(`   → Add these flags to the flag registry first`);
     }
     
     if (missingOwner.length > 0) {
-      errors.push(`❌ Flags missing owner: ${missingOwner.join(", ")}`);
+      errors.push(`❌ Flags missing owner: ${this.formatFlagList(missingOwner)}`);
       errors.push(`   → Add owner: "owner": "team-name" to flag metadata`);
     }
     
     if (missingExpiry.length > 0) {
-      errors.push(`❌ Flags missing expiry: ${missingExpiry.join(", ")}`);
+      errors.push(`❌ Flags missing expiry: ${this.formatFlagList(missingExpiry)}`);
       errors.push(`   → Add expiry: "expiry": "2024-12-31" to flag metadata`);
     }
     
     if (missingMetadata.length > 0) {
-      errors.push(`❌ Flags missing metadata: ${missingMetadata.join(", ")}`);
+      errors.push(`❌ Flags missing metadata: ${this.formatFlagList(missingMetadata)}`);
       errors.push(`   → Add complete metadata: owner, expiry, description`);
     }
     
     if (invalidValues.length > 0) {
-      errors.push(`❌ Invalid flag values: ${invalidValues.join(", ")}`);
+      errors.push(`❌ Invalid flag values: ${this.formatFlagList(invalidValues)}`);
       errors.push(`   → Check flag values match expected format`);
     }
     
@@ -110,7 +170,41 @@ export class ErrorMessageBuilder {
       message += errors.join("\n\n");
     }
     
-    message += "\n\n📚 Learn more: https://docs.example.com/feature-flags#metadata";
+    // Add quick fixes
+    if (quickFixes.length > 0) {
+      message += "\n\n⚡ Quick fixes:\n";
+      quickFixes.forEach((fix, index) => {
+        message += `   ${index + 1}. ${fix.title} (${Math.round(fix.confidence * 100)}% confidence)\n`;
+        message += `      ${fix.description}\n`;
+        if (fix.code) {
+          message += `      ${this.formatCodeBlock(fix.code, 'typescript', true)}\n`;
+        }
+      });
+    }
+    
+    // Add troubleshooting steps
+    if (troubleshootingSteps.length > 0) {
+      message += "\n🔧 Troubleshooting steps:\n";
+      troubleshootingSteps.forEach(step => {
+        message += `   ${step.step}. ${step.title}\n`;
+        message += `      ${step.description}\n`;
+        if (step.expectedOutcome) {
+          message += `      Expected: ${step.expectedOutcome}\n`;
+        }
+        if (step.verificationCommand) {
+          message += `      Verify: ${step.verificationCommand}\n`;
+        }
+      });
+    }
+    
+    // Add documentation links
+    if (documentationLinks.length > 0) {
+      message += "\n📚 Documentation:\n";
+      documentationLinks.forEach(link => {
+        message += `   • ${link.title}: ${link.url}\n`;
+        message += `     ${link.description}\n`;
+      });
+    }
     
     return message;
   }
@@ -279,6 +373,120 @@ export class ErrorMessageBuilder {
     };
     
     return suggestions[errorType] || ['Review the error details and fix accordingly'];
+  }
+
+  /**
+   * Build error header with consistent formatting
+   */
+  private static buildErrorHeader(title: string, context: EnhancedErrorContext): string {
+    const severityEmoji = this.getSeverityEmoji(context.severity);
+    const categoryBadge = this.getCategoryBadge(context.category);
+    
+    let header = `${severityEmoji} ${title}`;
+    if (categoryBadge) {
+      header += ` ${categoryBadge}`;
+    }
+    header += "\n\n";
+    
+    return header;
+  }
+
+  /**
+   * Format file location with enhanced styling
+   */
+  private static formatFileLocation(filePath: string, lineNumber?: number, columnNumber?: number): string {
+    let location = `📍 File: ${filePath}`;
+    if (lineNumber) {
+      location += `:${lineNumber}`;
+      if (columnNumber) {
+        location += `:${columnNumber}`;
+      }
+    }
+    return location + "\n\n";
+  }
+
+  /**
+   * Format severity indicator
+   */
+  private static formatSeverityIndicator(severity: string): string {
+    const severityMap: Record<string, string> = {
+      'low': '🟢 Low severity',
+      'medium': '🟡 Medium severity',
+      'high': '🟠 High severity',
+      'critical': '🔴 Critical severity'
+    };
+    
+    return `\n${severityMap[severity] || '⚠️ Unknown severity'}\n\n`;
+  }
+
+  /**
+   * Format pattern list with better readability
+   */
+  private static formatPatternList(patterns: string[]): string {
+    if (patterns.length === 0) return 'None detected';
+    if (patterns.length === 1) return patterns[0];
+    if (patterns.length <= 3) return patterns.join(', ');
+    return `${patterns.slice(0, 2).join(', ')} and ${patterns.length - 2} more`;
+  }
+
+  /**
+   * Format flag list with better readability
+   */
+  private static formatFlagList(flags: string[]): string {
+    if (flags.length === 0) return 'None';
+    if (flags.length === 1) return `\`${flags[0]}\``;
+    if (flags.length <= 3) return flags.map(f => `\`${f}\``).join(', ');
+    return `${flags.slice(0, 2).map(f => `\`${f}\``).join(', ')} and ${flags.length - 2} more`;
+  }
+
+  /**
+   * Format code block with optional inline styling
+   */
+  private static formatCodeBlock(code: string, language: string = 'typescript', inline: boolean = false): string {
+    if (inline) {
+      return `\`${code}\``;
+    }
+    return `\`\`\`${language}\n${code}\n\`\`\``;
+  }
+
+  /**
+   * Get severity emoji
+   */
+  private static getSeverityEmoji(severity: string): string {
+    const emojiMap: Record<string, string> = {
+      'low': '🟢',
+      'medium': '🟡',
+      'high': '🟠',
+      'critical': '🔴'
+    };
+    return emojiMap[severity] || '⚠️';
+  }
+
+  /**
+   * Get category badge
+   */
+  private static getCategoryBadge(category: string): string {
+    const badgeMap: Record<string, string> = {
+      'validation': '[VALIDATION]',
+      'configuration': '[CONFIG]',
+      'runtime': '[RUNTIME]',
+      'build': '[BUILD]',
+      'test': '[TEST]'
+    };
+    return badgeMap[category] || '';
+  }
+
+  /**
+   * Get default kill-switch suggestions
+   */
+  private static getDefaultKillSwitchSuggestions(): string[] {
+    return [
+      'const { isEnabled } = useFeatureFlag("FEATURE_NAME");',
+      'if (isEnabled("FEATURE_NAME")) { /* feature code */ }',
+      'process.env.FEATURE_NAME_ENABLED === "true"',
+      'const KILL_SWITCH_FEATURE_NAME = true;',
+      'config.features.featureName'
+    ];
   }
 }
 

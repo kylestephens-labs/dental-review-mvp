@@ -3,6 +3,9 @@
  * Ensures feature flags have proper rollout configuration for safe deployment
  */
 
+import { RolloutCache } from './rollout-cache.js';
+import { logger } from '../../logger.js';
+
 export interface FlagDefinition {
   name: string;
   content: string;
@@ -48,45 +51,100 @@ export interface RolloutMetrics {
 }
 
 export class RolloutValidator {
+  private static readonly COMPILED_PATTERNS = {
+    rolloutPercentage: /rolloutPercentage\s*:\s*\d+/,
+    environmentConfig: /environments\s*:\s*\[/,
+    defaultValue: /default\s*:\s*(true|false)/,
+    description: /description\s*:\s*['"`]/,
+    owner: /owner\s*:\s*['"`]/,
+    expiry: /expiry\s*:\s*['"`]/,
+    gradualRollout: /gradualRollout\s*:\s*\{/,
+    stages: /stages\s*:\s*\[/
+  };
+
   /**
-   * Validate rollout configuration for a single flag
+   * Initialize the validator with caching
+   */
+  static initialize(): void {
+    RolloutCache.initialize({
+      maxSize: 1000,
+      defaultTtl: 300000, // 5 minutes
+      cleanupInterval: 60000, // 1 minute
+      enableMemoryOptimization: true,
+      enableCompression: false
+    });
+    
+    RolloutCache.preloadCommonPatterns();
+    logger.info('Rollout validator initialized with caching');
+  }
+
+  /**
+   * Validate rollout configuration for a single flag with caching
    */
   static validateRolloutConfig(flagDef: FlagDefinition): RolloutValidationResult {
+    const startTime = Date.now();
+    const contentHash = RolloutCache.generateContentHash(flagDef.content);
+    
+    // Check cache first
+    const cached = RolloutCache.getValidationResult(flagDef.name, contentHash);
+    if (cached) {
+      logger.info('Using cached validation result', { 
+        flagName: flagDef.name, 
+        cacheHit: true 
+      });
+      return cached;
+    }
+    
+    // Perform validation
+    const result = this.performRolloutValidation(flagDef);
+    
+    // Cache the result
+    RolloutCache.setValidationResult(flagDef.name, contentHash, result);
+    
+    const duration = Date.now() - startTime;
+    logger.info('Rollout validation completed', { 
+      flagName: flagDef.name, 
+      duration, 
+      cacheHit: false 
+    });
+    
+    return result;
+  }
+
+  /**
+   * Perform actual rollout validation (internal method)
+   */
+  private static performRolloutValidation(flagDef: FlagDefinition): RolloutValidationResult {
     const errors: string[] = [];
     const warnings: string[] = [];
     
-    // Check for rollout percentage
-    const hasRolloutPercentage = /rolloutPercentage\s*:\s*\d+/.test(flagDef.content);
+    // Use compiled patterns for better performance
+    const hasRolloutPercentage = this.COMPILED_PATTERNS.rolloutPercentage.test(flagDef.content);
     if (!hasRolloutPercentage) {
       errors.push(`Missing rollout percentage configuration`);
     }
     
-    // Check for environment configuration
-    const hasEnvironmentConfig = /environments\s*:\s*\[/.test(flagDef.content);
+    const hasEnvironmentConfig = this.COMPILED_PATTERNS.environmentConfig.test(flagDef.content);
     if (!hasEnvironmentConfig) {
       errors.push(`Missing environment configuration`);
     }
     
-    // Check for default value
-    const hasDefaultValue = /default\s*:\s*(true|false)/.test(flagDef.content);
+    const hasDefaultValue = this.COMPILED_PATTERNS.defaultValue.test(flagDef.content);
     if (!hasDefaultValue) {
       errors.push(`Missing default value configuration`);
     }
     
-    // Check for description
-    const hasDescription = /description\s*:\s*['"`]/.test(flagDef.content);
+    const hasDescription = this.COMPILED_PATTERNS.description.test(flagDef.content);
     if (!hasDescription) {
       warnings.push(`Missing description - recommended for rollout safety`);
     }
     
-    // Check for owner
-    const hasOwner = /owner\s*:\s*['"`]/.test(flagDef.content);
+    const hasOwner = this.COMPILED_PATTERNS.owner.test(flagDef.content);
     if (!hasOwner) {
       warnings.push(`Missing owner - recommended for rollout accountability`);
     }
     
-    // Check for expiry
-    const hasExpiry = /expiry\s*:\s*['"`]/.test(flagDef.content);
+    const hasExpiry = this.COMPILED_PATTERNS.expiry.test(flagDef.content);
     if (!hasExpiry) {
       warnings.push(`Missing expiry date - recommended for rollout timeline`);
     }
@@ -107,9 +165,42 @@ export class RolloutValidator {
   }
 
   /**
-   * Validate gradual rollout configuration for multiple flags
+   * Validate gradual rollout configuration for multiple flags with caching
    */
   static validateGradualRollout(flags: FlagDefinition[]): GradualRolloutResult {
+    const startTime = Date.now();
+    const flagsHash = RolloutCache.generateFlagsHash(flags);
+    
+    // Check cache first
+    const cached = RolloutCache.getGradualRolloutResult(flagsHash);
+    if (cached) {
+      logger.info('Using cached gradual rollout result', { 
+        flagsCount: flags.length, 
+        cacheHit: true 
+      });
+      return cached;
+    }
+    
+    // Perform validation
+    const result = this.performGradualRolloutValidation(flags);
+    
+    // Cache the result
+    RolloutCache.setGradualRolloutResult(flagsHash, result);
+    
+    const duration = Date.now() - startTime;
+    logger.info('Gradual rollout validation completed', { 
+      flagsCount: flags.length, 
+      duration, 
+      cacheHit: false 
+    });
+    
+    return result;
+  }
+
+  /**
+   * Perform actual gradual rollout validation (internal method)
+   */
+  private static performGradualRolloutValidation(flags: FlagDefinition[]): GradualRolloutResult {
     const errors: string[] = [];
     const warnings: string[] = [];
     
@@ -119,6 +210,10 @@ export class RolloutValidator {
     let hasStagingConfig = false;
     let hasProductionConfig = false;
     
+    // Use compiled patterns for better performance
+    const rolloutPattern = this.COMPILED_PATTERNS.rolloutPercentage;
+    const envPattern = /environments\s*:\s*\[([^\]]+)\]/;
+    
     for (const flag of flags) {
       const validation = this.validateRolloutConfig(flag);
       
@@ -127,14 +222,15 @@ export class RolloutValidator {
         errors.push(`Flag '${flag.name}' has invalid rollout configuration: ${validation.errors.join(', ')}`);
       }
       
-      // Extract rollout percentage
-      const rolloutMatch = flag.content.match(/rolloutPercentage\s*:\s*(\d+)/);
+      // Extract rollout percentage using compiled pattern
+      const rolloutMatch = rolloutPattern.exec(flag.content);
       if (rolloutMatch) {
-        rolloutPercentage = Math.max(rolloutPercentage, parseInt(rolloutMatch[1]));
+        const percentage = parseInt(rolloutMatch[0].match(/\d+/)![0]);
+        rolloutPercentage = Math.max(rolloutPercentage, percentage);
       }
       
       // Check environment configuration
-      const envMatch = flag.content.match(/environments\s*:\s*\[([^\]]+)\]/);
+      const envMatch = envPattern.exec(flag.content);
       if (envMatch) {
         const environments = envMatch[1].split(',').map(env => env.trim().replace(/['"`]/g, ''));
         environmentCount = Math.max(environmentCount, environments.length);
@@ -180,11 +276,42 @@ export class RolloutValidator {
   }
 
   /**
-   * Get validation metrics for monitoring
+   * Get validation metrics for monitoring with caching
    */
   static async getValidationMetrics(flags: FlagDefinition[]): Promise<RolloutMetrics> {
     const startTime = Date.now();
+    const flagsHash = RolloutCache.generateFlagsHash(flags);
     
+    // Check cache first
+    const cached = RolloutCache.getMetrics(flagsHash);
+    if (cached) {
+      logger.info('Using cached validation metrics', { 
+        flagsCount: flags.length, 
+        cacheHit: true 
+      });
+      return cached;
+    }
+    
+    // Perform metrics calculation
+    const metrics = this.performValidationMetrics(flags, startTime);
+    
+    // Cache the result
+    RolloutCache.setMetrics(flagsHash, metrics);
+    
+    const duration = Date.now() - startTime;
+    logger.info('Validation metrics completed', { 
+      flagsCount: flags.length, 
+      duration, 
+      cacheHit: false 
+    });
+    
+    return metrics;
+  }
+
+  /**
+   * Perform actual validation metrics calculation (internal method)
+   */
+  private static performValidationMetrics(flags: FlagDefinition[], startTime: number): RolloutMetrics {
     let validRolloutConfigs = 0;
     let invalidRolloutConfigs = 0;
     let gradualRolloutSupported = 0;
@@ -195,26 +322,32 @@ export class RolloutValidator {
     let errorCount = 0;
     let warningCount = 0;
     
-    for (const flag of flags) {
-      const validation = this.validateRolloutConfig(flag);
+    // Process flags in batches for better performance
+    const batchSize = 50;
+    for (let i = 0; i < flags.length; i += batchSize) {
+      const batch = flags.slice(i, i + batchSize);
       
-      if (validation.isValid) {
-        validRolloutConfigs++;
-      } else {
-        invalidRolloutConfigs++;
+      for (const flag of batch) {
+        const validation = this.validateRolloutConfig(flag);
+        
+        if (validation.isValid) {
+          validRolloutConfigs++;
+        } else {
+          invalidRolloutConfigs++;
+        }
+        
+        if (validation.hasRolloutPercentage && validation.hasEnvironmentConfig && validation.hasDefaultValue) {
+          gradualRolloutSupported++;
+        }
+        
+        if (!validation.hasRolloutPercentage) missingRolloutPercentage++;
+        if (!validation.hasEnvironmentConfig) missingEnvironmentConfig++;
+        if (!validation.hasDefaultValue) missingDefaultValue++;
+        if (!validation.hasDescription) missingDescription++;
+        
+        errorCount += validation.errors.length;
+        warningCount += validation.warnings.length;
       }
-      
-      if (validation.hasRolloutPercentage && validation.hasEnvironmentConfig && validation.hasDefaultValue) {
-        gradualRolloutSupported++;
-      }
-      
-      if (!validation.hasRolloutPercentage) missingRolloutPercentage++;
-      if (!validation.hasEnvironmentConfig) missingEnvironmentConfig++;
-      if (!validation.hasDefaultValue) missingDefaultValue++;
-      if (!validation.hasDescription) missingDescription++;
-      
-      errorCount += validation.errors.length;
-      warningCount += validation.warnings.length;
     }
     
     const validationDuration = Date.now() - startTime;
@@ -235,12 +368,48 @@ export class RolloutValidator {
   }
 
   /**
-   * Extract flag definitions from file content
+   * Extract flag definitions from file content with caching
    */
   static extractFlagDefinitions(content: string, filePath: string): FlagDefinition[] {
+    const contentHash = RolloutCache.generateContentHash(content);
+    
+    // Check cache first
+    const cached = RolloutCache.getFlagDefinition(contentHash);
+    if (cached) {
+      logger.info('Using cached flag definitions', { 
+        filePath, 
+        cacheHit: true 
+      });
+      return cached;
+    }
+    
+    // Perform extraction
+    const flags = this.performFlagExtraction(content, filePath);
+    
+    // Cache the result
+    RolloutCache.setFlagDefinition(contentHash, flags[0] || {
+      name: 'EMPTY',
+      content: '',
+      filePath,
+      lineNumber: 1
+    });
+    
+    logger.info('Flag definitions extracted', { 
+      filePath, 
+      flagsCount: flags.length, 
+      cacheHit: false 
+    });
+    
+    return flags;
+  }
+
+  /**
+   * Perform actual flag extraction (internal method)
+   */
+  private static performFlagExtraction(content: string, filePath: string): FlagDefinition[] {
     const flags: FlagDefinition[] = [];
     
-    // Match various flag definition patterns
+    // Use compiled patterns for better performance
     const patterns = [
       // Object-style definitions
       /const\s+(\w+)\s*=\s*\{([^}]+)\}/g,
@@ -256,12 +425,12 @@ export class RolloutValidator {
       let match;
       while ((match = pattern.exec(content)) !== null) {
         const name = match[1];
-        const content = match[2];
+        const flagContent = match[2];
         const lineNumber = content.substring(0, match.index).split('\n').length;
         
         flags.push({
           name,
-          content,
+          content: flagContent,
           filePath,
           lineNumber
         });
@@ -269,6 +438,33 @@ export class RolloutValidator {
     }
     
     return flags;
+  }
+
+  /**
+   * Get performance statistics for the rollout validator
+   */
+  static getPerformanceStats(): {
+    cacheStats: any;
+    memoryUsage: NodeJS.MemoryUsage;
+    uptime: number;
+  } {
+    const cacheStats = RolloutCache.getStats();
+    const memoryUsage = process.memoryUsage();
+    const uptime = process.uptime();
+    
+    return {
+      cacheStats,
+      memoryUsage,
+      uptime
+    };
+  }
+
+  /**
+   * Shutdown the rollout validator and cleanup resources
+   */
+  static shutdown(): void {
+    RolloutCache.shutdown();
+    logger.info('Rollout validator shutdown complete');
   }
 
   /**

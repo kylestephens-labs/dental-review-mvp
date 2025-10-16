@@ -1,7 +1,7 @@
 import { type ProveContext } from '../context.js';
 import { logger } from '../logger.js';
 import { exec } from '../utils/exec.js';
-import { FeatureFlagDetector, UnifiedFlagRegistry, ErrorMessageBuilder, ErrorMessageUtils, type ErrorContext, RolloutValidator, type FlagDefinition } from './shared/index.js';
+import { FeatureFlagDetector, UnifiedFlagRegistry, ErrorMessageBuilder, ErrorMessageUtils, type ErrorContext, RolloutValidator, type FlagDefinition, ValidationOptimizer } from './shared/index.js';
 
 export interface KillswitchRequiredResult {
   ok: boolean;
@@ -211,44 +211,32 @@ export async function checkKillswitchRequired(context: ProveContext): Promise<Ki
       try {
         registry = await UnifiedFlagRegistry.loadAllFlags(workingDirectory);
         
-        // Enhanced flag extraction from various kill-switch patterns
-        const flagNames = new Set<string>();
-        for (const pattern of foundKillSwitches) {
-        // Extract flag names from various patterns
-        const flagNameMatch = pattern.match(/['"`]([^'"`]+)['"`]/);
-        if (flagNameMatch) {
-          flagNames.add(flagNameMatch[1]);
-        }
+        // Optimized flag extraction using ValidationOptimizer
+        const extractionResult = ValidationOptimizer.optimizeFlagExtraction(foundKillSwitches, {
+          enableCompiledRegex: true,
+          enableFlagCaching: true,
+          enableEarlyReturns: true,
+          enableBatchValidation: true
+        });
         
-        // Extract from KILL_SWITCH_ patterns
-        const killSwitchMatch = pattern.match(/KILL_SWITCH_([A-Z_]+)/);
-        if (killSwitchMatch) {
-          flagNames.add(killSwitchMatch[1]);
-        }
+        const flagNamesArray = extractionResult.flagNames;
         
-        // Extract from environment variable patterns
-        const envVarMatch = pattern.match(/process\.env\.([A-Z_]+_ENABLED)/);
-        if (envVarMatch) {
-          // Strip _ENABLED suffix for registry validation
-          const flagName = envVarMatch[1].replace(/_ENABLED$/, '');
-          flagNames.add(flagName);
-        }
-        
-        // Extract from config patterns
-        const configMatch = pattern.match(/config\s*[=:].*\.([a-zA-Z_]+)/);
-        if (configMatch) {
-          flagNames.add(configMatch[1]);
-        }
-        
-        // Extract from toggle patterns
-        const toggleMatch = pattern.match(/toggle\s*[=:].*\.([a-zA-Z_]+)/);
-        if (toggleMatch) {
-          flagNames.add(toggleMatch[1]);
-        }
-      }
+        logger.info('Optimized flag extraction completed', {
+          extractionTime: extractionResult.extractionTime,
+          patternsUsed: extractionResult.patternsUsed,
+          duplicatesRemoved: extractionResult.duplicatesRemoved,
+          uniqueFlags: flagNamesArray.length
+        });
       
-      // Validate flags against registry
-      const flagNamesArray = Array.from(flagNames);
+      // Optimized validation using ValidationOptimizer
+      const validationMetrics = ValidationOptimizer.optimizeValidation(flagNamesArray, registry, {
+        enableCompiledRegex: true,
+        enableFlagCaching: true,
+        enableEarlyReturns: true,
+        enableBatchValidation: true
+      });
+      
+      // Get validation result from registry
       const validationResult = registry.validateFlags(flagNamesArray);
       
       registeredFlags = flagNamesArray.filter(flag => registry!.isRegistered(flag));
@@ -259,7 +247,13 @@ export async function checkKillswitchRequired(context: ProveContext): Promise<Ki
           registeredFlags: registeredFlags.length,
           unregisteredFlags: unregisteredFlags.length,
           validationErrors: validationResult.errors.length,
-          extractedFlags: flagNamesArray
+          extractedFlags: flagNamesArray,
+          optimizationMetrics: {
+            validationTime: validationMetrics.validationTime,
+            cacheHitRate: validationMetrics.cacheHitRate,
+            memoryUsage: validationMetrics.memoryUsage,
+            optimizationsApplied: validationMetrics.optimizationsApplied
+          }
         });
         
       } catch (error) {

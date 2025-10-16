@@ -7,43 +7,24 @@ import { logger } from './logger.js';
 import { ThresholdsSchema } from './config/schemas/thresholds.js';
 import { PathsSchema } from './config/schemas/paths.js';
 import { TogglesSchema } from './config/schemas/toggles.js';
+import { FeatureFlagsSchema } from './config/schemas/feature-flags.js';
+import { KillSwitchSchema } from './config/schemas/kill-switch.js';
+import { GitSchema } from './config/schemas/git.js';
+import { RunnerSchema } from './config/schemas/runner.js';
+import { ModesSchema } from './config/schemas/modes.js';
+import { CheckTimeoutsSchema } from './config/schemas/check-timeouts.js';
 
-// Zod schema for configuration validation
+// Enhanced Zod schema for configuration validation using modular schemas
 const ConfigSchema = z.object({
   thresholds: ThresholdsSchema,
   paths: PathsSchema,
-  git: z.object({
-    baseRefFallback: z.string(),
-    requireMainBranch: z.boolean(),
-    enablePreConflictCheck: z.boolean(),
-  }),
-  runner: z.object({
-    concurrency: z.number().min(1).max(20),
-    timeout: z.number().min(1000),
-    failFast: z.boolean(),
-  }),
+  git: GitSchema,
+  runner: RunnerSchema,
   toggles: TogglesSchema,
-  modes: z.object({
-    functional: z.object({
-      requireTdd: z.boolean(),
-      requireDiffCoverage: z.boolean(),
-      requireTests: z.boolean(),
-    }),
-    nonFunctional: z.object({
-      requireProblemAnalysis: z.boolean(),
-      requireProblemAnalysisMinLength: z.number().min(0),
-      requireTdd: z.boolean(),
-      requireDiffCoverage: z.boolean(),
-      requireTests: z.boolean(),
-    }),
-  }),
-  checkTimeouts: z.object({
-    typecheck: z.number().min(1000),
-    lint: z.number().min(1000),
-    tests: z.number().min(1000),
-    build: z.number().min(1000),
-    coverage: z.number().min(1000),
-  }),
+  featureFlags: FeatureFlagsSchema,
+  killSwitch: KillSwitchSchema,
+  modes: ModesSchema,
+  checkTimeouts: CheckTimeoutsSchema,
 });
 
 type ConfigInput = z.infer<typeof ConfigSchema>;
@@ -126,7 +107,7 @@ function loadConfigFromEnv(): Partial<ConfigInput> {
   return envConfig;
 }
 
-// Merge configurations with proper precedence
+// Merge configurations with proper precedence and deep merging
 function mergeConfigs(
   defaults: ConfigInput,
   fileConfig: Partial<ConfigInput>,
@@ -161,6 +142,16 @@ function mergeConfigs(
       ...defaults.toggles,
       ...fileConfig.toggles,
       ...envConfig.toggles,
+    },
+    featureFlags: {
+      ...defaults.featureFlags,
+      ...fileConfig.featureFlags,
+      ...envConfig.featureFlags,
+    },
+    killSwitch: {
+      ...defaults.killSwitch,
+      ...fileConfig.killSwitch,
+      ...envConfig.killSwitch,
     },
     modes: {
       ...defaults.modes,
