@@ -12,6 +12,8 @@ export default defineConfig({
         singleFork: true
       }
     },
+    maxThreads: 2,
+    minThreads: 1,
     teardownTimeout: 10000,
     testTimeout: 10000,
     hookTimeout: 10000,
