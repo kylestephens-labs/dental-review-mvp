@@ -1,7 +1,7 @@
 import { type ProveContext } from '../context.js';
 import { logger } from '../logger.js';
 import { exec } from '../utils/exec.js';
-import { FeatureFlagDetector, UnifiedFlagRegistry, ErrorMessageBuilder, ErrorMessageUtils, type ErrorContext } from './shared/index.js';
+import { FeatureFlagDetector, UnifiedFlagRegistry, ErrorMessageBuilder, ErrorMessageUtils, type ErrorContext, RolloutValidator, type FlagDefinition } from './shared/index.js';
 
 export interface KillswitchRequiredResult {
   ok: boolean;
@@ -15,10 +15,15 @@ export interface KillswitchRequiredResult {
     detectedPatterns: string[];
     registeredFlags: string[];
     unregisteredFlags: string[];
+    rolloutValidationErrors: string[];
+    rolloutValidationWarnings: string[];
+    rolloutValidFlags: number;
+    rolloutInvalidFlags: number;
     metrics?: {
       detectionDuration: number;
       patternMatchCount: number;
       filesProcessed: number;
+      rolloutValidationDuration: number;
     };
   };
 }
@@ -256,6 +261,45 @@ export async function checkKillswitchRequired(context: ProveContext): Promise<Ki
       // This maintains backward compatibility while providing enhanced validation when possible
     }
 
+    // Add rollout validation for kill-switch flags
+    const rolloutValidationStart = Date.now();
+    const rolloutValidationErrors: string[] = [];
+    const rolloutValidationWarnings: string[] = [];
+    let rolloutValidFlags = 0;
+    let rolloutInvalidFlags = 0;
+
+    // Extract flag definitions from production files and validate rollout configuration
+    for (const filePath of productionFiles) {
+      try {
+        const fs = await import('fs/promises');
+        const content = await fs.readFile(filePath, 'utf-8');
+        const flagDefinitions = RolloutValidator.extractFlagDefinitions(content, filePath);
+        
+        for (const flagDef of flagDefinitions) {
+          const rolloutValidation = RolloutValidator.validateRolloutConfig(flagDef);
+          
+          if (rolloutValidation.isValid) {
+            rolloutValidFlags++;
+          } else {
+            rolloutInvalidFlags++;
+            rolloutValidationErrors.push(...rolloutValidation.errors.map(error => 
+              `${flagDef.name}: ${error}`
+            ));
+          }
+          
+          rolloutValidationWarnings.push(...rolloutValidation.warnings.map(warning => 
+            `${flagDef.name}: ${warning}`
+          ));
+        }
+      } catch (error) {
+        logger.warn(`Failed to read file for rollout validation: ${filePath}`, {
+          error: error instanceof Error ? error.message : String(error)
+        });
+      }
+    }
+
+    const rolloutValidationDuration = Date.now() - rolloutValidationStart;
+
     if (!hasKillSwitch) {
       // Build enhanced error message with suggestions
       const errorContext: ErrorContext = {
@@ -287,7 +331,14 @@ export async function checkKillswitchRequired(context: ProveContext): Promise<Ki
           detectedPatterns: [],
           registeredFlags: [],
           unregisteredFlags: [],
-          metrics: detectionResult.metrics
+          rolloutValidationErrors,
+          rolloutValidationWarnings,
+          rolloutValidFlags,
+          rolloutInvalidFlags,
+          metrics: {
+            ...detectionResult.metrics,
+            rolloutValidationDuration
+          }
         }
       };
     }
@@ -321,7 +372,14 @@ export async function checkKillswitchRequired(context: ProveContext): Promise<Ki
           detectedPatterns: foundKillSwitches,
           registeredFlags: registeredFlags,
           unregisteredFlags: unregisteredFlags,
-          metrics: detectionResult.metrics
+          rolloutValidationErrors,
+          rolloutValidationWarnings,
+          rolloutValidFlags,
+          rolloutInvalidFlags,
+          metrics: {
+            ...detectionResult.metrics,
+            rolloutValidationDuration
+          }
         }
       };
     }
@@ -365,7 +423,14 @@ export async function checkKillswitchRequired(context: ProveContext): Promise<Ki
         detectedPatterns: foundKillSwitches,
         registeredFlags: registeredFlags,
         unregisteredFlags: unregisteredFlags,
-        metrics: detectionResult.metrics
+        rolloutValidationErrors,
+        rolloutValidationWarnings,
+        rolloutValidFlags,
+        rolloutInvalidFlags,
+        metrics: {
+          ...detectionResult.metrics,
+          rolloutValidationDuration
+        }
       }
     };
 

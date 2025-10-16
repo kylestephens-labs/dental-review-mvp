@@ -16,3 +16,11 @@ export type {
 
 export { ErrorMessageBuilder, ErrorMessageUtils } from './error-messages.js';
 export type { ErrorContext } from './error-messages.js';
+
+export { RolloutValidator } from './rollout-validator.js';
+export type { 
+  FlagDefinition, 
+  RolloutValidationResult, 
+  GradualRolloutResult, 
+  RolloutMetrics 
+} from './rollout-validator.js';

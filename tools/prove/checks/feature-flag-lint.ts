@@ -6,6 +6,7 @@ import { logger } from '../logger.js';
 import { FeatureFlagDetector } from './shared/feature-flag-detector.js';
 import { UnifiedFlagRegistry } from './shared/flag-registry.js';
 import { ErrorMessageBuilder, ErrorMessageUtils, type ErrorContext } from './shared/error-messages.js';
+import { RolloutValidator, type FlagDefinition, type RolloutValidationResult } from './shared/rollout-validator.js';
 
 export interface FeatureFlagLintResult {
   ok: boolean;
@@ -14,8 +15,12 @@ export interface FeatureFlagLintResult {
     unregisteredFlags: string[];
     missingOwnerFlags: string[];
     missingExpiryFlags: string[];
+    rolloutValidationErrors: string[];
+    rolloutValidationWarnings: string[];
     totalFlags: number;
     registeredFlags: number;
+    rolloutValidFlags: number;
+    rolloutInvalidFlags: number;
     telemetry: {
       filesProcessed: number;
       filesSkipped: number;
@@ -23,6 +28,7 @@ export interface FeatureFlagLintResult {
       patternMatchCount: number;
       errorCount: number;
       memoryUsage: number;
+      rolloutValidationDuration: number;
       performanceMetrics: {
         ripgrepDuration?: number;
         alternativeMethodDuration?: number;
@@ -91,6 +97,46 @@ export async function checkFeatureFlagLint(context: ProveContext): Promise<Featu
     const validationStart = Date.now();
     const validationResult = registry.validateFlags(flagUsages);
     const validationDuration = Date.now() - validationStart;
+
+    // Add rollout validation
+    const rolloutValidationStart = Date.now();
+    const rolloutValidationErrors: string[] = [];
+    const rolloutValidationWarnings: string[] = [];
+    let rolloutValidFlags = 0;
+    let rolloutInvalidFlags = 0;
+
+    // Extract flag definitions and validate rollout configuration
+    for (const flagUsage of flagUsages) {
+      try {
+        // Read the file to extract flag definitions
+        const fs = await import('fs/promises');
+        const content = await fs.readFile(flagUsage.filePath, 'utf-8');
+        const flagDefinitions = RolloutValidator.extractFlagDefinitions(content, flagUsage.filePath);
+        
+        for (const flagDef of flagDefinitions) {
+          const rolloutValidation = RolloutValidator.validateRolloutConfig(flagDef);
+          
+          if (rolloutValidation.isValid) {
+            rolloutValidFlags++;
+          } else {
+            rolloutInvalidFlags++;
+            rolloutValidationErrors.push(...rolloutValidation.errors.map(error => 
+              `${flagDef.name}: ${error}`
+            ));
+          }
+          
+          rolloutValidationWarnings.push(...rolloutValidation.warnings.map(warning => 
+            `${flagDef.name}: ${warning}`
+          ));
+        }
+      } catch (error) {
+        logger.warn(`Failed to read file for rollout validation: ${flagUsage.filePath}`, {
+          error: error instanceof Error ? error.message : String(error)
+        });
+      }
+    }
+
+    const rolloutValidationDuration = Date.now() - rolloutValidationStart;
     
     if (!validationResult.isValid) {
       const unregisteredFlags = validationResult.missingFlags;
@@ -117,7 +163,16 @@ export async function checkFeatureFlagLint(context: ProveContext): Promise<Featu
         filePath: flagUsages[0]?.filePath // Show first file as example
       };
       
-      const reason = ErrorMessageBuilder.buildFlagLintError(errorContext);
+      let reason = ErrorMessageBuilder.buildFlagLintError(errorContext);
+      
+      // Add rollout validation errors if any
+      if (rolloutValidationErrors.length > 0) {
+        reason += `\n\n🚨 Rollout Validation Errors:\n${rolloutValidationErrors.map(error => `  • ${error}`).join('\n')}`;
+      }
+      
+      if (rolloutValidationWarnings.length > 0) {
+        reason += `\n\n⚠️ Rollout Validation Warnings:\n${rolloutValidationWarnings.map(warning => `  • ${warning}`).join('\n')}`;
+      }
       
       logger.error('Feature flag lint check failed', {
         unregisteredFlags,
@@ -135,8 +190,12 @@ export async function checkFeatureFlagLint(context: ProveContext): Promise<Featu
           unregisteredFlags,
           missingOwnerFlags,
           missingExpiryFlags,
+          rolloutValidationErrors,
+          rolloutValidationWarnings,
           totalFlags: flagUsages.length,
           registeredFlags: Object.keys(allFlags).length,
+          rolloutValidFlags,
+          rolloutInvalidFlags,
           telemetry: {
             filesProcessed: detectionResult.metrics.filesProcessed,
             filesSkipped: detectionResult.metrics.filesSkipped,
@@ -144,6 +203,7 @@ export async function checkFeatureFlagLint(context: ProveContext): Promise<Featu
             patternMatchCount: detectionResult.metrics.patternMatchCount,
             errorCount: detectionResult.metrics.errorCount + validationResult.errors.length,
             memoryUsage: process.memoryUsage().heapUsed - memoryStart.heapUsed,
+            rolloutValidationDuration,
             performanceMetrics: {
               flagLoadingDuration: flagLoadingDuration,
               validationDuration: validationDuration,
@@ -174,8 +234,12 @@ export async function checkFeatureFlagLint(context: ProveContext): Promise<Featu
         unregisteredFlags: [],
         missingOwnerFlags: [],
         missingExpiryFlags: [],
+        rolloutValidationErrors,
+        rolloutValidationWarnings,
         totalFlags: flagUsages.length,
         registeredFlags: Object.keys(allFlags).length,
+        rolloutValidFlags,
+        rolloutInvalidFlags,
         telemetry: {
           filesProcessed: detectionResult.metrics.filesProcessed,
           filesSkipped: detectionResult.metrics.filesSkipped,
@@ -183,6 +247,7 @@ export async function checkFeatureFlagLint(context: ProveContext): Promise<Featu
           patternMatchCount: detectionResult.metrics.patternMatchCount,
           errorCount: detectionResult.metrics.errorCount,
           memoryUsage: process.memoryUsage().heapUsed - memoryStart.heapUsed,
+          rolloutValidationDuration,
           performanceMetrics: {
             flagLoadingDuration: flagLoadingDuration,
             validationDuration: validationDuration,
