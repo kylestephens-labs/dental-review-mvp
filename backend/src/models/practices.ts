@@ -1,4 +1,4 @@
-import { pool, PoolClient } from '../config/database';
+import { pool, PoolClient } from '../config/database.js';
 
 export interface Practice {
   id: string;

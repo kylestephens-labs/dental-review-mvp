@@ -1,8 +1,8 @@
 import express from 'express';
-import { testConnections } from './config/database';
-import { POST as stripeWebhook } from './api/webhooks/stripe';
-import { GET as healthCheck, HEAD as healthCheckHead } from './api/healthz';
-import { GET as onboardGet } from './api/onboard/get';
+import { testConnections } from './config/database.js';
+import { POST as stripeWebhook } from './api/webhooks/stripe.js';
+import { GET as healthCheck, HEAD as healthCheckHead } from './api/healthz.js';
+import { GET as onboardGet } from './api/onboard/get.js';
 
 const app = express();
 const PORT = process.env.PORT || 3001;

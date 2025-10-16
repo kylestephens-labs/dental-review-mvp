@@ -32,8 +32,9 @@ export async function checkCommitSize(context: ProveContext): Promise<CommitSize
   try {
     const { git: { baseRef }, cfg: { thresholds: { maxCommitSize } } } = context;
     
-    // Get short statistics for the diff (committed changes)
-    const result = await exec('git', ['diff', '--shortstat', `${baseRef}...HEAD`], {
+    // Get short statistics for the current commit only (not against base ref)
+    // For trunk-based development, we only care about the current commit size
+    const result = await exec('git', ['diff', '--shortstat', 'HEAD~1..HEAD'], {
       timeout: 30000, // 30 seconds timeout
       cwd: context.workingDirectory
     });

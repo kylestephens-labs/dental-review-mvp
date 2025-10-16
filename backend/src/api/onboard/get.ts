@@ -1,10 +1,10 @@
 import { Request, Response } from 'express';
-import { verifyMagicLinkToken, hashTokenId, parseToken } from '../../utils/hmac_token';
-import { consumeToken } from '../../models/onboarding_tokens';
-import { getPracticeById } from '../../models/practices';
-import { getSettingsByPracticeId } from '../../models/settings';
-import { insertEvent } from '../../models/events';
-import { HttpError } from '../../utils/errors';
+import { verifyMagicLinkToken, hashTokenId, parseToken } from '../../utils/hmac_token.js';
+import { consumeToken } from '../../models/onboarding_tokens.js';
+import { getPracticeById } from '../../models/practices.js';
+import { getSettingsByPracticeId } from '../../models/settings.js';
+import { insertEvent } from '../../models/events.js';
+import { HttpError } from '../../utils/errors.js';
 
 export async function GET(req: Request, res: Response) {
   const { token } = req.params;

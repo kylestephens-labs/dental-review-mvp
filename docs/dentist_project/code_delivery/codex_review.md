@@ -1,7 +1,7 @@
 
 Please review cursor's work and provide any feedback.
 
-Please provide the following for the tasks t-... you did so codex can review your work
+Please provide the following for tasks 1-3 so codex can review your work
 
 -The task identifier plus the intent (“Task X– description, intent”).
 -A quick bullet list of what Cursor says it built or changed (touching code, tests, env/config).
@@ -13,15 +13,12 @@ Please provide the following for the tasks t-... you did so codex can review you
 Please review the following files for more context on the project:
 docs/dentist_project/architecture.md
 docs/dentist_project/business_plan
-docs/dentist_project/MVP
 docs/code_delivery/tasks_titles.md
 
-
-
-Please review the following files for more context on the project:
-docs/misc/prove_enforcement_8_paths/prove-overview.md
-docs/misc/prove_enforcement_8_paths/architecture.md
-docs/misc/prove_enforcement_8_paths/tasks.md
+Codex, please code review Cursor’s Task 12 – “Add payment sync webhook.”
+Here’s Cursor’s summary:
+- Built …
+I care most about delivering the task goal and high quality acceptance criteria that passes tests. Flag anything risky or missing tests.
 
 
 

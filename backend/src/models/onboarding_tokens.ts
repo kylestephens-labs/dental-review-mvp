@@ -1,5 +1,5 @@
-import { pool, PoolClient } from '../config/database';
-import { generateTokenId, hashTokenId } from '../utils/hmac_token';
+import { pool, PoolClient } from '../config/database.js';
+import { generateTokenId, hashTokenId } from '../utils/hmac_token.js';
 
 export interface OnboardingToken {
   id: string;

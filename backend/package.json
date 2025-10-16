@@ -8,10 +8,20 @@
     "dev": "tsx watch src/index.ts",
     "build": "tsc",
     "start": "node dist/index.js",
+    "start:prod": "NODE_ENV=production node dist/index.js",
     "test": "vitest run",
     "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
     "typecheck": "tsc --noEmit",
-    "lint": "eslint src/ --ext .ts,.js --max-warnings 0"
+    "lint": "eslint src/ --ext .ts,.js --max-warnings 0",
+    "lint:fix": "eslint src/ --ext .ts,.js --max-warnings 0 --fix",
+    "clean": "rm -rf dist",
+    "prebuild": "npm run clean",
+    "postbuild": "echo 'Build completed successfully'",
+    "docker:build": "docker build -t dental-mvp-backend ..",
+    "docker:run": "docker run -p 3001:3001 dental-mvp-backend",
+    "docker:test": "docker run --rm dental-mvp-backend npm test",
+    "health:check": "curl -f http://localhost:3001/healthz || exit 1"
   },
   "dependencies": {
     "@aws-sdk/client-ses": "^3.908.0",

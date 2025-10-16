@@ -1,0 +1,51 @@
+version: 1.0
+runtime: nodejs18
+build:
+  commands:
+    build:
+      - echo "Building dental practice management backend API..."
+      - cd backend
+      - npm ci --only=production
+      - npm run build
+      - echo "Backend build completed successfully"
+run:
+  runtime-version: 18
+  command: npm start
+  network:
+    port: 3001
+    env: PORT
+  env:
+    - name: NODE_ENV
+      value: production
+    - name: COMMIT_SHA
+      value: $GIT_COMMIT_SHA
+    - name: PORT
+      value: "3001"
+    - name: DATABASE_URL
+      value: $DATABASE_URL
+    - name: STRIPE_SECRET_KEY
+      value: $STRIPE_SECRET_KEY
+    - name: STRIPE_PUBLISHABLE_KEY
+      value: $STRIPE_PUBLISHABLE_KEY
+    - name: STRIPE_WEBHOOK_SECRET
+      value: $STRIPE_WEBHOOK_SECRET
+    - name: TWILIO_ACCOUNT_SID
+      value: $TWILIO_ACCOUNT_SID
+    - name: TWILIO_AUTH_TOKEN
+      value: $TWILIO_AUTH_TOKEN
+    - name: AWS_ACCESS_KEY_ID
+      value: $AWS_ACCESS_KEY_ID
+    - name: AWS_SECRET_ACCESS_KEY
+      value: $AWS_SECRET_ACCESS_KEY
+    - name: SUPABASE_URL
+      value: $SUPABASE_URL
+    - name: SUPABASE_SERVICE_ROLE_KEY
+      value: $SUPABASE_SERVICE_ROLE_KEY
+    - name: HMAC_SECRET
+      value: $HMAC_SECRET
+    - name: GOOGLE_PLACES_API_KEY
+      value: $GOOGLE_PLACES_API_KEY
+    - name: GOOGLE_CLIENTID
+      value: $GOOGLE_CLIENTID
+    - name: GOOGLE_OATUH_SECRET
+      value: $GOOGLE_OATUH_SECRET
