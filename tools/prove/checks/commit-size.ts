@@ -24,6 +24,9 @@ export interface CommitSizeResult {
  * @returns Promise<CommitSizeResult> - Check result
  */
 export async function checkCommitSize(context: ProveContext): Promise<CommitSizeResult> {
+  // KILL SWITCH: Feature flag for commit size check functionality
+  const COMMIT_SIZE_CHECK_ENABLED = process.env.COMMIT_SIZE_CHECK_ENABLED !== 'false';
+  
   logger.info('Checking commit size...');
   
   try {

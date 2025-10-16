@@ -25,7 +25,7 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>0/335</span>
+                <span class='fraction'>0/338</span>
             </div>
         
             
@@ -46,7 +46,7 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>0/335</span>
+                <span class='fraction'>0/338</span>
             </div>
         
             
@@ -588,7 +588,11 @@
 <a name='L523'></a><a href='#L523'>523</a>
 <a name='L524'></a><a href='#L524'>524</a>
 <a name='L525'></a><a href='#L525'>525</a>
-<a name='L526'></a><a href='#L526'>526</a></td><td class="line-coverage quiet"><span class="cline-any cline-no">&nbsp;</span>
+<a name='L526'></a><a href='#L526'>526</a>
+<a name='L527'></a><a href='#L527'>527</a>
+<a name='L528'></a><a href='#L528'>528</a>
+<a name='L529'></a><a href='#L529'>529</a>
+<a name='L530'></a><a href='#L530'>530</a></td><td class="line-coverage quiet"><span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -647,16 +651,17 @@
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -666,6 +671,9 @@
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -1134,7 +1142,7 @@ import { checkSizeBudget } from './checks/sizeBudget.js';
 import { executeCheck, handleCheckFailure, CHECK_CONFIGS } from './checks/runner-helper.js';
 import { type CheckResult as BaseCheckResult } from './checks/base.js';
 import { CHECK_FUNCTIONS } from './checks/index.js';
-// import { checkCommitSize } from './checks/commit-size.js'; // Temporarily disabled
+import { checkCommitSize } from './checks/commit-size.js';
 import { checkCommitMsgConvention } from './checks/commit-msg-convention.js';
 import { checkFeatureFlagLint } from './checks/feature-flag-lint.js';
 import { checkKillswitchRequired } from './checks/killswitch-required.js';
@@ -1170,6 +1178,7 @@ export interface RunnerOptions {
 <span class="cstat-no" title="statement not covered" >    { id: 'trunk', fn: checkTrunk },</span>
 <span class="cstat-no" title="statement not covered" >    { id: 'delivery-mode', fn: checkDeliveryMode },</span>
 <span class="cstat-no" title="statement not covered" >    { id: 'commit-msg-convention', fn: checkCommitMsgConvention },</span>
+<span class="cstat-no" title="statement not covered" >    { id: 'commit-size', fn: checkCommitSize },</span>
 <span class="cstat-no" title="statement not covered" >    { id: 'killswitch-required', fn: checkKillswitchRequired },</span>
 <span class="cstat-no" title="statement not covered" >  ];</span>
 &nbsp;
@@ -1192,9 +1201,12 @@ export interface RunnerOptions {
 &nbsp;
   // Add mode-specific checks
 <span class="cstat-no" title="statement not covered" >  if (context.mode === 'functional') {</span>
-<span class="cstat-no" title="statement not covered" >    parallelChecks.push(</span>
-<span class="cstat-no" title="statement not covered" >      { id: 'tdd-changed-has-tests', fn: checkTddChangedHasTests }</span>
-<span class="cstat-no" title="statement not covered" >    );</span>
+    // Add TDD check if enabled
+<span class="cstat-no" title="statement not covered" >    if (context.cfg.toggles.tdd !== false) {</span>
+<span class="cstat-no" title="statement not covered" >      parallelChecks.push(</span>
+<span class="cstat-no" title="statement not covered" >        { id: 'tdd-changed-has-tests', fn: checkTddChangedHasTests }</span>
+<span class="cstat-no" title="statement not covered" >      );</span>
+<span class="cstat-no" title="statement not covered" >    }</span>
     // Move diff-coverage to coverage-dependent checks
 <span class="cstat-no" title="statement not covered" >    coverageDependentChecks.push({ id: 'diff-coverage', fn: checkDiffCoverage });</span>
 <span class="cstat-no" title="statement not covered" >  }</span>
@@ -1645,7 +1657,7 @@ export interface RunnerOptions {
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-10-16T02:05:44.640Z
+                at 2025-10-16T03:46:17.049Z
             </div>
         <script src="../../prettify.js"></script>
         <script>
