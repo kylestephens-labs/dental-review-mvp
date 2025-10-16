@@ -6,7 +6,51 @@ import { insertEvent, getEventByStripeId } from '../../models/events';
 import { createToken } from '../../models/onboarding_tokens';
 import { generateMagicLinkToken } from '../../utils/hmac_token';
 import { sesClient } from '../../client/ses';
-import { pool } from '../../config/database';
+import { pool, PoolClient } from '../../config/database';
+
+/**
+ * Logs checkout-related events for tracking and SLA purposes
+ */
+async function logCheckoutEvents(
+  practiceId: string,
+  stripeEvent: any,
+  session: any,
+  customerDetails: any,
+  practiceName: string,
+  client: PoolClient
+): Promise<void> {
+  // TTL start event for SLA tracking
+  await insertEvent(
+    {
+      practice_id: practiceId,
+      type: 'stripe_checkout_at',
+      actor: 'system',
+      payload_json: {
+        stripe_event_id: stripeEvent.id,
+        stripe_session_id: session.id,
+        customer_email: customerDetails.email,
+        customer_id: session.customer,
+        practice_name: practiceName
+      }
+    },
+    client
+  );
+
+  // General checkout event for audit trail
+  await insertEvent(
+    {
+      practice_id: practiceId,
+      type: 'stripe_checkout',
+      actor: 'system',
+      payload_json: {
+        stripe_event_id: stripeEvent.id,
+        session_id: session.id,
+        customer_email: customerDetails.email
+      }
+    },
+    client
+  );
+}
 
 export async function POST(req: Request, res: Response) {
   // Get raw body for signature verification
@@ -96,20 +140,8 @@ export async function POST(req: Request, res: Response) {
         magicLink
       );
 
-      // Log events
-      await insertEvent(
-        {
-          practice_id: practice.id,
-          type: 'stripe_checkout',
-          actor: 'system',
-          payload_json: {
-            stripe_event_id: stripeEvent.id,
-            session_id: session.id,
-            customer_email: customerDetails.email
-          }
-        },
-        client
-      );
+      // Log events for tracking and SLA
+      await logCheckoutEvents(practice.id, stripeEvent, session, customerDetails, practiceName, client);
 
       if (emailResult.success) {
         await insertEvent(

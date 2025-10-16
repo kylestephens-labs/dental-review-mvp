@@ -63,3 +63,15 @@ export async function getEventsByPracticeId(practiceId: string, limit = 100): Pr
   const result = await pool().query(query, [practiceId, limit]);
   return result.rows;
 }
+
+export async function getTTLStartEvent(practiceId: string): Promise<Event | null> {
+  const query = `
+    SELECT * FROM events 
+    WHERE practice_id = $1 AND type = $2 
+    ORDER BY occurred_at ASC 
+    LIMIT 1
+  `;
+  
+  const result = await pool().query(query, [practiceId, 'stripe_checkout_at']);
+  return result.rows[0] || null;
+}
