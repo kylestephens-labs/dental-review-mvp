@@ -185,6 +185,17 @@ export const BACKEND_FLAGS: Record<string, FeatureFlagDefinition> = {
     description: 'Database migration system',
     rolloutPercentage: 100,
     environments: ['development', 'staging', 'production']
+  },
+
+  // Health check endpoint
+  HEALTHZ_ENDPOINT: {
+    name: 'HEALTHZ_ENDPOINT',
+    owner: 'infrastructure-team',
+    expiry: '2025-12-31T23:59:59Z',
+    default: true,
+    description: 'Health check endpoint for App Runner and monitoring',
+    rolloutPercentage: 100,
+    environments: ['development', 'staging', 'production']
   }
 };
 

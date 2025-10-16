@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import request from 'supertest';
 import express from 'express';
-import { GET as healthCheck } from '../../api/healthz';
+import { GET as healthCheck, HEAD as healthCheckHead } from '../../api/healthz';
 
 describe('GET /healthz', () => {
   let app: express.Application;
@@ -9,7 +9,7 @@ describe('GET /healthz', () => {
   beforeEach(() => {
     app = express();
     app.get('/healthz', healthCheck);
-    app.head('/healthz', healthCheck);
+    app.head('/healthz', healthCheckHead);
   });
 
   afterEach(() => {
@@ -125,4 +125,5 @@ describe('GET /healthz', () => {
       expect(response.body.status).toBe('ok');
     });
   });
+
 });
