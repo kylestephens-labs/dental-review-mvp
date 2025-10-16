@@ -10,6 +10,7 @@ import { validateEnvironment, loadEnvFromFile } from '../env-check';
 
 describe('Environment Validation', () => {
   let originalEnv: NodeJS.ProcessEnv;
+  let processExitSpy: any;
 
   beforeEach(() => {
     // Save original environment
@@ -19,11 +20,22 @@ describe('Environment Validation', () => {
     Object.keys(process.env).forEach(key => {
       delete process.env[key];
     });
+
+    // Mock process.exit to prevent actual exit during tests
+    processExitSpy = vi.spyOn(process, 'exit').mockImplementation(() => {
+      // Do nothing - just prevent actual exit
+      return undefined as never;
+    });
   });
 
   afterEach(() => {
     // Restore original environment
     process.env = originalEnv;
+    
+    // Restore process.exit
+    if (processExitSpy) {
+      processExitSpy.mockRestore();
+    }
   });
 
   describe('validateEnvironment', () => {
@@ -47,12 +59,6 @@ describe('Environment Validation', () => {
       // Mock console methods
       const consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
       const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-      
-      // Mock process.exit to prevent actual exit during tests
-      const processExitSpy = vi.spyOn(process, 'exit').mockImplementation(() => {
-        // Do nothing - just prevent actual exit
-        return undefined as never;
-      });
 
       expect(() => validateEnvironment()).not.toThrow();
       
@@ -61,7 +67,6 @@ describe('Environment Validation', () => {
       
       consoleLogSpy.mockRestore();
       consoleErrorSpy.mockRestore();
-      processExitSpy.mockRestore();
     });
 
     test('should fail when required variables are missing', () => {
@@ -73,10 +78,6 @@ describe('Environment Validation', () => {
 
       const consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
       const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-      const processExitSpy = vi.spyOn(process, 'exit').mockImplementation(() => {
-        // Do nothing - just prevent actual exit
-        return undefined as never;
-      });
 
       expect(() => validateEnvironment()).not.toThrow();
       
@@ -93,7 +94,6 @@ describe('Environment Validation', () => {
       
       consoleLogSpy.mockRestore();
       consoleErrorSpy.mockRestore();
-      processExitSpy.mockRestore();
     });
 
     test('should fail when variables have invalid formats', () => {
@@ -151,10 +151,6 @@ describe('Environment Validation', () => {
 
       const consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
       const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-      const processExitSpy = vi.spyOn(process, 'exit').mockImplementation(() => {
-        // Do nothing - just prevent actual exit
-        return undefined as never;
-      });
 
       expect(() => validateEnvironment()).not.toThrow();
       
@@ -171,7 +167,6 @@ describe('Environment Validation', () => {
       
       consoleLogSpy.mockRestore();
       consoleErrorSpy.mockRestore();
-      processExitSpy.mockRestore();
     });
 
     test('should validate Stripe key formats', () => {
