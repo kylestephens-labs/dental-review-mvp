@@ -1,7 +1,7 @@
 import express from 'express';
 import { testConnections } from './config/database';
 import { POST as stripeWebhook } from './api/webhooks/stripe';
-import { GET as healthCheck } from './api/healthz';
+import { GET as healthCheck, HEAD as healthCheckHead } from './api/healthz';
 import { GET as onboardGet } from './api/onboard/get';
 
 const app = express();
@@ -9,6 +9,7 @@ const PORT = process.env.PORT || 3001;
 
 // Health check endpoint
 app.get('/healthz', healthCheck);
+app.head('/healthz', healthCheckHead);
 
 // Stripe webhook endpoint - needs raw body for signature verification
 // MUST be before express.json() middleware
@@ -27,7 +28,7 @@ app.use((err: Error, req: express.Request, res: express.Response, next: express.
 });
 
 // 404 handler
-app.use('*', (req, res) => {
+app.use((req, res) => {
   res.status(404).json({ error: 'Not found' });
 });
 
