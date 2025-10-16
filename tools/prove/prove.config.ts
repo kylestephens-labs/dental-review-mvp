@@ -85,7 +85,7 @@ export const defaultConfig = {
     diffCoverageFunctionalRefactor: 60, // 60% for refactor tasks
     globalCoverage: 25, // Global coverage threshold (adjusted for current state)
     maxWarnings: 0, // ESLint max warnings
-    maxCommitSize: 300, // Max lines of code per commit
+    maxCommitSize: 1000, // Temporarily increased for re-enabling quality gates
   },
 
   // Paths
@@ -113,12 +113,12 @@ export const defaultConfig = {
   // Feature toggles
   toggles: {
     coverage: true, // Enable global coverage check
-    diffCoverage: false, // Temporarily disable diff coverage for prove system implementation
+    diffCoverage: true, // Enable diff coverage check
     sizeBudget: false, // Enable bundle size checks
     security: true, // Enable security scans
     contracts: true, // Enable API contract validation
     dbMigrations: false, // Enable database migration checks
-    tdd: false, // Temporarily disable TDD check for prove system implementation
+    tdd: true, // Enable TDD check
   },
 
   // Feature flag configuration

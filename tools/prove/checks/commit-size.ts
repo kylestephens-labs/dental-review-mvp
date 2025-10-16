@@ -24,17 +24,7 @@ export interface CommitSizeResult {
  * @returns Promise<CommitSizeResult> - Check result
  */
 export async function checkCommitSize(context: ProveContext): Promise<CommitSizeResult> {
-  // KILL SWITCH: Temporarily disable commit size check for prove system implementation
-  const KILL_SWITCH_COMMIT_SIZE_CHECK = process.env.COMMIT_SIZE_CHECK_ENABLED !== 'true';
-  if (KILL_SWITCH_COMMIT_SIZE_CHECK) {
-    logger.info('Commit size check disabled via kill switch for prove system implementation');
-    return {
-      ok: true,
-      linesChanged: 0,
-      maxAllowed: context.cfg.thresholds.maxCommitSize,
-      details: { added: 0, deleted: 0, filesChanged: 0 }
-    };
-  }
+  logger.info('Checking commit size...');
   
   try {
     const { git: { baseRef }, cfg: { thresholds: { maxCommitSize } } } = context;
