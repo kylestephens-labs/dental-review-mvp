@@ -18,22 +18,65 @@ export interface ProveResult {
     ok: boolean;
     ms: number;
     reason?: string;
+    // Enhanced performance tracking
+    performanceMetrics?: {
+      memoryDelta?: number;
+      operationsCount?: number;
+      cacheHitRate?: number;
+      regressionDetected?: boolean;
+    };
   }>;
   totalMs: number;
   success: boolean;
+  // Enhanced performance summary
+  performanceSummary?: {
+    totalOperations: number;
+    averageDuration: number;
+    totalMemoryDelta: number;
+    regressionCount: number;
+    baselineCount: number;
+  };
 }
 
 /**
  * Pure helper function to format prove report data
  */
-export function formatReport({ mode, checks, totalMs }: { mode: string; checks: Array<{ id: string; ok: boolean; ms: number; reason?: string }>; totalMs: number }): ProveResult {
+export function formatReport({ 
+  mode, 
+  checks, 
+  totalMs, 
+  performanceSummary 
+}: { 
+  mode: string; 
+  checks: Array<{ 
+    id: string; 
+    ok: boolean; 
+    ms: number; 
+    reason?: string;
+    performanceMetrics?: {
+      memoryDelta?: number;
+      operationsCount?: number;
+      cacheHitRate?: number;
+      regressionDetected?: boolean;
+    };
+  }>; 
+  totalMs: number;
+  performanceSummary?: {
+    totalOperations: number;
+    averageDuration: number;
+    totalMemoryDelta: number;
+    regressionCount: number;
+    baselineCount: number;
+  };
+}): ProveResult {
   const success = checks.every(check => check.ok);
 
   return {
     mode,
     checks,
     totalMs,
-    success
+    success,
+    performanceSummary
   };
 }
 
@@ -111,10 +154,61 @@ class Logger {
     this.log(this.createEntry('info', `⚠️  ${message}`, data));
   }
 
+  // Enhanced performance logging
+  performance(operation: string, metrics: {
+    duration: number;
+    memoryDelta: number;
+    operationsCount: number;
+    cacheHitRate?: number;
+    regressionDetected?: boolean;
+    baseline?: {
+      duration: number;
+      memory: number;
+      operations: number;
+    };
+  }): void {
+    const performanceData = {
+      operation,
+      duration: `${metrics.duration}ms`,
+      memoryDelta: `${Math.round(metrics.memoryDelta / 1024 / 1024)}MB`,
+      operations: metrics.operationsCount,
+      cacheHitRate: metrics.cacheHitRate ? `${Math.round(metrics.cacheHitRate)}%` : 'N/A',
+      regression: metrics.regressionDetected || false,
+      baseline: metrics.baseline ? {
+        duration: `${metrics.baseline.duration}ms`,
+        memory: `${Math.round(metrics.baseline.memory / 1024 / 1024)}MB`,
+        operations: metrics.baseline.operations
+      } : null
+    };
+
+    this.log(this.createEntry('info', `📊 Performance: ${operation}`, performanceData));
+  }
+
   // Generate final prove report
-  generateReport(mode: string, checks: Array<{ id: string; ok: boolean; ms: number; reason?: string }>): ProveResult {
+  generateReport(
+    mode: string, 
+    checks: Array<{ 
+      id: string; 
+      ok: boolean; 
+      ms: number; 
+      reason?: string;
+      performanceMetrics?: {
+        memoryDelta?: number;
+        operationsCount?: number;
+        cacheHitRate?: number;
+        regressionDetected?: boolean;
+      };
+    }>,
+    performanceSummary?: {
+      totalOperations: number;
+      averageDuration: number;
+      totalMemoryDelta: number;
+      regressionCount: number;
+      baselineCount: number;
+    }
+  ): ProveResult {
     const totalMs = Date.now() - this.startTime;
-    const report = formatReport({ mode, checks, totalMs });
+    const report = formatReport({ mode, checks, totalMs, performanceSummary });
 
     // Write report to JSON file
     try {
@@ -128,7 +222,14 @@ class Logger {
     if (this.isJsonMode) {
       console.log(JSON.stringify({ type: 'prove-report', ...report }));
     } else {
-      this.result(`Prove completed in ${totalMs}ms`, { success: report.success, mode, checks: checks.length });
+      const performanceInfo = performanceSummary ? 
+        ` | Performance: ${performanceSummary.totalOperations} ops, ${Math.round(performanceSummary.averageDuration)}ms avg, ${performanceSummary.regressionCount} regressions` : '';
+      this.result(`Prove completed in ${totalMs}ms${performanceInfo}`, { 
+        success: report.success, 
+        mode, 
+        checks: checks.length,
+        performance: performanceSummary
+      });
     }
 
     return report;

@@ -5,6 +5,8 @@ import { exec } from '../../utils/exec.js';
 import { logger } from '../../logger.js';
 import { readFile } from 'fs/promises';
 import { join } from 'path';
+import { PerformanceMonitor, PerformanceMetrics } from './performance-monitor.js';
+import { PatternCache } from './pattern-cache.js';
 
 export interface DetectionMetrics {
   filesProcessed: number;
@@ -18,6 +20,22 @@ export interface DetectionMetrics {
     alternativeMethodDuration?: number;
     fileReadingDuration: number;
     patternMatchingDuration: number;
+  };
+  // Enhanced performance tracking
+  performanceMonitor?: PerformanceMetrics;
+  regressionDetected?: boolean;
+  baselineComparison?: {
+    durationVsBaseline: number;
+    memoryVsBaseline: number;
+    operationsVsBaseline: number;
+  };
+  // Pattern cache metrics
+  patternCacheMetrics?: {
+    cacheHits: number;
+    cacheMisses: number;
+    hitRate: number;
+    averageCompilationTime: number;
+    totalPatterns: number;
   };
 }
 
@@ -36,39 +54,108 @@ export interface PatternDetectionResult {
 }
 
 export class FeatureFlagDetector {
-  // Comprehensive pattern definitions for all feature flag and kill switch detection
-  static readonly PATTERNS = {
+  private static patternsInitialized = false;
+  private static cachedPatterns: {
+    useFeatureFlag: RegExp;
+    isEnabled: RegExp;
+    isFeatureEnabled: RegExp;
+    killSwitch: RegExp;
+    envVar: RegExp;
+    config: RegExp;
+    toggle: RegExp;
+    import: RegExp;
+    rollout: RegExp;
+    flagConfig: RegExp;
+    frontendFlags: RegExp;
+    backendFlags: RegExp;
+    flagDefinition: RegExp;
+    productionCode: RegExp[];
+  } | null = null;
+
+  // Pattern source strings for caching
+  private static readonly PATTERN_SOURCES = {
     // Feature flag usage patterns - more specific to avoid matching example text
-    useFeatureFlag: /(?:^|[^a-zA-Z_])useFeatureFlag\s*\(\s*['"`]([^'"`]+)['"`]/gm,
-    isEnabled: /(?:^|[^a-zA-Z_])isEnabled\s*\(\s*['"`]([^'"`]+)['"`]/gm,
-    isFeatureEnabled: /(?:^|[^a-zA-Z_])isFeatureEnabled\s*\(\s*['"`]([^'"`]+)['"`]/gm,
+    useFeatureFlag: '(?:^|[^a-zA-Z_])useFeatureFlag\\s*\\(\\s*[\'"`]([^\'"`]+)[\'"`]',
+    isEnabled: '(?:^|[^a-zA-Z_])isEnabled\\s*\\(\\s*[\'"`]([^\'"`]+)[\'"`]',
+    isFeatureEnabled: '(?:^|[^a-zA-Z_])isFeatureEnabled\\s*\\(\\s*[\'"`]([^\'"`]+)[\'"`]',
     
     // Kill switch patterns - more specific to avoid matching example text
-    killSwitch: /(?:^|[^a-zA-Z_])KILL_SWITCH_[A-Z_]+/gm,
-    envVar: /(?:^|[^a-zA-Z_])process\.env\.[A-Z_]+_ENABLED/gm,
-    config: /(?:^|[^a-zA-Z_])config\s*[=:].*enabled/gm,
-    toggle: /(?:^|[^a-zA-Z_])toggle\s*[=:]/gm,
-    import: /(?:^|[^a-zA-Z_])import.*flags|from.*flags/gm,
-    rollout: /(?:^|[^a-zA-Z_])rolloutPercentage\s*:\s*\d+/gm,
+    killSwitch: '(?:^|[^a-zA-Z_])KILL_SWITCH_[A-Z_]+',
+    envVar: '(?:^|[^a-zA-Z_])process\\.env\\.[A-Z_]+_ENABLED',
+    config: '(?:^|[^a-zA-Z_])config\\s*[=:].*enabled',
+    toggle: '(?:^|[^a-zA-Z_])toggle\\s*[=:]',
+    import: '(?:^|[^a-zA-Z_])import.*flags|from.*flags',
+    rollout: '(?:^|[^a-zA-Z_])rolloutPercentage\\s*:\\s*\\d+',
     
     // Feature flag configuration patterns
-    flagConfig: /export const featureFlagConfig[^=]*=\s*{([\s\S]*?)};/,
-    frontendFlags: /export const FRONTEND_FLAGS[^=]*=\s*{([\s\S]*?)};/,
-    backendFlags: /export const BACKEND_FLAGS[^=]*=\s*{([\s\S]*?)};/,
-    flagDefinition: /(\w+):\s*{/g,
+    flagConfig: 'export const featureFlagConfig[^=]*=\\s*{([\\s\\S]*?)};',
+    frontendFlags: 'export const FRONTEND_FLAGS[^=]*=\\s*{([\\s\\S]*?)};',
+    backendFlags: 'export const BACKEND_FLAGS[^=]*=\\s*{([\\s\\S]*?)};',
+    flagDefinition: '(\\w+):\\s*{',
     
     // Production code patterns
     productionCode: [
-      /^src\//,           // Frontend source code
-      /^backend\/src\//,  // Backend source code
-      /^api\//,           // API code
-      /^lib\//,           // Library code
-      /^components\//,    // React components
-      /^pages\//,         // Next.js pages
-      /^app\//,           // App directory
-      /\.(ts|tsx|js|jsx)$/ // TypeScript/JavaScript files
+      '^src/',           // Frontend source code
+      '^backend/src/',  // Backend source code
+      '^api/',           // API code
+      '^lib/',           // Library code
+      '^components/',    // React components
+      '^pages/',         // Next.js pages
+      '^app/',           // App directory
+      '\\.(ts|tsx|js|jsx)$' // TypeScript/JavaScript files
     ]
   };
+
+  /**
+   * Initialize patterns with caching
+   */
+  static initializePatterns(): void {
+    if (this.patternsInitialized) {
+      return;
+    }
+
+    logger.info('Initializing feature flag patterns with caching...');
+    
+    // Warm up the pattern cache
+    PatternCache.warmup();
+    
+    // Get cached patterns
+    this.cachedPatterns = {
+      useFeatureFlag: PatternCache.getPattern(this.PATTERN_SOURCES.useFeatureFlag, 'gm'),
+      isEnabled: PatternCache.getPattern(this.PATTERN_SOURCES.isEnabled, 'gm'),
+      isFeatureEnabled: PatternCache.getPattern(this.PATTERN_SOURCES.isFeatureEnabled, 'gm'),
+      killSwitch: PatternCache.getPattern(this.PATTERN_SOURCES.killSwitch, 'gm'),
+      envVar: PatternCache.getPattern(this.PATTERN_SOURCES.envVar, 'gm'),
+      config: PatternCache.getPattern(this.PATTERN_SOURCES.config, 'gm'),
+      toggle: PatternCache.getPattern(this.PATTERN_SOURCES.toggle, 'gm'),
+      import: PatternCache.getPattern(this.PATTERN_SOURCES.import, 'gm'),
+      rollout: PatternCache.getPattern(this.PATTERN_SOURCES.rollout, 'gm'),
+      flagConfig: PatternCache.getPattern(this.PATTERN_SOURCES.flagConfig),
+      frontendFlags: PatternCache.getPattern(this.PATTERN_SOURCES.frontendFlags),
+      backendFlags: PatternCache.getPattern(this.PATTERN_SOURCES.backendFlags),
+      flagDefinition: PatternCache.getPattern(this.PATTERN_SOURCES.flagDefinition, 'g'),
+      productionCode: PatternCache.getPatterns(this.PATTERN_SOURCES.productionCode, 'gm')
+    };
+
+    this.patternsInitialized = true;
+    
+    const cacheMetrics = PatternCache.getMetrics();
+    logger.info('Pattern initialization complete', {
+      totalPatterns: cacheMetrics.totalPatterns,
+      hitRate: `${cacheMetrics.hitRate.toFixed(2)}%`,
+      averageCompilationTime: `${cacheMetrics.averageCompilationTime.toFixed(2)}ms`
+    });
+  }
+
+  /**
+   * Get patterns (lazy initialization)
+   */
+  static get PATTERNS() {
+    if (!this.patternsInitialized) {
+      this.initializePatterns();
+    }
+    return this.cachedPatterns!;
+  }
 
   /**
    * Detect feature flag usage patterns in files using ripgrep with fallback
@@ -81,8 +168,8 @@ export class FeatureFlagDetector {
       this.PATTERNS.isFeatureEnabled
     ]
   ): Promise<PatternDetectionResult> {
-    const startTime = Date.now();
-    const memoryStart = process.memoryUsage();
+    // Start performance monitoring
+    const performanceMetrics = PerformanceMonitor.startOperation('feature-flag-detection');
     
     const metrics: DetectionMetrics = {
       filesProcessed: 0,
@@ -94,15 +181,37 @@ export class FeatureFlagDetector {
       performanceMetrics: {
         fileReadingDuration: 0,
         patternMatchingDuration: 0
-      }
+      },
+      performanceMonitor: performanceMetrics,
+      regressionDetected: false
     };
 
     try {
       // Try ripgrep first for better performance
       const ripgrepResult = await this.detectWithRipgrep(workingDirectory, patterns, metrics);
       if (ripgrepResult) {
-        metrics.detectionDuration = Date.now() - startTime;
-        metrics.memoryUsage = process.memoryUsage().heapUsed - memoryStart.heapUsed;
+        // Record operations and complete performance monitoring
+        PerformanceMonitor.recordOperation(performanceMetrics);
+        const finalMetrics = PerformanceMonitor.endOperation(performanceMetrics, 'feature-flag-detection');
+        
+        metrics.performanceMonitor = finalMetrics;
+        metrics.regressionDetected = finalMetrics.regression.durationRegression || 
+                                   finalMetrics.regression.memoryRegression || 
+                                   finalMetrics.regression.performanceRegression;
+        
+        // Add pattern cache metrics
+        const cacheMetrics = PatternCache.getMetrics();
+        metrics.patternCacheMetrics = {
+          cacheHits: cacheMetrics.cacheHits,
+          cacheMisses: cacheMetrics.cacheMisses,
+          hitRate: cacheMetrics.hitRate,
+          averageCompilationTime: cacheMetrics.averageCompilationTime,
+          totalPatterns: cacheMetrics.totalPatterns
+        };
+        
+        // Log performance metrics
+        PerformanceMonitor.logPerformanceMetrics('feature-flag-detection', finalMetrics);
+        
         return ripgrepResult;
       }
 
@@ -110,15 +219,37 @@ export class FeatureFlagDetector {
       logger.warn('Ripgrep failed, using alternative file reading method');
       const alternativeResult = await this.detectWithFileReading(workingDirectory, patterns, metrics);
       
-      metrics.detectionDuration = Date.now() - startTime;
-      metrics.memoryUsage = process.memoryUsage().heapUsed - memoryStart.heapUsed;
+      // Record operations and complete performance monitoring
+      PerformanceMonitor.recordOperation(performanceMetrics);
+      const finalMetrics = PerformanceMonitor.endOperation(performanceMetrics, 'feature-flag-detection');
+      
+      metrics.performanceMonitor = finalMetrics;
+      metrics.regressionDetected = finalMetrics.regression.durationRegression || 
+                                 finalMetrics.regression.memoryRegression || 
+                                 finalMetrics.regression.performanceRegression;
+      
+      // Add pattern cache metrics
+      const cacheMetrics = PatternCache.getMetrics();
+      metrics.patternCacheMetrics = {
+        cacheHits: cacheMetrics.cacheHits,
+        cacheMisses: cacheMetrics.cacheMisses,
+        hitRate: cacheMetrics.hitRate,
+        averageCompilationTime: cacheMetrics.averageCompilationTime,
+        totalPatterns: cacheMetrics.totalPatterns
+      };
+      
+      // Log performance metrics
+      PerformanceMonitor.logPerformanceMetrics('feature-flag-detection', finalMetrics);
       
       return alternativeResult;
 
     } catch (error) {
       metrics.errorCount++;
-      metrics.detectionDuration = Date.now() - startTime;
-      metrics.memoryUsage = process.memoryUsage().heapUsed - memoryStart.heapUsed;
+      PerformanceMonitor.recordError(performanceMetrics);
+      
+      const finalMetrics = PerformanceMonitor.endOperation(performanceMetrics, 'feature-flag-detection');
+      metrics.performanceMonitor = finalMetrics;
+      metrics.regressionDetected = true; // Errors indicate regression
       
       logger.error('Feature flag detection failed', {
         error: error instanceof Error ? error.message : String(error),
@@ -149,8 +280,8 @@ export class FeatureFlagDetector {
       this.PATTERNS.import
     ]
   ): Promise<PatternDetectionResult> {
-    const startTime = Date.now();
-    const memoryStart = process.memoryUsage();
+    // Start performance monitoring
+    const performanceMetrics = PerformanceMonitor.startOperation('kill-switch-detection');
     
     const metrics: DetectionMetrics = {
       filesProcessed: files.length,
@@ -162,7 +293,9 @@ export class FeatureFlagDetector {
       performanceMetrics: {
         fileReadingDuration: 0,
         patternMatchingDuration: 0
-      }
+      },
+      performanceMonitor: performanceMetrics,
+      regressionDetected: false
     };
 
     const killSwitchPatterns: string[] = [];
@@ -232,8 +365,28 @@ export class FeatureFlagDetector {
 
       metrics.performanceMetrics.fileReadingDuration = Date.now() - fileReadingStart;
       metrics.patternMatchCount = killSwitchPatterns.length;
-      metrics.detectionDuration = Date.now() - startTime;
-      metrics.memoryUsage = process.memoryUsage().heapUsed - memoryStart.heapUsed;
+      
+      // Record operations and complete performance monitoring
+      PerformanceMonitor.recordOperation(performanceMetrics);
+      const finalMetrics = PerformanceMonitor.endOperation(performanceMetrics, 'kill-switch-detection');
+      
+      metrics.performanceMonitor = finalMetrics;
+      metrics.regressionDetected = finalMetrics.regression.durationRegression || 
+                                 finalMetrics.regression.memoryRegression || 
+                                 finalMetrics.regression.performanceRegression;
+      
+      // Add pattern cache metrics
+      const cacheMetrics = PatternCache.getMetrics();
+      metrics.patternCacheMetrics = {
+        cacheHits: cacheMetrics.cacheHits,
+        cacheMisses: cacheMetrics.cacheMisses,
+        hitRate: cacheMetrics.hitRate,
+        averageCompilationTime: cacheMetrics.averageCompilationTime,
+        totalPatterns: cacheMetrics.totalPatterns
+      };
+      
+      // Log performance metrics
+      PerformanceMonitor.logPerformanceMetrics('kill-switch-detection', finalMetrics);
 
       return {
         flagNames: [],
@@ -244,8 +397,11 @@ export class FeatureFlagDetector {
 
     } catch (error) {
       metrics.errorCount++;
-      metrics.detectionDuration = Date.now() - startTime;
-      metrics.memoryUsage = process.memoryUsage().heapUsed - memoryStart.heapUsed;
+      PerformanceMonitor.recordError(performanceMetrics);
+      
+      const finalMetrics = PerformanceMonitor.endOperation(performanceMetrics, 'kill-switch-detection');
+      metrics.performanceMonitor = finalMetrics;
+      metrics.regressionDetected = true; // Errors indicate regression
       
       logger.error('Kill switch pattern detection failed', {
         error: error instanceof Error ? error.message : String(error),

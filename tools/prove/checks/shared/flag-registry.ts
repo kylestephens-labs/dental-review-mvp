@@ -4,6 +4,8 @@
 import { readFile } from 'fs/promises';
 import { join } from 'path';
 import { logger } from '../../logger.js';
+import { PerformanceMonitor, PerformanceMetrics } from './performance-monitor.js';
+import { FlagCache, CachedFlagData } from './flag-cache.js';
 
 export interface FlagMetadata {
   name: string;
@@ -37,6 +39,23 @@ export interface RegistryMetrics {
   errorCount: number;
   cacheHits: number;
   cacheMisses: number;
+  // Enhanced performance tracking
+  performanceMonitor?: PerformanceMetrics;
+  cacheHitRate: number;
+  averageLookupTime: number;
+  memoryUsage: number;
+  regressionDetected?: boolean;
+  // Flag cache metrics
+  flagCacheMetrics?: {
+    cacheHits: number;
+    cacheMisses: number;
+    hitRate: number;
+    totalLoads: number;
+    averageLoadTime: number;
+    memoryUsage: number;
+    ttlHits: number;
+    ttlMisses: number;
+  };
 }
 
 export class UnifiedFlagRegistry {
@@ -48,41 +67,92 @@ export class UnifiedFlagRegistry {
   private validationStartTime: number = 0;
   private cacheHits: number = 0;
   private cacheMisses: number = 0;
+  private lookupTimes: number[] = [];
+  private performanceMonitor?: PerformanceMetrics;
 
   /**
-   * Load all flags from all sources in parallel
+   * Load all flags from all sources in parallel with intelligent caching
    */
   static async loadAllFlags(workingDirectory: string): Promise<UnifiedFlagRegistry> {
     const registry = new UnifiedFlagRegistry();
     registry.loadingStartTime = Date.now();
+    
+    // Start performance monitoring
+    registry.performanceMonitor = PerformanceMonitor.startOperation('flag-registry-loading');
 
     try {
-      // Load all flag sources in parallel
-      const [runtimeFlags, frontendFlags, backendFlags] = await Promise.all([
-        registry.loadRuntimeFlags(workingDirectory),
-        registry.loadFrontendFlags(workingDirectory),
-        registry.loadBackendFlags(workingDirectory)
-      ]);
+      // Use intelligent caching
+      const cachedData = await FlagCache.getOrLoad(workingDirectory, async () => {
+        // Load all flag sources in parallel
+        const [runtimeFlags, frontendFlags, backendFlags] = await Promise.all([
+          registry.loadRuntimeFlags(workingDirectory),
+          registry.loadFrontendFlags(workingDirectory),
+          registry.loadBackendFlags(workingDirectory)
+        ]);
 
-      registry.runtimeFlags = runtimeFlags;
-      registry.frontendFlags = frontendFlags;
-      registry.backendFlags = backendFlags;
+        return { runtimeFlags, frontendFlags, backendFlags };
+      });
+
+      registry.runtimeFlags = cachedData.runtimeFlags;
+      registry.frontendFlags = cachedData.frontendFlags;
+      registry.backendFlags = cachedData.backendFlags;
 
       // Build unified cache
       registry.buildCache();
 
+      // Record operations and complete performance monitoring
+      PerformanceMonitor.recordOperation(registry.performanceMonitor);
+      const finalMetrics = PerformanceMonitor.endOperation(registry.performanceMonitor, 'flag-registry-loading');
+      registry.performanceMonitor = finalMetrics;
+
+      // Add flag cache metrics
+      const flagCacheMetrics = FlagCache.getMetrics();
+      registry.flagCacheMetrics = {
+        cacheHits: flagCacheMetrics.cacheHits,
+        cacheMisses: flagCacheMetrics.cacheMisses,
+        hitRate: flagCacheMetrics.hitRate,
+        totalLoads: flagCacheMetrics.totalLoads,
+        averageLoadTime: flagCacheMetrics.averageLoadTime,
+        memoryUsage: flagCacheMetrics.memoryUsage,
+        ttlHits: flagCacheMetrics.ttlHits,
+        ttlMisses: flagCacheMetrics.ttlMisses
+      };
+
       logger.info('Unified flag registry loaded successfully', {
-        runtimeFlags: Object.keys(runtimeFlags).length,
-        frontendFlags: Object.keys(frontendFlags).length,
-        backendFlags: Object.keys(backendFlags).length,
-        totalFlags: registry.getTotalFlagCount()
+        runtimeFlags: Object.keys(cachedData.runtimeFlags).length,
+        frontendFlags: Object.keys(cachedData.frontendFlags).length,
+        backendFlags: Object.keys(cachedData.backendFlags).length,
+        totalFlags: cachedData.totalFlags,
+        performance: {
+          duration: `${finalMetrics.duration}ms`,
+          memoryDelta: `${Math.round(finalMetrics.memoryDelta / 1024 / 1024)}MB`,
+          regression: finalMetrics.regression.durationRegression || 
+                    finalMetrics.regression.memoryRegression || 
+                    finalMetrics.regression.performanceRegression
+        },
+        cache: {
+          hitRate: `${flagCacheMetrics.hitRate.toFixed(1)}%`,
+          totalLoads: flagCacheMetrics.totalLoads,
+          memoryUsage: `${Math.round(flagCacheMetrics.memoryUsage / 1024)}KB`,
+          ttlHits: flagCacheMetrics.ttlHits,
+          ttlMisses: flagCacheMetrics.ttlMisses
+        }
       });
 
       return registry;
 
     } catch (error) {
+      PerformanceMonitor.recordError(registry.performanceMonitor!);
+      const finalMetrics = PerformanceMonitor.endOperation(registry.performanceMonitor!, 'flag-registry-loading');
+      registry.performanceMonitor = finalMetrics;
+      
       logger.error('Failed to load unified flag registry', {
-        error: error instanceof Error ? error.message : String(error)
+        error: error instanceof Error ? error.message : String(error),
+        performance: {
+          duration: `${finalMetrics.duration}ms`,
+          memoryDelta: `${Math.round(finalMetrics.memoryDelta / 1024 / 1024)}MB`,
+          regression: true
+        }
       });
       throw error;
     }
@@ -102,26 +172,32 @@ export class UnifiedFlagRegistry {
    * Get complete metadata for a flag from any source
    */
   getFlagMetadata(flagName: string): FlagMetadata | null {
+    const lookupStart = Date.now();
+    
     // Check cache first
     if (this.cache.has(flagName)) {
       this.cacheHits++;
-      return this.cache.get(flagName)!;
+      PerformanceMonitor.recordCacheHit(this.performanceMonitor!);
+      const result = this.cache.get(flagName)!;
+      this.lookupTimes.push(Date.now() - lookupStart);
+      return result;
     }
 
     this.cacheMisses++;
+    PerformanceMonitor.recordCacheMiss(this.performanceMonitor!);
 
     // Check all registries
+    let result: FlagMetadata | null = null;
     if (flagName in this.runtimeFlags) {
-      return this.runtimeFlags[flagName];
-    }
-    if (flagName in this.frontendFlags) {
-      return this.frontendFlags[flagName];
-    }
-    if (flagName in this.backendFlags) {
-      return this.backendFlags[flagName];
+      result = this.runtimeFlags[flagName];
+    } else if (flagName in this.frontendFlags) {
+      result = this.frontendFlags[flagName];
+    } else if (flagName in this.backendFlags) {
+      result = this.backendFlags[flagName];
     }
 
-    return null;
+    this.lookupTimes.push(Date.now() - lookupStart);
+    return result;
   }
 
   /**
@@ -168,6 +244,19 @@ export class UnifiedFlagRegistry {
    * Get registry metrics for monitoring
    */
   async getRegistryMetrics(): Promise<RegistryMetrics> {
+    const totalLookups = this.cacheHits + this.cacheMisses;
+    const cacheHitRate = totalLookups > 0 ? (this.cacheHits / totalLookups) * 100 : 0;
+    const averageLookupTime = this.lookupTimes.length > 0 
+      ? this.lookupTimes.reduce((sum, time) => sum + time, 0) / this.lookupTimes.length 
+      : 0;
+    
+    const memoryUsage = process.memoryUsage().heapUsed;
+    const regressionDetected = this.performanceMonitor ? (
+      this.performanceMonitor.regression.durationRegression || 
+      this.performanceMonitor.regression.memoryRegression || 
+      this.performanceMonitor.regression.performanceRegression
+    ) : false;
+
     return {
       totalFlags: this.getTotalFlagCount(),
       runtimeFlags: Object.keys(this.runtimeFlags).length,
@@ -177,7 +266,12 @@ export class UnifiedFlagRegistry {
       validationDuration: this.validationStartTime > 0 ? Date.now() - this.validationStartTime : 0,
       errorCount: 0, // This would be tracked during loading
       cacheHits: this.cacheHits,
-      cacheMisses: this.cacheMisses
+      cacheMisses: this.cacheMisses,
+      performanceMonitor: this.performanceMonitor,
+      cacheHitRate,
+      averageLookupTime,
+      memoryUsage,
+      regressionDetected
     };
   }
 
@@ -483,5 +577,97 @@ export class UnifiedFlagRegistry {
     }
 
     return warnings;
+  }
+
+  /**
+   * Get comprehensive metrics for monitoring
+   */
+  getMetrics(): RegistryMetrics {
+    const totalLookups = this.cacheHits + this.cacheMisses;
+    const cacheHitRate = totalLookups > 0 ? (this.cacheHits / totalLookups) * 100 : 0;
+    const averageLookupTime = this.lookupTimes.length > 0 
+      ? this.lookupTimes.reduce((sum, time) => sum + time, 0) / this.lookupTimes.length 
+      : 0;
+    
+    // Estimate memory usage
+    const memoryUsage = this.calculateMemoryUsage();
+
+    return {
+      totalFlags: this.getTotalFlagCount(),
+      runtimeFlags: Object.keys(this.runtimeFlags).length,
+      frontendFlags: Object.keys(this.frontendFlags).length,
+      backendFlags: Object.keys(this.backendFlags).length,
+      loadingDuration: Date.now() - this.loadingStartTime,
+      validationDuration: this.validationStartTime > 0 ? Date.now() - this.validationStartTime : 0,
+      errorCount: 0,
+      cacheHits: this.cacheHits,
+      cacheMisses: this.cacheMisses,
+      performanceMonitor: this.performanceMonitor,
+      cacheHitRate,
+      averageLookupTime,
+      memoryUsage,
+      regressionDetected: this.performanceMonitor?.regression.durationRegression || 
+                         this.performanceMonitor?.regression.memoryRegression || 
+                         this.performanceMonitor?.regression.performanceRegression || false,
+      flagCacheMetrics: this.flagCacheMetrics
+    };
+  }
+
+  /**
+   * Get flag cache health status
+   */
+  getCacheHealthStatus(): {
+    healthy: boolean;
+    issues: string[];
+    recommendations: string[];
+    metrics: {
+      hitRate: number;
+      memoryUsage: number;
+      totalLoads: number;
+      ttlHits: number;
+      ttlMisses: number;
+    };
+  } {
+    const healthStatus = FlagCache.getHealthStatus();
+    const metrics = FlagCache.getMetrics();
+    
+    return {
+      ...healthStatus,
+      metrics: {
+        hitRate: metrics.hitRate,
+        memoryUsage: metrics.memoryUsage,
+        totalLoads: metrics.totalLoads,
+        ttlHits: metrics.ttlHits,
+        ttlMisses: metrics.ttlMisses
+      }
+    };
+  }
+
+  /**
+   * Invalidate flag cache for current working directory
+   */
+  static invalidateCache(workingDirectory: string): void {
+    FlagCache.invalidate(workingDirectory);
+    logger.info('Flag registry cache invalidated', { workingDirectory });
+  }
+
+  /**
+   * Clear all flag caches
+   */
+  static clearAllCaches(): void {
+    FlagCache.clear();
+    logger.info('All flag registry caches cleared');
+  }
+
+  /**
+   * Calculate memory usage estimation
+   */
+  private calculateMemoryUsage(): number {
+    const runtimeSize = JSON.stringify(this.runtimeFlags).length;
+    const frontendSize = JSON.stringify(this.frontendFlags).length;
+    const backendSize = JSON.stringify(this.backendFlags).length;
+    const cacheSize = this.cache.size * 200; // Rough estimate per cache entry
+    
+    return (runtimeSize + frontendSize + backendSize + cacheSize) * 1.5;
   }
 }
