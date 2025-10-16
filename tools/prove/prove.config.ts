@@ -115,8 +115,8 @@ export const defaultConfig = {
     coverage: true, // Enable global coverage check
     diffCoverage: true, // Enable diff coverage check
     sizeBudget: false, // Enable bundle size checks
-    security: false, // Enable security scans
-    contracts: false, // Enable API contract validation
+    security: true, // Enable security scans
+    contracts: true, // Enable API contract validation
     dbMigrations: false, // Enable database migration checks
   },
 

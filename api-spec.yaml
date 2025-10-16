@@ -11,6 +11,8 @@ servers:
     description: Production server
   - url: http://localhost:3000/api
     description: Development server
+security:
+  - StripeSignature: []
 paths:
   /healthz:
     get:
@@ -19,6 +21,7 @@ paths:
       operationId: healthCheck
       tags:
         - Health
+      security: []  # No authentication required for health check
       responses:
         '200':
           description: API is healthy
@@ -190,8 +193,6 @@ components:
             - message
       required:
         - error
-  security:
-    - StripeSignature: []
 tags:
   - name: Health
     description: Health check endpoints

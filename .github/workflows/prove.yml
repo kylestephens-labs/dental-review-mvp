@@ -75,12 +75,11 @@ jobs:
         # Environment variables are automatically loaded from GitHub Secrets
         # No explicit secret references to avoid security exposure
 
-      # TEMPORARILY DISABLED: Full mode while building prove quality gates
-      # - name: Run Prove Quality Gates (Full Mode) - Main Branch Only
-      #   if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-      #   run: npm run prove
-      #   # Environment variables are automatically loaded from GitHub Secrets
-      #   # No explicit secret references to avoid security exposure
+      - name: Run Prove Quality Gates (Full Mode) - Main Branch Only
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        run: npm run prove
+        # Environment variables are automatically loaded from GitHub Secrets
+        # No explicit secret references to avoid security exposure
 
       - name: Upload Prove Report Artifact
         if: always()

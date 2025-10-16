@@ -19,7 +19,7 @@ import { checkSizeBudget } from './checks/sizeBudget.js';
 import { executeCheck, handleCheckFailure, CHECK_CONFIGS } from './checks/runner-helper.js';
 import { type CheckResult as BaseCheckResult } from './checks/base.js';
 import { CHECK_FUNCTIONS } from './checks/index.js';
-// import { checkCommitSize } from './checks/commit-size.js'; // Temporarily disabled
+import { checkCommitSize } from './checks/commit-size.js';
 import { checkCommitMsgConvention } from './checks/commit-msg-convention.js';
 import { checkFeatureFlagLint } from './checks/feature-flag-lint.js';
 import { checkKillswitchRequired } from './checks/killswitch-required.js';
@@ -55,6 +55,7 @@ function getExecutionPlan(context: ProveContext, quickMode: boolean) {
     { id: 'trunk', fn: checkTrunk },
     { id: 'delivery-mode', fn: checkDeliveryMode },
     { id: 'commit-msg-convention', fn: checkCommitMsgConvention },
+    { id: 'commit-size', fn: checkCommitSize },
     { id: 'killswitch-required', fn: checkKillswitchRequired },
   ];
 

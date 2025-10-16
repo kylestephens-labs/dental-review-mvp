@@ -1,84 +1,299 @@
-Short take: your Prove gates cover a lot—and they directly blunt most pains. There are a few places where you’re “good but not bullet-proof.” Here’s a tight audit with concrete upgrades.
+# 🚀 **Prove Quality Gates - Post-MVP Enhancement Roadmap**
 
-Audit: pain points vs. your gates
+## **📊 Executive Summary**
 
-Pain point	Status	Why	Small, surgical upgrade
-Hallucination	✅ Strong	typecheck, build, env-check, tests catch most fabrications	(optional) add lockfile/engines gate to stop env drift (see T37)
-Scope creep	✅ Strong	commit-size gate, diff-coverage (functional), tests-touched, pre-conflict	(optional) max new files + dep add justification check (T39b)
-Context drift	⚠️ Partial	ARCHITECTURE.md + TASK.json exist, but not verified per change	Context compliance gate: require TASK.json + link to affected components; fail if missing (T35)
-Spec drift / partial completion	⚠️ Partial	tests + diff-coverage help; API/webhook contracts are optional	Turn contracts on by default when API files change (T36)
-Env/dependency incoherence	⚠️ Partial	env-check + pinned Node in CI	Lockfile & engines gate; repro build check (T37)
-Bloat & scaffold inflation	⚠️ Partial	size-limit (optional) + commit-size	Add ts-prune/madge dead-code & circular-dep gate (T39)
-Semantic inconsistency	⚠️ Partial	type safety & tests help, but no invariant layer	Invariants: zod/typia at boundaries + property-based tests nightly (T41)
-Temporal regression	✅ Good	diff-coverage + nightly full prove	(optional) flakiness sweep: rerun failed tests N times in CI (T40)
-Prompt sensitivity/variance	⚠️ Partial	delivery-mode + prove log help	Prompt compliance gate: verify presence/hash of SENIOR_ENGINEER_PROMPT.md; fail if agent reply lacks PROVE LOG (T35b)
-Verification black holes	✅ Strong	prove-report.json + required CI check	(optional) keep report as PR artifact & link in template (already planned)
-Model capability mismatch	⚠️ Partial	not captured today	Model provenance note in PR: require MODEL= in commit/PR (T42)
-Human trust erosion	✅ Strong	objective, mechanical gates	Add runbook links in failure messages for fastest fix path (DX)
+The Prove Quality Gates system is **production-ready** with 70 TypeScript files and 15,177 lines of code. This roadmap prioritizes enhancements based on **high impact, high value, and low/medium effort** to maximize ROI while maintaining system stability.
 
+---
 
-⸻
+## **🎯 Priority 1: High Impact, High Value, Low Effort (Immediate - 1-2 weeks)**
 
-Add these tiny tasks (all < ~50 LOC each)
+### **T35 — Context Compliance Gate** ⭐⭐⭐
+**Impact:** Prevents context drift and ensures task metadata consistency  
+**Value:** Eliminates "works on my machine" issues and improves traceability  
+**Effort:** Low (~50 LOC)
 
-T35 — Context compliance gate
-	•	Goal: Stop context drift by requiring task metadata.
-	•	Do: Fail if PR lacks: tasks/TASK.json (mode/id/title) and a “Touched Areas” list in the PR body (components/paths).
-	•	Test: Remove either → Prove fails with a crisp message.
+**What:** Fail if PR lacks `tasks/TASK.json` (mode/id/title) and "Touched Areas" list in PR body  
+**Why:** Stops context drift by requiring task metadata and component mapping  
+**Files:** `tools/prove/checks/context-compliance.ts` (new), `tools/prove/runner.ts` (enhance)
 
-T35b — Prompt compliance gate
-	•	Goal: Make agents follow the canonical task template.
-	•	Do: Check repo contains docs/SENIOR_ENGINEER_PROMPT.md; if CI payload indicates AI commit/PR, require a PROVE_LOG section or an attached artifact reference.
-	•	Test: AI PR without log → fail; with log → pass.
+**Test:** Remove either → Prove fails with crisp message
 
-T36 — Auto-enable contracts when APIs change
-	•	Goal: Prevent API/webhook shape drift.
-	•	Do: If diff touches backend/src/api/** or contracts/**, run OpenAPI lint + webhook signature tests (Stripe/Twilio). Else skip.
-	•	Test: Break a response schema → fail.
+---
 
-T37 — Lockfile & engines gate
-	•	Goal: Eliminate env incoherence.
-	•	Do:
-	•	Verify presence & changes to package-lock.json match package.json (no orphan adds).
-	•	Fail if Node version ≠ .nvmrc/engines.node.
-	•	CI installs with npm ci (already done).
-	•	Test: Edit dep without lockfile update → fail.
+### **T37 — Lockfile & Engines Gate** ⭐⭐⭐
+**Impact:** Eliminates environment incoherence and dependency drift  
+**Value:** Stops "works on my machine" issues cold  
+**Effort:** Low (~50 LOC)
 
-T39 — Dead-code / circular-dep sweep
-	•	Goal: Block silent rot & spaghetti.
-	•	Do: Add ts-prune to fail on newly unused exports; add madge to fail on new circulars in changed modules.
-	•	Test: Add unused export or create a cycle → fail.
+**What:** Verify `package-lock.json` matches `package.json`, enforce Node version consistency  
+**Why:** Prevents dependency drift and environment mismatches  
+**Files:** `tools/prove/checks/lockfile-engines.ts` (new), `tools/prove/runner.ts` (enhance)
 
-T39b — Dependency add justification (lightweight)
-	•	Goal: Keep bloat in check.
-	•	Do: If package.json deps change, require commit body section: “Why stdlib isn’t enough + size + last update + license”. Otherwise fail.
-	•	Test: Add dep without section → fail.
+**Test:** Edit dep without lockfile update → fail
 
-T40 — Flaky test sweeper (fast)
-	•	Goal: Stabilize trust signals.
-	•	Do: On CI failure, rerun failed tests up to 2x (vitest --retry 2) and mark tests as flaky in report. Nightly can run --repeat 3 to detect flakiness proactively.
-	•	Test: Introduce nondeterministic test; flakiness reported.
+---
 
-T41 — Nightly mutation/property tests
-	•	Goal: Ensure tests have teeth.
-	•	Do: Nightly job runs stryker (or a small property-based test suite on critical modules).
-	•	Test: Kill a condition; mutation score below threshold → nightly fails.
+### **T36 — Auto-Enable Contracts on API Change** ⭐⭐⭐
+**Impact:** Prevents API/webhook shape drift automatically  
+**Value:** Closes biggest remaining spec-drift gap  
+**Effort:** Low (~50 LOC)
 
-T42 — Model provenance requirement
-	•	Goal: Make capability visible.
-	•	Do: Require MODEL=<name> in PR body. Store into prove-report.json.
-	•	Test: Missing → fail with “Add MODEL=… to PR body.”
+**What:** If diff touches `backend/src/api/**` or `contracts/**`, run OpenAPI lint + webhook tests  
+**Why:** Prevents API breaking changes and ensures contract compliance  
+**Files:** `tools/prove/checks/contracts.ts` (enhance), `tools/prove/runner.ts` (enhance)
 
-⸻
+**Test:** Break response schema → fail
 
-Two toggles worth flipping to “on by default”
-	•	Contracts on API change (T36) — this closes your biggest remaining spec-drift gap.
-	•	Lockfile/engines (T37) — cheap, high-value; stops “works on my machine” issues cold.
+---
 
-⸻
+## **🎯 Priority 2: High Impact, High Value, Medium Effort (Short-term - 2-4 weeks)**
 
-If you do nothing else
+### **T39 — Dead Code & Circular Dependency Sweep** ⭐⭐
+**Impact:** Prevents silent code rot and architectural debt  
+**Value:** Maintains code quality and prevents spaghetti code  
+**Effort:** Medium (~100 LOC)
 
-Implement T36 + T37 now. They’re tiny, mechanical, and plug the most common “surprise” gaps left after your current gates.
+**What:** Add `ts-prune` for unused exports, `madge` for circular dependencies  
+**Why:** Blocks silent rot and maintains clean architecture  
+**Files:** `tools/prove/checks/dead-code-sweep.ts` (new), `tools/prove/runner.ts` (enhance)
 
-Want me to spit out Cursor-ready micro-prompts for T36 and T37 (exact diffs, files, tests to run)?
+**Test:** Add unused export or create cycle → fail
+
+---
+
+### **T40 — Flaky Test Sweeper** ⭐⭐
+**Impact:** Stabilizes trust signals and improves CI reliability  
+**Value:** Reduces false negatives and improves developer confidence  
+**Effort:** Medium (~75 LOC)
+
+**What:** Rerun failed tests up to 2x, mark flaky tests in report  
+**Why:** Stabilizes test suite and identifies unreliable tests  
+**Files:** `tools/prove/checks/flaky-test-sweeper.ts` (new), `tools/prove/runner.ts` (enhance)
+
+**Test:** Introduce nondeterministic test → flakiness reported
+
+---
+
+### **T35b — Prompt Compliance Gate** ⭐⭐
+**Impact:** Ensures AI agents follow canonical task templates  
+**Value:** Improves AI agent consistency and reduces prompt sensitivity  
+**Effort:** Medium (~75 LOC)
+
+**What:** Check for `docs/SENIOR_ENGINEER_PROMPT.md`, require PROVE_LOG section for AI commits  
+**Why:** Makes agents follow consistent patterns and reduces variance  
+**Files:** `tools/prove/checks/prompt-compliance.ts` (new), `tools/prove/runner.ts` (enhance)
+
+**Test:** AI PR without log → fail; with log → pass
+
+---
+
+## **🎯 Priority 3: Medium Impact, High Value, Low Effort (Medium-term - 1-2 months)**
+
+### **T39b — Dependency Add Justification** ⭐
+**Impact:** Prevents bloat and keeps dependencies intentional  
+**Value:** Maintains lean dependency tree and prevents license issues  
+**Effort:** Low (~40 LOC)
+
+**What:** If `package.json` deps change, require commit body section with justification  
+**Why:** Keeps bloat in check and ensures intentional dependency additions  
+**Files:** `tools/prove/checks/dependency-justification.ts` (new), `tools/prove/runner.ts` (enhance)
+
+**Test:** Add dep without justification section → fail
+
+---
+
+### **T42 — Model Provenance Requirement** ⭐
+**Impact:** Makes AI capability and model usage visible  
+**Value:** Improves traceability and model performance tracking  
+**Effort:** Low (~30 LOC)
+
+**What:** Require `MODEL=<name>` in PR body, store in `prove-report.json`  
+**Why:** Makes AI model usage visible and trackable  
+**Files:** `tools/prove/checks/model-provenance.ts` (new), `tools/prove/runner.ts` (enhance)
+
+**Test:** Missing MODEL= → fail with "Add MODEL=… to PR body"
+
+---
+
+### **T41 — Nightly Mutation/Property Tests** ⭐
+**Impact:** Ensures tests have teeth and catch edge cases  
+**Value:** Improves test quality and catches subtle bugs  
+**Effort:** Medium (~100 LOC)
+
+**What:** Nightly job runs `stryker` or property-based tests on critical modules  
+**Why:** Ensures tests are effective and catch real bugs  
+**Files:** `tools/prove/checks/mutation-tests.ts` (new), `.github/workflows/nightly-prove.yml` (new)
+
+**Test:** Kill a condition → mutation score below threshold → nightly fails
+
+---
+
+## **🎯 Priority 4: High Impact, Medium Value, High Effort (Long-term - 2-3 months)**
+
+### **Performance Optimization Suite** ⭐⭐
+**Impact:** Dramatically improves prove execution speed  
+**Value:** Better developer experience and faster CI  
+**Effort:** High (~500 LOC)
+
+**What:** Comprehensive performance monitoring, caching, and optimization  
+**Why:** Improves developer experience and reduces CI costs  
+**Files:** `tools/prove/checks/shared/performance-monitor.ts`, `tools/prove/checks/shared/cache-manager.ts`
+
+**Components:**
+- Advanced caching strategies
+- Performance regression detection
+- Memory usage optimization
+- Parallel execution improvements
+
+---
+
+### **Advanced Error Recovery** ⭐⭐
+**Impact:** Improves system resilience and developer experience  
+**Value:** Reduces friction and improves error handling  
+**Effort:** High (~400 LOC)
+
+**What:** Intelligent error recovery, auto-fix suggestions, and context-aware error messages  
+**Why:** Reduces developer friction and improves error resolution  
+**Files:** `tools/prove/checks/shared/error-recovery.ts`, `tools/prove/checks/shared/auto-fix.ts`
+
+**Components:**
+- Auto-fix suggestions
+- Error recovery strategies
+- Context-aware error messages
+- Intelligent retry mechanisms
+
+---
+
+### **Dashboard & Analytics** ⭐
+**Impact:** Provides visibility into prove system performance and trends  
+**Value:** Enables data-driven improvements and trend analysis  
+**Effort:** High (~600 LOC)
+
+**What:** Web dashboard for prove reports, analytics, and trend visualization  
+**Why:** Enables data-driven improvements and system monitoring  
+**Files:** `tools/prove/dashboard/` (new directory), `tools/prove/analytics/` (new directory)
+
+**Components:**
+- Prove report visualization
+- Performance trend analysis
+- Team productivity metrics
+- System health monitoring
+
+---
+
+## **🎯 Priority 5: Low Impact, Medium Value, Low Effort (Nice-to-have - 3+ months)**
+
+### **Enhanced Documentation** ⭐
+**Impact:** Improves developer onboarding and system understanding  
+**Value:** Reduces learning curve and improves maintainability  
+**Effort:** Low (~200 LOC)
+
+**What:** Interactive documentation, examples, and tutorials  
+**Why:** Improves developer experience and system adoption  
+**Files:** `docs/prove/` (enhance), `tools/prove/docs/` (new)
+
+---
+
+### **Plugin System** ⭐
+**Impact:** Enables extensibility and custom checks  
+**Value:** Allows team-specific customizations and integrations  
+**Effort:** Medium (~300 LOC)
+
+**What:** Plugin architecture for custom checks and integrations  
+**Why:** Enables team-specific customizations and third-party integrations  
+**Files:** `tools/prove/plugins/` (new directory), `tools/prove/plugin-api.ts` (new)
+
+---
+
+## **📋 Implementation Strategy**
+
+### **Phase 1: Foundation (Weeks 1-2)**
+- Implement T35, T37, T36 (Priority 1)
+- Enable contracts and lockfile checks by default
+- Measure impact and gather feedback
+
+### **Phase 2: Quality (Weeks 3-6)**
+- Implement T39, T40, T35b (Priority 2)
+- Add dead code detection and flaky test handling
+- Improve AI agent compliance
+
+### **Phase 3: Optimization (Weeks 7-10)**
+- Implement T39b, T42, T41 (Priority 3)
+- Add dependency justification and model provenance
+- Implement nightly mutation testing
+
+### **Phase 4: Advanced (Months 3-6)**
+- Implement performance optimization suite
+- Add advanced error recovery
+- Build dashboard and analytics
+
+---
+
+## **🎯 Success Metrics**
+
+### **Immediate (Priority 1-2)**
+- **Context Drift Reduction:** 90% reduction in missing task metadata
+- **Environment Issues:** 95% reduction in "works on my machine" problems
+- **API Drift:** 100% prevention of breaking API changes
+- **Code Quality:** 80% reduction in dead code and circular dependencies
+
+### **Short-term (Priority 3)**
+- **Test Stability:** 90% reduction in flaky test failures
+- **AI Compliance:** 95% of AI commits include proper metadata
+- **Dependency Quality:** 100% of new dependencies have justification
+
+### **Long-term (Priority 4-5)**
+- **Performance:** 50% improvement in prove execution time
+- **Developer Experience:** 80% reduction in error resolution time
+- **System Visibility:** 100% of prove runs tracked and analyzed
+
+---
+
+## **⚠️ Risk Mitigation**
+
+### **Preserve Functionality**
+- All enhancements maintain existing behavior
+- Comprehensive testing before deployment
+- Gradual rollout with feature flags
+
+### **Performance Monitoring**
+- Baseline measurements before changes
+- Continuous performance monitoring
+- Rollback procedures for regressions
+
+### **Team Communication**
+- Clear documentation of changes
+- Training materials for new features
+- Regular feedback collection
+
+---
+
+## **🏆 Expected Outcomes**
+
+### **Immediate Benefits (1-2 weeks)**
+- Eliminated context drift and environment issues
+- Automatic API contract enforcement
+- Improved traceability and compliance
+
+### **Short-term Benefits (1-2 months)**
+- Cleaner codebase with reduced technical debt
+- More stable and reliable test suite
+- Better AI agent compliance and consistency
+
+### **Long-term Benefits (3-6 months)**
+- Significantly faster prove execution
+- Advanced error recovery and auto-fix capabilities
+- Comprehensive system monitoring and analytics
+
+---
+
+## **🚀 Next Steps**
+
+1. **Start with Priority 1** - Implement T35, T37, T36 immediately
+2. **Measure Impact** - Track metrics and gather team feedback
+3. **Iterate Quickly** - Implement Priority 2 based on results
+4. **Plan Long-term** - Begin planning Priority 4-5 features
+5. **Monitor Success** - Track metrics and adjust priorities as needed
+
+**This roadmap ensures maximum value delivery while maintaining system stability and team productivity.**
