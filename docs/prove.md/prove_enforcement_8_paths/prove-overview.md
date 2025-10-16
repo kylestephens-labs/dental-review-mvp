@@ -125,6 +125,15 @@ await Promise.all(parallelChecks.map(runWithLimit));
 
 <!-- @generated-end:check-catalogue -->
 
+#### Enhanced Feature Flag & Kill-Switch Checks
+| Check | ID | Description | Quick Mode |
+| --- | --- | --- | --- |
+| Enhanced Kill-Switch Detection | `killswitch-required` | Uses shared utilities for comprehensive pattern detection including `useFeatureFlag()`, `isEnabled()`, environment variables, config-based flags, and rollout validation | ✅ |
+| Feature Flag Registration Validation | `killswitch-required` | Validates that detected kill-switch flags are properly registered in the flag registry | ✅ |
+| Rollout Configuration Validation | `feature-flag-lint` | Validates rollout percentage, environment configuration, default values, descriptions, owners, and expiry dates | ✅ |
+| Gradual Rollout Safety | `feature-flag-lint` | Ensures gradual rollout configuration is safe for production deployment | ✅ |
+| Enhanced Error Messages | `killswitch-required`, `feature-flag-lint` | Provides specific, actionable error messages with file locations and fix suggestions | ✅ |
+
 <!-- @generated-start:quick-mode-checks -->
 ### Quick Mode Checks
 

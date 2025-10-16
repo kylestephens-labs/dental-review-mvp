@@ -58,7 +58,15 @@ The goal is to provide any engineer or AI agent with a full picture of how the c
 │       │   ├── buildApi.ts
 │       │   ├── sizeBudget.ts
 │       │   ├── deliveryMode.ts
-│       │   └── tddChangedHasTests.ts
+│       │   ├── tddChangedHasTests.ts
+│       │   ├── feature-flag-lint.ts
+│       │   ├── killswitch-required.ts
+│       │   └── shared/           # Shared utilities for checks
+│       │       ├── feature-flag-detector.ts
+│       │       ├── flag-registry.ts
+│       │       ├── error-messages.ts
+│       │       ├── rollout-validator.ts
+│       │       └── index.ts
 │       └── utils/
 │           ├── exec.ts
 │           ├── git.ts
@@ -138,6 +146,10 @@ Responsibilities:
 	9.	Test Suite Pass (vitest --coverage)
 	10.	Diff Coverage on changed lines (functional tasks)
 	11.	Build Verification (vite build or tsup)
+	12.	Enhanced Kill-Switch Detection (comprehensive pattern detection with shared utilities)
+	13.	Feature Flag Registration Validation (ensures flags are properly registered)
+	14.	Rollout Configuration Validation (validates safe deployment configuration)
+	15.	Enhanced Error Messages (specific, actionable guidance for developers)
 
 Technologies:
 Node.js, TypeScript, Zod, Vitest, ESLint, Diff-Cover, p-limit, Git CLI

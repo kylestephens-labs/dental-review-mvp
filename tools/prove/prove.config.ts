@@ -43,6 +43,27 @@ export const defaultConfig = {
     dbMigrations: false, // Enable database migration checks
   },
 
+  // Feature flag configuration
+  featureFlags: {
+    enableTelemetry: true, // Enable telemetry collection for feature flags
+    enableRolloutValidation: true, // Enable rollout configuration validation
+    enableSharedDetection: true, // Use shared detection utilities
+    registryCacheTimeout: 30000, // 30 seconds cache timeout for flag registry
+    detectionTimeout: 10000, // 10 seconds timeout for pattern detection
+    enableGradualRolloutValidation: true, // Enable gradual rollout safety checks
+    enableFlagRegistrationValidation: true, // Enable flag registration validation
+  },
+
+  // Kill-switch configuration
+  killSwitch: {
+    enableRegistrationValidation: true, // Enable kill-switch flag registration validation
+    enableEnhancedPatterns: true, // Enable enhanced pattern detection
+    enableSharedDetection: true, // Use shared detection utilities
+    enableRolloutValidation: true, // Enable rollout validation for kill-switches
+    enableErrorMessages: true, // Enable enhanced error messages
+    patternDetectionTimeout: 5000, // 5 seconds timeout for pattern detection
+  },
+
   // Mode-specific settings
   modes: {
     functional: {

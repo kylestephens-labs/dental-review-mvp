@@ -395,6 +395,73 @@ Done when: OK/skipped per toggle.
 
 ⸻
 
+Phase 13 — Enhanced Feature Flag & Kill-Switch System
+
+T35 — Create shared feature flag detection utilities
+
+Goal: Centralize pattern detection logic for feature flags and kill-switches.
+Do: Create tools/prove/checks/shared/feature-flag-detector.ts with comprehensive regex patterns and detection methods.
+Test: Test pattern detection with various flag usage patterns.
+Done when: All common feature flag patterns are detected correctly.
+
+T36 — Create unified flag registry system
+
+Goal: Centralize flag loading and validation from multiple sources.
+Do: Create tools/prove/checks/shared/flag-registry.ts to load flags from runtime, frontend, and backend sources.
+Test: Load flags from all sources and validate against usage.
+Done when: Flag registry loads and validates flags correctly.
+
+T37 — Create shared error message utilities
+
+Goal: Provide consistent, actionable error messages across all checks.
+Do: Create tools/prove/checks/shared/error-messages.ts with ErrorMessageBuilder class.
+Test: Generate error messages for various failure scenarios.
+Done when: Error messages are specific, actionable, and consistent.
+
+T38 — Create rollout validation utility
+
+Goal: Ensure feature flags have proper rollout configuration for safe deployment.
+Do: Create tools/prove/checks/shared/rollout-validator.ts with validation methods.
+Test: Validate rollout configuration for various flag definitions.
+Done when: Rollout validation catches missing or invalid configurations.
+
+T39 — Enhance kill-switch pattern recognition
+
+Goal: Detect more safety mechanisms and feature flag patterns using shared utilities.
+Do: Refactor tools/prove/checks/killswitch-required.ts to use shared utilities and add enhanced patterns.
+Test: Test with existing feature commits and new patterns.
+Done when: Kill-switch check detects all common patterns.
+
+T40 — Add flag registration validation to kill-switch
+
+Goal: Ensure detected flags are properly registered in the flag registry.
+Do: Integrate flag registration validation into kill-switch check using shared utilities.
+Test: Test with registered and unregistered flags.
+Done when: Kill-switch check fails for unregistered flags.
+
+T41 — Improve error messages and developer experience
+
+Goal: Make error messages specific and actionable for developers.
+Do: Enhance error messages in both checks using shared error message utilities.
+Test: Verify error messages provide clear guidance and fix suggestions.
+Done when: Error messages are helpful and easy to follow.
+
+T42 — Add rollout validation
+
+Goal: Ensure feature flags have proper rollout configuration for safe deployment.
+Do: Add rollout validation to both feature-flag-lint and kill-switch checks.
+Test: Test rollout validation with various flag configurations.
+Done when: Rollout validation works correctly in both checks.
+
+T43 — Update configuration and documentation
+
+Goal: Keep prove system configuration and documentation in sync with implementation changes.
+Do: Update prove.config.ts, prove-overview.md, tasks.md, and architecture.md.
+Test: Verify configuration options work and documentation is accurate.
+Done when: Configuration and documentation reflect all changes.
+
+⸻
+
 Phase 14 — Agent compliance
 
 T34 — Cursor/Windsurf/MCP snippets
