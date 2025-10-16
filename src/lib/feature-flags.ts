@@ -76,6 +76,16 @@ export const featureFlagConfig: FeatureFlagConfig = {
       environments: ['development', 'staging', 'production', 'test']
     },
 
+    COMMIT_SIZE_CHECK: {
+      name: 'COMMIT_SIZE_CHECK',
+      enabled: false,
+      rolloutPercentage: 0,
+      description: 'Kill switch for commit size check in prove quality gates',
+      createdAt: '2025-01-18T00:00:00Z',
+      updatedAt: '2025-01-18T00:00:00Z',
+      environments: ['development', 'staging', 'production', 'test']
+    },
+
     // Dental Project Feature Flags (from tasks.md analysis)
     GOOGLE_CALENDAR_INTEGRATION: {
       name: 'GOOGLE_CALENDAR_INTEGRATION',
