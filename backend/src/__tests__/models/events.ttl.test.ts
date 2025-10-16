@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { getTTLStartEvent, insertEvent } from '../../models/events';
+import { getTTLStartEvent, getTTLStartEventByStripeId, insertEvent } from '../../models/events';
 
 // Mock database
 vi.mock('../../config/database', () => ({
@@ -149,6 +149,49 @@ describe('Events Model - TTL Instrumentation', () => {
         ]
       );
       expect(result).toEqual(mockEvent);
+    });
+  });
+
+  describe('getTTLStartEventByStripeId', () => {
+    it('should return TTL start event when found by Stripe event ID', async () => {
+      const mockEvent = {
+        id: 'evt_123',
+        practice_id: 'practice_123',
+        type: 'stripe_checkout_at',
+        actor: 'system',
+        payload_json: {
+          stripe_event_id: 'evt_test_123',
+          stripe_session_id: 'cs_test_123',
+          customer_email: 'test@example.com'
+        },
+        occurred_at: new Date('2023-01-01T00:00:00Z')
+      };
+
+      const { pool } = await import('../../config/database');
+      vi.mocked(pool).mockReturnValue(mockClient as any);
+      mockClient.query.mockResolvedValue({ rows: [mockEvent] });
+
+      const result = await getTTLStartEventByStripeId('evt_test_123');
+
+      expect(result).toEqual(mockEvent);
+      expect(mockClient.query).toHaveBeenCalledWith(
+        expect.stringContaining('SELECT * FROM events'),
+        ['evt_test_123']
+      );
+    });
+
+    it('should return null when no TTL start event found', async () => {
+      const { pool } = await import('../../config/database');
+      vi.mocked(pool).mockReturnValue(mockClient as any);
+      mockClient.query.mockResolvedValue({ rows: [] });
+
+      const result = await getTTLStartEventByStripeId('evt_nonexistent');
+
+      expect(result).toBeNull();
+      expect(mockClient.query).toHaveBeenCalledWith(
+        expect.stringContaining('SELECT * FROM events'),
+        ['evt_nonexistent']
+      );
     });
   });
 });

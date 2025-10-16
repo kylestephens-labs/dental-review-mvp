@@ -14,7 +14,8 @@ vi.mock('../../../models/settings', () => ({
 }));
 vi.mock('../../../models/events', () => ({
   insertEvent: vi.fn(),
-  getEventByStripeId: vi.fn()
+  getEventByStripeId: vi.fn(),
+  getTTLStartEventByStripeId: vi.fn()
 }));
 vi.mock('../../../models/onboarding_tokens', () => ({
   createToken: vi.fn()
@@ -126,7 +127,7 @@ describe('POST /webhooks/stripe', () => {
       const { createDefaultSettings } = await import('../../../models/settings');
       const { createToken } = await import('../../../models/onboarding_tokens');
       const { sesClient } = await import('../../../client/ses');
-      const { insertEvent, getEventByStripeId } = await import('../../../models/events');
+      const { insertEvent, getEventByStripeId, getTTLStartEventByStripeId } = await import('../../../models/events');
       const { generateMagicLinkToken } = await import('../../../utils/hmac_token');
       const { pool } = await import('../../../config/database');
 
@@ -136,6 +137,7 @@ describe('POST /webhooks/stripe', () => {
       vi.mocked(sesClient.sendMagicLinkEmail).mockResolvedValue({ success: true, messageId: 'msg-123' });
       vi.mocked(insertEvent).mockResolvedValue({});
       vi.mocked(getEventByStripeId).mockResolvedValue(null);
+      vi.mocked(getTTLStartEventByStripeId).mockResolvedValue(null);
       vi.mocked(generateMagicLinkToken).mockReturnValue('magic-link-token');
 
       // Mock database client with proper transaction handling

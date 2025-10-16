@@ -44,7 +44,7 @@ export async function insertEvent(data: CreateEventData, client?: PoolClient): P
 export async function getEventByStripeId(stripeEventId: string): Promise<Event | null> {
   const query = `
     SELECT * FROM events 
-    WHERE type = 'stripe_checkout' 
+    WHERE type IN ('stripe_checkout', 'stripe_checkout_at') 
     AND payload_json->>'stripe_event_id' = $1
   `;
   
@@ -66,12 +66,27 @@ export async function getEventsByPracticeId(practiceId: string, limit = 100): Pr
 
 export async function getTTLStartEvent(practiceId: string): Promise<Event | null> {
   const query = `
-    SELECT * FROM events 
-    WHERE practice_id = $1 AND type = $2 
-    ORDER BY occurred_at ASC 
+    SELECT * FROM events
+    WHERE practice_id = $1 AND type = $2
+    ORDER BY occurred_at ASC
     LIMIT 1
   `;
-  
+
   const result = await pool().query(query, [practiceId, 'stripe_checkout_at']);
+  return result.rows[0] || null;
+}
+
+/**
+ * Check if a TTL start event already exists for a given Stripe event ID
+ * This provides additional idempotency protection for TTL instrumentation
+ */
+export async function getTTLStartEventByStripeId(stripeEventId: string): Promise<Event | null> {
+  const query = `
+    SELECT * FROM events 
+    WHERE type = 'stripe_checkout_at' 
+    AND payload_json->>'stripe_event_id' = $1
+  `;
+  
+  const result = await pool().query(query, [stripeEventId]);
   return result.rows[0] || null;
 }

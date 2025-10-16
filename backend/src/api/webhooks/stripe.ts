@@ -2,7 +2,7 @@ import { Request, Response } from 'express';
 import { verifyWebhookSignature } from '../../utils/stripe';
 import { createPractice } from '../../models/practices';
 import { createDefaultSettings } from '../../models/settings';
-import { insertEvent, getEventByStripeId } from '../../models/events';
+import { insertEvent, getEventByStripeId, getTTLStartEventByStripeId } from '../../models/events';
 import { createToken } from '../../models/onboarding_tokens';
 import { generateMagicLinkToken } from '../../utils/hmac_token';
 import { sesClient } from '../../client/ses';
@@ -82,8 +82,11 @@ export async function POST(req: Request, res: Response) {
 
   try {
     // Check for idempotency - prevent duplicate processing
+    // Check both stripe_checkout and stripe_checkout_at events
     const existingEvent = await getEventByStripeId(stripeEvent.id);
-    if (existingEvent) {
+    const existingTTLEvent = await getTTLStartEventByStripeId(stripeEvent.id);
+    
+    if (existingEvent || existingTTLEvent) {
       console.log(`Event ${stripeEvent.id} already processed, skipping`);
       return res.status(200).json({ received: true });
     }

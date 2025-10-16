@@ -14,7 +14,8 @@ vi.mock('../../../models/settings', () => ({
 }));
 vi.mock('../../../models/events', () => ({
   insertEvent: vi.fn(),
-  getEventByStripeId: vi.fn()
+  getEventByStripeId: vi.fn(),
+  getTTLStartEventByStripeId: vi.fn()
 }));
 vi.mock('../../../models/onboarding_tokens', () => ({
   createToken: vi.fn()
@@ -173,6 +174,52 @@ describe('POST /webhooks/stripe - TTL Instrumentation', () => {
       expect(mockJson).toHaveBeenCalledWith({ received: true });
     });
 
+    it('should not create duplicate events when TTL start event already exists', async () => {
+      const mockSession = {
+        id: 'cs_test_456',
+        customer_details: {
+          name: 'Test Practice 2',
+          email: 'test2@example.com'
+        }
+      };
+
+      const mockStripeEvent = {
+        id: 'evt_test_456',
+        type: 'checkout.session.completed',
+        data: { object: mockSession }
+      };
+
+      // Mock Stripe signature verification
+      const { verifyWebhookSignature } = await import('../../../utils/stripe');
+      vi.mocked(verifyWebhookSignature).mockReturnValue(mockStripeEvent);
+
+      // Mock no existing stripe_checkout event but existing TTL event
+      const { getEventByStripeId, getTTLStartEventByStripeId } = await import('../../../models/events');
+      vi.mocked(getEventByStripeId).mockResolvedValue(null);
+      vi.mocked(getTTLStartEventByStripeId).mockResolvedValue({
+        id: 'existing-ttl-event-456',
+        practice_id: 'practice-456',
+        type: 'stripe_checkout_at',
+        actor: 'system',
+        payload_json: { stripe_event_id: 'evt_test_456' },
+        occurred_at: new Date(),
+        ip_hash: null,
+        ua_hash: null
+      });
+
+      const { pool } = await import('../../../config/database');
+      vi.mocked(pool).mockReturnValue(mockClient as any);
+
+      await POST(mockReq as Request, mockRes as Response);
+
+      // Verify no new events were created
+      const { insertEvent } = await import('../../../models/events');
+      expect(insertEvent).not.toHaveBeenCalled();
+
+      expect(mockStatus).toHaveBeenCalledWith(200);
+      expect(mockJson).toHaveBeenCalledWith({ received: true });
+    });
+
     it('should include correct payload structure in stripe_checkout_at event', async () => {
       const mockSession = {
         id: 'cs_test_456',
@@ -199,7 +246,7 @@ describe('POST /webhooks/stripe - TTL Instrumentation', () => {
       const { createDefaultSettings } = await import('../../../models/settings');
       const { createToken } = await import('../../../models/onboarding_tokens');
       const { sesClient } = await import('../../../client/ses');
-      const { insertEvent, getEventByStripeId } = await import('../../../models/events');
+      const { insertEvent, getEventByStripeId, getTTLStartEventByStripeId } = await import('../../../models/events');
       const { generateMagicLinkToken } = await import('../../../utils/hmac_token');
       const { pool } = await import('../../../config/database');
 
@@ -209,6 +256,7 @@ describe('POST /webhooks/stripe - TTL Instrumentation', () => {
       vi.mocked(sesClient.sendMagicLinkEmail).mockResolvedValue({ success: true, messageId: 'msg-456' });
       vi.mocked(insertEvent).mockResolvedValue({});
       vi.mocked(getEventByStripeId).mockResolvedValue(null);
+      vi.mocked(getTTLStartEventByStripeId).mockResolvedValue(null);
       vi.mocked(generateMagicLinkToken).mockReturnValue('magic-link-token-456');
       vi.mocked(pool).mockReturnValue(mockClient as any);
 
@@ -254,7 +302,7 @@ describe('POST /webhooks/stripe - TTL Instrumentation', () => {
       const { createDefaultSettings } = await import('../../../models/settings');
       const { createToken } = await import('../../../models/onboarding_tokens');
       const { sesClient } = await import('../../../client/ses');
-      const { insertEvent, getEventByStripeId } = await import('../../../models/events');
+      const { insertEvent, getEventByStripeId, getTTLStartEventByStripeId } = await import('../../../models/events');
       const { generateMagicLinkToken } = await import('../../../utils/hmac_token');
       const { pool } = await import('../../../config/database');
 
@@ -264,6 +312,7 @@ describe('POST /webhooks/stripe - TTL Instrumentation', () => {
       vi.mocked(sesClient.sendMagicLinkEmail).mockResolvedValue({ success: true, messageId: 'msg-789' });
       vi.mocked(insertEvent).mockResolvedValue({});
       vi.mocked(getEventByStripeId).mockResolvedValue(null);
+      vi.mocked(getTTLStartEventByStripeId).mockResolvedValue(null);
       vi.mocked(generateMagicLinkToken).mockReturnValue('magic-link-token-789');
       vi.mocked(pool).mockReturnValue(mockClient as any);
 
