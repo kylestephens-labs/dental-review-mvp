@@ -54,7 +54,8 @@ export async function checkFeatureFlagLint(context: ProveContext): Promise<Featu
     
     // Use shared detector to find feature flag usages
     const detectionResult = await FeatureFlagDetector.detectFeatureFlagUsage(workingDirectory);
-    const flagUsages = detectionResult.flagNames;
+    const flagUsages = detectionResult.flagUsages;
+    const flagNames = detectionResult.flagNames;
     
     if (flagUsages.length === 0) {
       logger.info('No feature flag usages found');
@@ -83,7 +84,7 @@ export async function checkFeatureFlagLint(context: ProveContext): Promise<Featu
       };
     }
 
-    logger.info(`Found ${flagUsages.length} feature flag usages: ${flagUsages.join(', ')}`);
+    logger.info(`Found ${flagUsages.length} feature flag usages: ${flagNames.join(', ')}`);
 
     // Use unified registry to load all flags with timing
     const flagLoadingStart = Date.now();
@@ -95,7 +96,7 @@ export async function checkFeatureFlagLint(context: ProveContext): Promise<Featu
 
     // Use unified validation to check flags with timing
     const validationStart = Date.now();
-    const validationResult = registry.validateFlags(flagUsages);
+    const validationResult = registry.validateFlags(flagNames);
     const validationDuration = Date.now() - validationStart;
 
     // Add rollout validation

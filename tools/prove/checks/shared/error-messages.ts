@@ -14,6 +14,7 @@ export interface ErrorContext {
   missingExpiry?: string[];
   missingMetadata?: string[];
   invalidValues?: string[];
+  registeredFlags?: string[];
 }
 
 export class ErrorMessageBuilder {

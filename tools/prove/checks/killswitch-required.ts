@@ -195,18 +195,25 @@ export async function checkKillswitchRequired(context: ProveContext): Promise<Ki
 
     const foundKillSwitches = detectionResult.killSwitchPatterns;
     const hasKillSwitch = foundKillSwitches.length > 0;
+    
+    logger.info('Kill-switch detection results', {
+      foundKillSwitches: foundKillSwitches,
+      hasKillSwitch: hasKillSwitch,
+      patternCount: foundKillSwitches.length
+    });
 
-    // Load flag registry for validation
+    // Load flag registry for validation only if kill-switch patterns were found
     let registeredFlags: string[] = [];
     let unregisteredFlags: string[] = [];
     let registry: UnifiedFlagRegistry | null = null;
     
-    try {
-      registry = await UnifiedFlagRegistry.loadAllFlags(workingDirectory);
-      
-      // Enhanced flag extraction from various kill-switch patterns
-      const flagNames = new Set<string>();
-      for (const pattern of foundKillSwitches) {
+    if (hasKillSwitch) {
+      try {
+        registry = await UnifiedFlagRegistry.loadAllFlags(workingDirectory);
+        
+        // Enhanced flag extraction from various kill-switch patterns
+        const flagNames = new Set<string>();
+        for (const pattern of foundKillSwitches) {
         // Extract flag names from various patterns
         const flagNameMatch = pattern.match(/['"`]([^'"`]+)['"`]/);
         if (flagNameMatch) {
@@ -222,7 +229,9 @@ export async function checkKillswitchRequired(context: ProveContext): Promise<Ki
         // Extract from environment variable patterns
         const envVarMatch = pattern.match(/process\.env\.([A-Z_]+_ENABLED)/);
         if (envVarMatch) {
-          flagNames.add(envVarMatch[1]);
+          // Strip _ENABLED suffix for registry validation
+          const flagName = envVarMatch[1].replace(/_ENABLED$/, '');
+          flagNames.add(flagName);
         }
         
         // Extract from config patterns
@@ -245,20 +254,21 @@ export async function checkKillswitchRequired(context: ProveContext): Promise<Ki
       registeredFlags = flagNamesArray.filter(flag => registry!.isRegistered(flag));
       unregisteredFlags = validationResult.missingFlags;
       
-      logger.info('Flag validation completed', {
-        totalFlags: flagNamesArray.length,
-        registeredFlags: registeredFlags.length,
-        unregisteredFlags: unregisteredFlags.length,
-        validationErrors: validationResult.errors.length,
-        extractedFlags: flagNamesArray
-      });
-      
-    } catch (error) {
-      logger.warn('Failed to load flag registry for validation', {
-        error: error instanceof Error ? error.message : String(error)
-      });
-      // If registry loading fails, we can't validate flags, so we'll continue without validation
-      // This maintains backward compatibility while providing enhanced validation when possible
+        logger.info('Flag validation completed', {
+          totalFlags: flagNamesArray.length,
+          registeredFlags: registeredFlags.length,
+          unregisteredFlags: unregisteredFlags.length,
+          validationErrors: validationResult.errors.length,
+          extractedFlags: flagNamesArray
+        });
+        
+      } catch (error) {
+        logger.warn('Failed to load flag registry for validation', {
+          error: error instanceof Error ? error.message : String(error)
+        });
+        // If registry loading fails, we can't validate flags, so we'll continue without validation
+        // This maintains backward compatibility while providing enhanced validation when possible
+      }
     }
 
     // Add rollout validation for kill-switch flags
@@ -272,6 +282,18 @@ export async function checkKillswitchRequired(context: ProveContext): Promise<Ki
     for (const filePath of productionFiles) {
       try {
         const fs = await import('fs/promises');
+        
+        // Check if file exists before trying to read it
+        try {
+          await fs.access(filePath);
+        } catch (error) {
+          if (error instanceof Error && error.code === 'ENOENT') {
+            logger.warn(`File not found for rollout validation, skipping: ${filePath}`);
+            continue;
+          }
+          throw error;
+        }
+        
         const content = await fs.readFile(filePath, 'utf-8');
         const flagDefinitions = RolloutValidator.extractFlagDefinitions(content, filePath);
         
@@ -343,8 +365,8 @@ export async function checkKillswitchRequired(context: ProveContext): Promise<Ki
       };
     }
 
-    // Check if any detected flags are unregistered (fail the check)
-    if (unregisteredFlags.length > 0) {
+    // Check if any detected flags are unregistered (fail the check) - only if kill-switch patterns were found
+    if (hasKillSwitch && unregisteredFlags.length > 0) {
       // Build enhanced error message for unregistered flags
       const errorContext: ErrorContext = {
         unregisteredFlags: unregisteredFlags,

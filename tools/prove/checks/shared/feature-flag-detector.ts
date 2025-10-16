@@ -21,27 +21,35 @@ export interface DetectionMetrics {
   };
 }
 
+export interface FlagUsage {
+  filePath: string;
+  lineNumber: number;
+  flagName: string;
+  pattern: string;
+}
+
 export interface PatternDetectionResult {
   flagNames: string[];
   killSwitchPatterns: string[];
+  flagUsages: FlagUsage[];
   metrics: DetectionMetrics;
 }
 
 export class FeatureFlagDetector {
   // Comprehensive pattern definitions for all feature flag and kill switch detection
   static readonly PATTERNS = {
-    // Feature flag usage patterns
-    useFeatureFlag: /useFeatureFlag\s*\(\s*['"`]([^'"`]+)['"`]/g,
-    isEnabled: /isEnabled\s*\(\s*['"`]([^'"`]+)['"`]/g,
-    isFeatureEnabled: /isFeatureEnabled\s*\(\s*['"`]([^'"`]+)['"`]/g,
+    // Feature flag usage patterns - more specific to avoid matching example text
+    useFeatureFlag: /(?:^|[^a-zA-Z_])useFeatureFlag\s*\(\s*['"`]([^'"`]+)['"`]/gm,
+    isEnabled: /(?:^|[^a-zA-Z_])isEnabled\s*\(\s*['"`]([^'"`]+)['"`]/gm,
+    isFeatureEnabled: /(?:^|[^a-zA-Z_])isFeatureEnabled\s*\(\s*['"`]([^'"`]+)['"`]/gm,
     
-    // Kill switch patterns
-    killSwitch: /KILL_SWITCH_/g,
-    envVar: /process\.env\.[A-Z_]+_ENABLED/g,
-    config: /config\s*[=:].*enabled/g,
-    toggle: /toggle\s*[=:]/g,
-    import: /import.*flags|from.*flags/g,
-    rollout: /rolloutPercentage\s*:\s*\d+/g,
+    // Kill switch patterns - more specific to avoid matching example text
+    killSwitch: /(?:^|[^a-zA-Z_])KILL_SWITCH_[A-Z_]+/gm,
+    envVar: /(?:^|[^a-zA-Z_])process\.env\.[A-Z_]+_ENABLED/gm,
+    config: /(?:^|[^a-zA-Z_])config\s*[=:].*enabled/gm,
+    toggle: /(?:^|[^a-zA-Z_])toggle\s*[=:]/gm,
+    import: /(?:^|[^a-zA-Z_])import.*flags|from.*flags/gm,
+    rollout: /(?:^|[^a-zA-Z_])rolloutPercentage\s*:\s*\d+/gm,
     
     // Feature flag configuration patterns
     flagConfig: /export const featureFlagConfig[^=]*=\s*{([\s\S]*?)};/,
@@ -120,6 +128,7 @@ export class FeatureFlagDetector {
       return {
         flagNames: [],
         killSwitchPatterns: [],
+        flagUsages: [],
         metrics
       };
     }
@@ -157,21 +166,57 @@ export class FeatureFlagDetector {
     };
 
     const killSwitchPatterns: string[] = [];
+    const flagUsages: FlagUsage[] = [];
     const fileReadingStart = Date.now();
 
     try {
       for (const file of files) {
+        // Skip files that should be excluded
+        if (this.shouldSkipFile(file)) {
+          metrics.filesSkipped++;
+          continue;
+        }
+        
         try {
           const filePath = join(workingDirectory, file);
+          
+          // Check if file exists before trying to read it
+          try {
+            await readFile(filePath, 'utf-8');
+          } catch (error) {
+            if (error instanceof Error && error.code === 'ENOENT') {
+              logger.warn(`File not found, skipping: ${file}`);
+              metrics.filesSkipped++;
+              continue;
+            }
+            throw error;
+          }
+          
           const content = await readFile(filePath, 'utf-8');
           
           const filteredContent = this.filterComments(content);
           const patternMatchingStart = Date.now();
+          const lines = content.split('\n');
           
           for (const pattern of patterns) {
-            const matches = filteredContent.match(pattern);
-            if (matches) {
-              killSwitchPatterns.push(...matches);
+            const matches = filteredContent.matchAll(pattern);
+            for (const match of matches) {
+              killSwitchPatterns.push(match[0]);
+              
+              // Find line number for this match
+              const matchIndex = match.index || 0;
+              const beforeMatch = content.substring(0, matchIndex);
+              const lineNumber = beforeMatch.split('\n').length;
+              
+              // Extract flag name if possible
+              const flagName = match[1] || match[0];
+              
+              flagUsages.push({
+                filePath: file,
+                lineNumber,
+                flagName,
+                pattern: pattern.source
+              });
             }
           }
           
@@ -193,6 +238,7 @@ export class FeatureFlagDetector {
       return {
         flagNames: [],
         killSwitchPatterns,
+        flagUsages,
         metrics
       };
 
@@ -209,6 +255,7 @@ export class FeatureFlagDetector {
       return {
         flagNames: [],
         killSwitchPatterns: [],
+        flagUsages: [],
         metrics
       };
     }
@@ -258,14 +305,21 @@ export class FeatureFlagDetector {
         return null;
       }
 
-      // Extract flag names from ripgrep output
+      // Extract flag names and structured data from ripgrep output
       const flagNames = new Set<string>();
+      const flagUsages: FlagUsage[] = [];
       const lines = result.stdout.split('\n').filter(line => line.trim());
       
       logger.info(`Processing ${lines.length} lines from ripgrep output`);
       
       for (const line of lines) {
-        const codePart = line.includes(':') ? line.split(':').slice(2).join(':') : line;
+        const parts = line.split(':');
+        if (parts.length < 3) continue;
+        
+        const filePath = parts[0];
+        const lineNumber = parseInt(parts[1], 10) || 0;
+        const codePart = parts.slice(2).join(':');
+        
         if (this.isCommentLine(codePart)) {
           continue;
         }
@@ -283,7 +337,14 @@ export class FeatureFlagDetector {
           const nonGlobalPattern = new RegExp(pattern.source, pattern.flags.replace('g', ''));
           const match = codePart.match(nonGlobalPattern);
           if (match && match[1]) {
-            flagNames.add(match[1]);
+            const flagName = match[1];
+            flagNames.add(flagName);
+            flagUsages.push({
+              filePath,
+              lineNumber,
+              flagName,
+              pattern: pattern.source
+            });
           }
         }
       }
@@ -294,6 +355,7 @@ export class FeatureFlagDetector {
       return {
         flagNames: Array.from(flagNames),
         killSwitchPatterns: [],
+        flagUsages,
         metrics
       };
 
@@ -315,6 +377,7 @@ export class FeatureFlagDetector {
   ): Promise<PatternDetectionResult> {
     const alternativeStart = Date.now();
     const flagNames = new Set<string>();
+    const flagUsages: FlagUsage[] = [];
     
     try {
       // Find all TypeScript/JavaScript files recursively
@@ -340,6 +403,7 @@ export class FeatureFlagDetector {
         return {
           flagNames: [],
           killSwitchPatterns: [],
+          flagUsages: [],
           metrics
         };
       }
@@ -356,14 +420,42 @@ export class FeatureFlagDetector {
         }
         
         try {
-          const content = await readFile(join(workingDirectory, file), 'utf-8');
+          const filePath = join(workingDirectory, file);
+          
+          // Check if file exists before trying to read it
+          let content: string;
+          try {
+            content = await readFile(filePath, 'utf-8');
+          } catch (error) {
+            if (error instanceof Error && error.code === 'ENOENT') {
+              logger.warn(`File not found, skipping: ${file}`);
+              metrics.filesSkipped++;
+              continue;
+            }
+            throw error;
+          }
+          
           const filteredContent = this.filterComments(content);
+          const lines = content.split('\n');
           
           for (const pattern of patterns) {
             const matches = filteredContent.matchAll(pattern);
             for (const match of matches) {
               if (match[1]) {
-                flagNames.add(match[1]);
+                const flagName = match[1];
+                flagNames.add(flagName);
+                
+                // Find line number for this match
+                const matchIndex = match.index || 0;
+                const beforeMatch = content.substring(0, matchIndex);
+                const lineNumber = beforeMatch.split('\n').length;
+                
+                flagUsages.push({
+                  filePath: file,
+                  lineNumber,
+                  flagName,
+                  pattern: pattern.source
+                });
               }
             }
           }
@@ -379,6 +471,7 @@ export class FeatureFlagDetector {
       return {
         flagNames: Array.from(flagNames),
         killSwitchPatterns: [],
+        flagUsages,
         metrics
       };
 
@@ -389,6 +482,7 @@ export class FeatureFlagDetector {
       return {
         flagNames: [],
         killSwitchPatterns: [],
+        flagUsages: [],
         metrics
       };
     }
@@ -445,12 +539,14 @@ export class FeatureFlagDetector {
            file.includes('node_modules') ||
            file.includes('dist') ||
            file.includes('build') ||
-           file.includes('frontend') ||
-           file.includes('backend') ||
            file.includes('docs') ||
            file.includes('coverage') ||
            file.includes('playwright-report') ||
-           file.includes('test-results');
+           file.includes('test-results') ||
+           file.includes('error-messages.ts') || // Skip error message files with example text
+           file.includes('README') ||
+           file.includes('.md') ||
+           file.endsWith('error-messages.ts'); // Also check for exact filename match
   }
 
   /**
