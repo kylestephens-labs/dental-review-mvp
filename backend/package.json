@@ -21,22 +21,28 @@
     "docker:build": "docker build -t dental-mvp-backend ..",
     "docker:run": "docker run -p 3001:3001 dental-mvp-backend",
     "docker:test": "docker run --rm dental-mvp-backend npm test",
-    "health:check": "curl -f http://localhost:3001/healthz || exit 1"
+    "health:check": "curl -f http://localhost:3001/healthz || exit 1",
+    "env:validate": "tsx src/scripts/validateEnv.ts",
+    "env:check": "npm run env:validate && echo 'Environment validation completed'",
+    "deps:check": "npm audit --audit-level=moderate",
+    "deps:update": "npm update",
+    "deps:outdated": "npm outdated"
   },
   "dependencies": {
     "@aws-sdk/client-ses": "^3.908.0",
-    "@types/express": "^5.0.3",
+    "dotenv": "^16.4.5",
     "express": "^5.1.0",
-    "next": "^14.2.0",
-    "node-mocks-http": "^1.15.0",
     "pg": "^8.16.3",
     "stripe": "^14.25.0"
   },
   "devDependencies": {
+    "@types/express": "^5.0.3",
+    "@types/jest": "^30.0.0",
     "@types/node": "^22.16.5",
     "@types/pg": "^8.11.10",
     "@types/supertest": "^6.0.3",
     "eslint": "^9.32.0",
+    "node-mocks-http": "^1.15.0",
     "supertest": "^7.1.4",
     "tsx": "^4.20.6",
     "typescript": "^5.8.3",

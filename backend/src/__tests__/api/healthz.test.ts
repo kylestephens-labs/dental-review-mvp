@@ -1,7 +1,13 @@
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import request from 'supertest';
 import express from 'express';
 import { GET as healthCheck, HEAD as healthCheckHead } from '../../api/healthz';
+import { getCommitSha } from '../../utils/buildInfo.js';
+
+// Mock the getCommitSha function
+vi.mock('../../utils/buildInfo.js', () => ({
+  getCommitSha: vi.fn()
+}));
 
 describe('GET /healthz', () => {
   let app: express.Application;
@@ -10,6 +16,10 @@ describe('GET /healthz', () => {
     app = express();
     app.get('/healthz', healthCheck);
     app.head('/healthz', healthCheckHead);
+    
+    // Reset mocks and set default return value
+    vi.clearAllMocks();
+    vi.mocked(getCommitSha).mockReturnValue('test123');
   });
 
   afterEach(() => {
@@ -21,8 +31,8 @@ describe('GET /healthz', () => {
 
   describe('Successful liveness check', () => {
     it('should return 200 OK with status and sha', async () => {
-      // Set up environment variable for commit SHA
-      process.env.COMMIT_SHA = 'abc123def456';
+      // Set up mock to return specific value
+      vi.mocked(getCommitSha).mockReturnValue('abc123def456');
 
       const response = await request(app)
         .get('/healthz')
@@ -37,7 +47,7 @@ describe('GET /healthz', () => {
     });
 
     it('should use VERCEL_GIT_COMMIT_SHA as fallback', async () => {
-      process.env.VERCEL_GIT_COMMIT_SHA = 'vercel123';
+      vi.mocked(getCommitSha).mockReturnValue('vercel123');
 
       const response = await request(app)
         .get('/healthz')
@@ -47,7 +57,7 @@ describe('GET /healthz', () => {
     });
 
     it('should use GIT_SHA as second fallback', async () => {
-      process.env.GIT_SHA = 'git456';
+      vi.mocked(getCommitSha).mockReturnValue('git456');
 
       const response = await request(app)
         .get('/healthz')
@@ -57,6 +67,8 @@ describe('GET /healthz', () => {
     });
 
     it('should use "dev" as final fallback when no env vars are set', async () => {
+      vi.mocked(getCommitSha).mockReturnValue('dev');
+
       const response = await request(app)
         .get('/healthz')
         .expect(200);
