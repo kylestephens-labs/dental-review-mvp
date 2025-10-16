@@ -80,10 +80,10 @@ describe('POST /webhooks/stripe', () => {
       expect(mockJson).toHaveBeenCalledWith({ error: 'Invalid signature' });
     });
 
-    it('should return 200 for non-checkout events', async () => {
+    it('should return 200 for unsupported events', async () => {
       const mockStripeEvent = {
         id: 'evt_test_123',
-        type: 'payment_intent.succeeded',
+        type: 'customer.created',
         data: { object: {} }
       };
 
@@ -171,6 +171,128 @@ describe('POST /webhooks/stripe', () => {
         'Test Practice',
         expect.stringContaining('/onboard/')
       );
+    });
+  });
+
+  describe('Payment-sync event handling', () => {
+    it('should handle payment_intent.succeeded event with practice_id', async () => {
+      const mockStripeEvent = {
+        id: 'evt_payment_intent_123',
+        type: 'payment_intent.succeeded',
+        data: {
+          object: {
+            id: 'pi_test_123',
+            amount: 2000,
+            currency: 'usd',
+            status: 'succeeded',
+            metadata: {
+              practice_id: 'practice_123'
+            }
+          }
+        }
+      };
+
+      const { verifyWebhookSignature } = await import('../../../utils/stripe');
+      vi.mocked(verifyWebhookSignature).mockReturnValue(mockStripeEvent);
+
+      // Mock database functions
+      const { getEventByStripeId, getTTLStartEventByStripeId, insertEvent } = await import('../../../models/events');
+      vi.mocked(getEventByStripeId).mockResolvedValue(null);
+      vi.mocked(getTTLStartEventByStripeId).mockResolvedValue(null);
+      vi.mocked(insertEvent).mockResolvedValue({ id: 'event_123' });
+
+      await POST(mockReq as Request, mockRes as Response);
+
+      expect(mockStatus).toHaveBeenCalledWith(200);
+      expect(mockJson).toHaveBeenCalledWith({ received: true });
+      expect(insertEvent).toHaveBeenCalledWith(
+        expect.objectContaining({
+          practice_id: 'practice_123',
+          type: 'stripe_payment_intent_succeeded',
+          payload_json: expect.objectContaining({
+            stripe_event_id: 'evt_payment_intent_123',
+            amount: 2000,
+            currency: 'usd',
+            status: 'succeeded'
+          })
+        }),
+        expect.any(Object)
+      );
+    });
+
+    it('should handle invoice.paid event with practice_id', async () => {
+      const mockStripeEvent = {
+        id: 'evt_invoice_123',
+        type: 'invoice.paid',
+        data: {
+          object: {
+            id: 'in_test_123',
+            amount_paid: 5000,
+            currency: 'usd',
+            status: 'paid',
+            metadata: {
+              practice_id: 'practice_456'
+            }
+          }
+        }
+      };
+
+      const { verifyWebhookSignature } = await import('../../../utils/stripe');
+      vi.mocked(verifyWebhookSignature).mockReturnValue(mockStripeEvent);
+
+      // Mock database functions
+      const { getEventByStripeId, getTTLStartEventByStripeId, insertEvent } = await import('../../../models/events');
+      vi.mocked(getEventByStripeId).mockResolvedValue(null);
+      vi.mocked(getTTLStartEventByStripeId).mockResolvedValue(null);
+      vi.mocked(insertEvent).mockResolvedValue({ id: 'event_456' });
+
+      await POST(mockReq as Request, mockRes as Response);
+
+      expect(mockStatus).toHaveBeenCalledWith(200);
+      expect(mockJson).toHaveBeenCalledWith({ received: true });
+      expect(insertEvent).toHaveBeenCalledWith(
+        expect.objectContaining({
+          practice_id: 'practice_456',
+          type: 'stripe_invoice_paid',
+          payload_json: expect.objectContaining({
+            stripe_event_id: 'evt_invoice_123',
+            amount: 5000,
+            currency: 'usd',
+            status: 'paid'
+          })
+        }),
+        expect.any(Object)
+      );
+    });
+
+    it('should skip payment-sync events without practice_id', async () => {
+      const mockStripeEvent = {
+        id: 'evt_payment_intent_123',
+        type: 'payment_intent.succeeded',
+        data: {
+          object: {
+            id: 'pi_test_123',
+            amount: 2000,
+            currency: 'usd',
+            status: 'succeeded',
+            metadata: {} // No practice_id
+          }
+        }
+      };
+
+      const { verifyWebhookSignature } = await import('../../../utils/stripe');
+      vi.mocked(verifyWebhookSignature).mockReturnValue(mockStripeEvent);
+
+      // Mock database functions
+      const { getEventByStripeId, getTTLStartEventByStripeId, insertEvent } = await import('../../../models/events');
+      vi.mocked(getEventByStripeId).mockResolvedValue(null);
+      vi.mocked(getTTLStartEventByStripeId).mockResolvedValue(null);
+
+      await POST(mockReq as Request, mockRes as Response);
+
+      expect(mockStatus).toHaveBeenCalledWith(200);
+      expect(mockJson).toHaveBeenCalledWith({ received: true });
+      expect(insertEvent).not.toHaveBeenCalled();
     });
   });
 });

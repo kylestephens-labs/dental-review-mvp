@@ -1,12 +1,47 @@
 import { Request, Response } from 'express';
-import { verifyWebhookSignature } from '../../utils/stripe';
-import { createPractice } from '../../models/practices';
-import { createDefaultSettings } from '../../models/settings';
-import { insertEvent, getEventByStripeId, getTTLStartEventByStripeId } from '../../models/events';
-import { createToken } from '../../models/onboarding_tokens';
-import { generateMagicLinkToken } from '../../utils/hmac_token';
-import { sesClient } from '../../client/ses';
-import { pool, PoolClient } from '../../config/database';
+import { verifyWebhookSignature } from '../../utils/stripe.js';
+import { createPractice } from '../../models/practices.js';
+import { createDefaultSettings } from '../../models/settings.js';
+import { insertEvent, getEventByStripeId, getTTLStartEventByStripeId } from '../../models/events.js';
+import { createToken } from '../../models/onboarding_tokens.js';
+import { generateMagicLinkToken } from '../../utils/hmac_token.js';
+import { sesClient } from '../../client/ses.js';
+import { pool, PoolClient } from '../../config/database.js';
+
+/**
+ * Handles payment-sync events (payment_intent.succeeded, invoice.paid)
+ */
+async function handlePaymentSyncEvent(stripeEvent: any, client: PoolClient) {
+  console.log(`Processing payment-sync event: ${stripeEvent.type}`);
+  
+  const paymentData = stripeEvent.data.object;
+  const practiceId = paymentData.metadata?.practice_id;
+  
+  if (!practiceId) {
+    console.log('No practice_id found in payment-sync event metadata, skipping');
+    return;
+  }
+  
+  const eventType = `stripe_${stripeEvent.type.replace('.', '_')}`;
+  const amount = paymentData.amount || paymentData.amount_paid;
+  const status = paymentData.status || 'succeeded';
+  
+  await insertEvent(
+    {
+      practice_id: practiceId,
+      type: eventType,
+      payload_json: {
+        stripe_event_id: stripeEvent.id,
+        amount,
+        currency: paymentData.currency,
+        status
+      }
+    },
+    client
+  );
+  
+  console.log(`Payment-sync event logged for practice ${practiceId}`);
+}
 
 /**
  * Logs checkout-related events for tracking and SLA purposes
@@ -69,8 +104,12 @@ export async function POST(req: Request, res: Response) {
     return res.status(400).json({ error: 'Invalid signature' });
   }
 
-  // Only handle checkout.session.completed events
-  if (stripeEvent && stripeEvent.type !== 'checkout.session.completed') {
+  // Define supported event types
+  const CHECKOUT_EVENT = 'checkout.session.completed';
+  const PAYMENT_SYNC_EVENTS = ['payment_intent.succeeded', 'invoice.paid'];
+  const SUPPORTED_EVENTS = [CHECKOUT_EVENT, ...PAYMENT_SYNC_EVENTS];
+  
+  if (stripeEvent && !SUPPORTED_EVENTS.includes(stripeEvent.type)) {
     console.log(`Ignoring event type: ${stripeEvent.type}`);
     return res.status(200).json({ received: true });
   }
@@ -82,7 +121,6 @@ export async function POST(req: Request, res: Response) {
 
   try {
     // Check for idempotency - prevent duplicate processing
-    // Check both stripe_checkout and stripe_checkout_at events
     const existingEvent = await getEventByStripeId(stripeEvent.id);
     const existingTTLEvent = await getTTLStartEventByStripeId(stripeEvent.id);
     
@@ -91,19 +129,22 @@ export async function POST(req: Request, res: Response) {
       return res.status(200).json({ received: true });
     }
 
-    const session = stripeEvent.data.object as any;
-    const customerDetails = session.customer_details || {};
-
-    // Ensure we have a name - use email as fallback if name is missing
-    const practiceName = customerDetails.name || customerDetails.email || 'Unknown Practice';
-
     // Use database transaction for atomicity
     const client = await pool().connect();
 
     try {
       await client.query('BEGIN');
 
-      // Create practice
+      // Route events based on type
+      if (stripeEvent.type === CHECKOUT_EVENT) {
+        // Handle checkout session completion
+        const session = stripeEvent.data.object as any;
+        const customerDetails = session.customer_details || {};
+
+        // Ensure we have a name - use email as fallback if name is missing
+        const practiceName = customerDetails.name || customerDetails.email || 'Unknown Practice';
+
+        // Create practice
       const practice = await createPractice(
         {
           name: practiceName,
@@ -174,10 +215,19 @@ export async function POST(req: Request, res: Response) {
         );
       }
 
-      await client.query('COMMIT');
+        await client.query('COMMIT');
 
-      console.log(`Successfully processed checkout for practice ${practice.id}`);
-      return res.status(200).json({ received: true });
+        console.log(`Successfully processed checkout for practice ${practice.id}`);
+        return res.status(200).json({ received: true });
+      } else if (PAYMENT_SYNC_EVENTS.includes(stripeEvent.type)) {
+        // Handle payment-sync events
+        await handlePaymentSyncEvent(stripeEvent, client);
+        
+        await client.query('COMMIT');
+        
+        console.log(`Successfully processed payment-sync event: ${stripeEvent.type}`);
+        return res.status(200).json({ received: true });
+      }
     } catch (error) {
       await client.query('ROLLBACK');
       throw error;
