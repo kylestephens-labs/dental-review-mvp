@@ -10,6 +10,7 @@ export const TogglesSchema = z.object({
   security: z.boolean(),
   contracts: z.boolean(),
   dbMigrations: z.boolean(),
+  tdd: z.boolean().optional(),
 });
 
 export type TogglesConfig = z.infer<typeof TogglesSchema>;

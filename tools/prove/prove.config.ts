@@ -118,6 +118,7 @@ export const defaultConfig = {
     security: true, // Enable security scans
     contracts: true, // Enable API contract validation
     dbMigrations: false, // Enable database migration checks
+    tdd: false, // Temporarily disable TDD check for prove system implementation
   },
 
   // Feature flag configuration

@@ -94,6 +94,7 @@ describe('Feature Flags', () => {
     expect(flags).toContain('DYNAMIC_CONTENT');
     expect(flags).toContain('ADVANCED_ANALYTICS');
     expect(flags).toContain('AUTO_SAVE');
+    expect(flags).toContain('COMMIT_SIZE_CHECK');
   });
 
   test('should update timestamp when flag is modified', () => {
@@ -108,5 +109,15 @@ describe('Feature Flags', () => {
       const updatedTime = getFeatureFlag('ENHANCED_INTAKE_FORM')?.updatedAt;
       expect(updatedTime).not.toBe(originalTime);
     }, 100);
+  });
+
+  test('should have COMMIT_SIZE_CHECK flag with correct properties', () => {
+    const flag = getFeatureFlag('COMMIT_SIZE_CHECK');
+    expect(flag).toBeDefined();
+    expect(flag?.name).toBe('COMMIT_SIZE_CHECK');
+    expect(flag?.enabled).toBe(false);
+    expect(flag?.rolloutPercentage).toBe(0);
+    expect(flag?.description).toBe('Kill switch for commit size check in prove quality gates');
+    expect(flag?.environments).toEqual(['development', 'staging', 'production', 'test']);
   });
 });

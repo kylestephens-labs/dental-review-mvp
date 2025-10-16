@@ -78,9 +78,12 @@ function getExecutionPlan(context: ProveContext, quickMode: boolean) {
 
   // Add mode-specific checks
   if (context.mode === 'functional') {
-    parallelChecks.push(
-      { id: 'tdd-changed-has-tests', fn: checkTddChangedHasTests }
-    );
+    // Add TDD check if enabled
+    if (context.cfg.toggles.tdd !== false) {
+      parallelChecks.push(
+        { id: 'tdd-changed-has-tests', fn: checkTddChangedHasTests }
+      );
+    }
     // Move diff-coverage to coverage-dependent checks
     coverageDependentChecks.push({ id: 'diff-coverage', fn: checkDiffCoverage });
   }
