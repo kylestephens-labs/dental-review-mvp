@@ -73,3 +73,7 @@ prove-report.json
 
 # MCP Orchestrator backups (migrated to separate repo)
 # mcp-orchestrator-backup*.tar.gz
+
+# TDD Phase tracking files
+.tdd-phase
+.tdd-phase.*
