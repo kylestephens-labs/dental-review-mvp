@@ -166,7 +166,7 @@ export class TestEvidenceStorage implements TestEvidenceStorage {
         existingEvidence = JSON.parse(content);
       } catch (error) {
         // File doesn't exist or is empty, start with empty array
-        logger.debug('No existing evidence file found, starting fresh');
+        logger.info('No existing evidence file found, starting fresh');
       }
 
       // Add new evidence
@@ -180,7 +180,7 @@ export class TestEvidenceStorage implements TestEvidenceStorage {
       // Write back to file
       await writeFile(this.evidencePath, JSON.stringify(existingEvidence, null, 2));
 
-      logger.debug('Test evidence stored', {
+      logger.info('Test evidence stored', {
         evidenceId: evidence.id,
         phase: evidence.phase,
         totalEvidence: existingEvidence.length

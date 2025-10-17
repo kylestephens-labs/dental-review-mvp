@@ -5,6 +5,7 @@ import { config, type ProveConfig } from './config.js';
 import { logger } from './logger.js';
 import { getGitContext, type GitContext } from './utils/git.js';
 import { readTddPhase, type TddPhase, type TddPhaseData } from './utils/tdd-phase.js';
+import { type TestEvidence, getTestEvidenceHistory } from './utils/testEvidence.js';
 
 export interface ProveContext {
   // Configuration
@@ -27,6 +28,9 @@ export interface ProveContext {
   tddPhase?: TddPhase;
   tddPhaseTimestamp?: number;
   
+  // Test evidence for TDD phase detection
+  testEvidence?: TestEvidence[];
+  
   // Additional context
   startTime: number;
   workingDirectory: string;
@@ -48,6 +52,24 @@ function detectTddPhase(workingDirectory: string): { phase: TddPhase; timestamp:
     phase: phaseData.phase,
     timestamp: phaseData.timestamp
   };
+}
+
+/**
+ * Load test evidence history for TDD phase detection
+ * @param workingDirectory - Current working directory
+ * @returns Promise<TestEvidence[]> - Test evidence history
+ */
+async function loadTestEvidence(workingDirectory: string): Promise<TestEvidence[]> {
+  try {
+    const evidence = await getTestEvidenceHistory('.prove/evidence.json');
+    logger.info('Loaded test evidence', { count: evidence.length });
+    return evidence;
+  } catch (error) {
+    logger.info('No test evidence found or failed to load', {
+      error: error instanceof Error ? error.message : String(error)
+    });
+    return [];
+  }
 }
 
 /**
@@ -144,6 +166,9 @@ export async function buildContext(baseRefFallback: string = 'origin/main'): Pro
     // Detect TDD phase
     const tddPhaseInfo = detectTddPhase(workingDirectory);
 
+    // Load test evidence for TDD phase detection
+    const testEvidence = await loadTestEvidence(workingDirectory);
+
     const context: ProveContext = {
       cfg: config,
       git,
@@ -153,6 +178,7 @@ export async function buildContext(baseRefFallback: string = 'origin/main'): Pro
       mode,
       tddPhase: tddPhaseInfo?.phase,
       tddPhaseTimestamp: tddPhaseInfo?.timestamp,
+      testEvidence,
       startTime,
       workingDirectory,
     };
@@ -166,6 +192,8 @@ export async function buildContext(baseRefFallback: string = 'origin/main'): Pro
       hasUncommittedChanges: context.git.hasUncommittedChanges,
       isCI: context.isCI,
       workingDirectory: context.workingDirectory,
+      tddPhase: context.tddPhase,
+      testEvidenceCount: context.testEvidence?.length || 0,
       concurrency: context.cfg.runner.concurrency,
       thresholds: {
         diffCoverageFunctional: context.cfg.thresholds.diffCoverageFunctional,
