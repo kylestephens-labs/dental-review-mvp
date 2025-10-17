@@ -15,6 +15,6 @@ run:
     - name: NODE_ENV
       value: production
     - name: COMMIT_SHA
-      value: $GIT_COMMIT_SHA
+      value: "dev"
     - name: PORT
       value: "3001"
