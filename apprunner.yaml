@@ -18,3 +18,9 @@ run:
       value: "dev"
     - name: PORT
       value: "3001"
+  health-check:
+    path: /healthz
+    interval: 30
+    timeout: 5
+    healthy-threshold: 2
+    unhealthy-threshold: 5
