@@ -8,6 +8,8 @@ This document provides detailed implementation tasks for the Enhanced TDD Enforc
 
 ## **Task 1: Update Commit Message Convention Documentation**
 
+**Task Classification**: Non-Functional
+
 ### **Overview**
 Update the cursor-kickoff-prompt.md to include TDD phase markers in the commit message convention and provide clear examples.
 
@@ -45,9 +47,17 @@ Feature: TDD Phase Marker Documentation
 - **Risk**: Developers might not follow the new format initially
 - **Success**: All commit messages include proper TDD phase markers when appropriate
 
+# AI Response Should:
+- Reference the established context from # 🚀 Senior Engineer - Dental MVP Development
+- Apply the appropriate approach (TDD/Problem Analysis)
+- Work systematically through the task
+- Ask focused questions about specific requirements
+
 ---
 
 ## **Task 2: Fix Diff-Coverage Configuration Alignment**
+
+**Task Classification**: Non-Functional
 
 ### **Overview**
 Align the diff-coverage configuration with the documentation promises to eliminate confusion about whether 85% coverage is required.
@@ -86,9 +96,17 @@ Feature: Diff-Coverage Configuration Alignment
 - **Risk**: Might increase build failures if coverage is too strict
 - **Success**: Configuration and documentation are perfectly aligned
 
+# AI Response Should:
+- Reference the established context from # 🚀 Senior Engineer - Dental MVP Development
+- Apply the appropriate approach (TDD/Problem Analysis)
+- Work systematically through the task
+- Ask focused questions about specific requirements
+
 ---
 
 ## **Task 3: Add TDD Phase Capture CLI Commands**
+
+**Task Classification**: Functional
 
 ### **Overview**
 Create CLI commands that help developers capture TDD phase information and run prove with phase awareness.
@@ -129,9 +147,17 @@ Feature: TDD Phase Capture Commands
 - **Risk**: Additional complexity in CLI interface
 - **Success**: Developers can easily mark phases and run prove with phase awareness
 
+# AI Response Should:
+- Reference the established context from # 🚀 Senior Engineer - Dental MVP Development
+- Apply the appropriate approach (TDD/Problem Analysis)
+- Work systematically through the task
+- Ask focused questions about specific requirements
+
 ---
 
 ## **Task 4: Implement Test Evidence Capture**
+
+**Task Classification**: Functional
 
 ### **Overview**
 Create a system to capture test execution evidence (pass/fail) that can be used by TDD phase detection.
@@ -172,9 +198,17 @@ Feature: Test Evidence Capture
 - **Risk**: Additional file I/O and storage requirements
 - **Success**: Test evidence is properly captured and analyzed
 
+# AI Response Should:
+- Reference the established context from # 🚀 Senior Engineer - Dental MVP Development
+- Apply the appropriate approach (TDD/Problem Analysis)
+- Work systematically through the task
+- Ask focused questions about specific requirements
+
 ---
 
 ## **Task 5: Create Enhanced TDD Phase Detection**
+
+**Task Classification**: Functional
 
 ### **Overview**
 Implement the enhanced TDD phase detection system that uses multiple sources of evidence to determine the current TDD phase.
@@ -216,9 +250,17 @@ Feature: Enhanced TDD Phase Detection
 - **Risk**: Complex logic might have false positives/negatives
 - **Success**: Phase detection is accurate and reliable
 
+# AI Response Should:
+- Reference the established context from # 🚀 Senior Engineer - Dental MVP Development
+- Apply the appropriate approach (TDD/Problem Analysis)
+- Work systematically through the task
+- Ask focused questions about specific requirements
+
 ---
 
 ## **Task 6: Create TDD Green Phase Validation**
+
+**Task Classification**: Functional
 
 ### **Overview**
 Implement validation for the Green phase of TDD, ensuring tests pass and implementation is complete.
@@ -258,9 +300,17 @@ Feature: TDD Green Phase Validation
 - **Risk**: Might be too strict and block legitimate work
 - **Success**: Green phase validation catches incomplete implementations
 
+# AI Response Should:
+- Reference the established context from # 🚀 Senior Engineer - Dental MVP Development
+- Apply the appropriate approach (TDD/Problem Analysis)
+- Work systematically through the task
+- Ask focused questions about specific requirements
+
 ---
 
 ## **Task 7: Create TDD Refactor Phase Validation**
+
+**Task Classification**: Functional
 
 ### **Overview**
 Implement validation for the Refactor phase of TDD, ensuring code quality improvements and behavior preservation.
@@ -300,9 +350,17 @@ Feature: TDD Refactor Phase Validation
 - **Risk**: Quality metrics might be subjective or hard to measure
 - **Success**: Refactor phase validation catches poor refactoring
 
+# AI Response Should:
+- Reference the established context from # 🚀 Senior Engineer - Dental MVP Development
+- Apply the appropriate approach (TDD/Problem Analysis)
+- Work systematically through the task
+- Ask focused questions about specific requirements
+
 ---
 
 ## **Task 8: Create TDD Process Sequence Validation**
+
+**Task Classification**: Functional
 
 ### **Overview**
 Implement validation for the complete TDD process sequence, ensuring Red → Green → Refactor order is followed.
@@ -342,9 +400,17 @@ Feature: TDD Process Sequence Validation
 - **Risk**: Might be too rigid and block legitimate work patterns
 - **Success**: Process sequence validation catches TDD violations
 
+# AI Response Should:
+- Reference the established context from # 🚀 Senior Engineer - Dental MVP Development
+- Apply the appropriate approach (TDD/Problem Analysis)
+- Work systematically through the task
+- Ask focused questions about specific requirements
+
 ---
 
 ## **Task 9: Update Documentation with TDD Phase Guidance**
+
+**Task Classification**: Non-Functional
 
 ### **Overview**
 Update all relevant documentation to include comprehensive guidance on TDD phases and the enhanced prove system.
@@ -385,9 +451,17 @@ Feature: TDD Phase Documentation
 - **Risk**: Documentation might become too complex
 - **Success**: Developers can successfully use TDD phases and validation
 
+# AI Response Should:
+- Reference the established context from # 🚀 Senior Engineer - Dental MVP Development
+- Apply the appropriate approach (TDD/Problem Analysis)
+- Work systematically through the task
+- Ask focused questions about specific requirements
+
 ---
 
 ## **Task 10: Add TDD Phase Testing and Validation**
+
+**Task Classification**: Functional
 
 ### **Overview**
 Create comprehensive tests for all TDD phase functionality to ensure reliability and catch regressions.
@@ -428,6 +502,12 @@ Feature: TDD Phase Testing
 - **Value**: Ensures TDD phase system is reliable and maintainable
 - **Risk**: Testing might be complex due to system interactions
 - **Success**: All TDD functionality is thoroughly tested and validated
+
+# AI Response Should:
+- Reference the established context from # 🚀 Senior Engineer - Dental MVP Development
+- Apply the appropriate approach (TDD/Problem Analysis)
+- Work systematically through the task
+- Ask focused questions about specific requirements
 
 ---
 

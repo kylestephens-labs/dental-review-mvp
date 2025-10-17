@@ -29,7 +29,12 @@ vi.mock('../../../client/ses', () => ({
   }
 }));
 vi.mock('../../../config/database', () => ({
-  pool: vi.fn()
+  pool: vi.fn(() => ({
+    connect: vi.fn(() => ({
+      query: vi.fn(),
+      release: vi.fn()
+    }))
+  }))
 }));
 
 describe('POST /webhooks/stripe', () => {

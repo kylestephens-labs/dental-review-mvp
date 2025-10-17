@@ -4,6 +4,7 @@
 import { config, type ProveConfig } from './config.js';
 import { logger } from './logger.js';
 import { getGitContext, type GitContext } from './utils/git.js';
+import { readTddPhase, type TddPhase, type TddPhaseData } from './utils/tdd-phase.js';
 
 export interface ProveContext {
   // Configuration
@@ -22,9 +23,31 @@ export interface ProveContext {
   // Mode information
   mode: 'functional' | 'non-functional';
   
+  // TDD phase information
+  tddPhase?: TddPhase;
+  tddPhaseTimestamp?: number;
+  
   // Additional context
   startTime: number;
   workingDirectory: string;
+}
+
+/**
+ * Detect TDD phase from .tdd-phase file
+ * @param workingDirectory - Current working directory
+ * @returns TDD phase information or undefined if not found
+ */
+function detectTddPhase(workingDirectory: string): { phase: TddPhase; timestamp: number } | undefined {
+  const phaseData = readTddPhase(workingDirectory);
+  
+  if (!phaseData) {
+    return undefined;
+  }
+  
+  return {
+    phase: phaseData.phase,
+    timestamp: phaseData.timestamp
+  };
 }
 
 /**
@@ -118,6 +141,9 @@ export async function buildContext(baseRefFallback: string = 'origin/main'): Pro
     // Get working directory
     const workingDirectory = process.cwd();
 
+    // Detect TDD phase
+    const tddPhaseInfo = detectTddPhase(workingDirectory);
+
     const context: ProveContext = {
       cfg: config,
       git,
@@ -125,6 +151,8 @@ export async function buildContext(baseRefFallback: string = 'origin/main'): Pro
       isCI,
       log: logger,
       mode,
+      tddPhase: tddPhaseInfo?.phase,
+      tddPhaseTimestamp: tddPhaseInfo?.timestamp,
       startTime,
       workingDirectory,
     };

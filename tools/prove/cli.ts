@@ -23,6 +23,9 @@ if (options.json) {
 if (options.quickMode) {
   logger.header("Prove Quality Gates - Quick Mode");
   logger.info("Running fast checks: env + typecheck + lint + unit tests");
+} else if (options.tdd) {
+  logger.header("Prove Quality Gates - TDD Mode");
+  logger.info("Running prove with TDD phase detection");
 } else {
   logger.header("Prove Quality Gates - Full Mode");
   logger.info("Running all quality gates");
@@ -42,6 +45,17 @@ try {
   // Print context summary
   const summary = getContextSummary(context);
   logger.success(`Context summary: ${summary}`);
+
+  // Show TDD phase information if available
+  if (context.tddPhase) {
+    logger.info(`TDD phase detected: ${context.tddPhase}`);
+    if (context.tddPhaseTimestamp) {
+      const phaseTime = new Date(context.tddPhaseTimestamp).toISOString();
+      logger.info(`Phase timestamp: ${phaseTime}`);
+    }
+  } else if (options.tdd) {
+    logger.info("No TDD phase detected - use 'npm run tdd:red', 'npm run tdd:green', or 'npm run tdd:refactor' to set phase");
+  }
 
   // Test context access
   logger.info("Context details:", {

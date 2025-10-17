@@ -59,6 +59,20 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
+// Clean up DOM after each test to prevent test isolation issues
+afterEach(() => {
+  // Clear the DOM completely
+  document.body.innerHTML = '';
+  
+  // Clear any React roots that might be hanging around
+  const roots = document.querySelectorAll('[data-reactroot]');
+  roots.forEach(root => root.remove());
+  
+  // Clear any test containers
+  const testContainers = document.querySelectorAll('[data-testid]');
+  testContainers.forEach(container => container.remove());
+});
+
 // Clear VITE_FEATURE_* environment variables in tests to prevent interference
 // This allows tests to use updateFeatureFlag mutations without env overrides
 if (typeof process !== 'undefined' && process.env) {

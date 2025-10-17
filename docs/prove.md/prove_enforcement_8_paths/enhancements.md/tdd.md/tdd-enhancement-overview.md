@@ -213,122 +213,51 @@ export async function checkTddProcessSequence(context: ProveContext): Promise<Ch
 
 ---
 
-## **📋 Implementation Tasks**
+## **🏗️ System Architecture**
 
-### **Task 1: Update Commit Message Convention Documentation**
-- **Classification**: Non-Functional
-- **Goal**: Ensure developers know how to use TDD phase markers
-- **Files**: `cursor-kickoff-prompt.md`, `commit-msg-convention.ts`
-- **Acceptance Criteria**:
-  - [ ] Update commit message format to include `[TDD:(red|green|refactor)]` marker
-  - [ ] Add clear examples for each TDD phase
-  - [ ] Update the commit message validation regex
-  - [ ] Add guidance on when to use each phase marker
+### **Architecture Components**
 
-### **Task 2: Fix Diff-Coverage Configuration Alignment**
-- **Classification**: Non-Functional
-- **Goal**: Align configuration with documentation promises
-- **Files**: `prove.config.ts`, `cursor-kickoff-prompt.md`
-- **Acceptance Criteria**:
-  - [ ] Enable diff-coverage toggle in default configuration
-  - [ ] Update documentation to reflect the actual configuration
-  - [ ] Add clear explanation of when diff-coverage is enforced
-  - [ ] Update configuration validation to ensure consistency
+#### **1. Phase Detection Layer**
+```typescript
+interface TddPhaseDetector {
+  detectPhase(context: ProveContext): Promise<'red' | 'green' | 'refactor' | 'unknown'>;
+  extractFromCommitMessage(message: string): 'red' | 'green' | 'refactor' | 'unknown';
+  analyzeTestEvidence(evidence: TestEvidence[]): 'red' | 'green' | 'refactor' | 'unknown';
+  detectRefactoringEvidence(changes: GitChanges): 'refactor' | 'unknown';
+}
+```
 
-### **Task 3: Add TDD Phase Capture CLI Commands**
-- **Classification**: Functional
-- **Goal**: Provide easy-to-use commands for marking TDD phases
-- **Files**: `package.json`, `cli.ts`, `context.ts`
-- **Acceptance Criteria**:
-  - [ ] Create `npm run tdd:red` command
-  - [ ] Create `npm run tdd:green` command
-  - [ ] Create `npm run tdd:refactor` command
-  - [ ] Create `npm run prove:tdd` command with phase detection
-  - [ ] Add phase information to prove context
+#### **2. Phase Validation Layer**
+```typescript
+interface RedPhaseValidator {
+  validateTestFirst(changes: GitChanges): ValidationResult;
+  validateTestQuality(tests: TestFile[]): ValidationResult;
+  validateTestCoverage(coverage: CoverageReport): ValidationResult;
+}
 
-### **Task 4: Implement Test Evidence Capture**
-- **Classification**: Functional
-- **Goal**: Enable automatic TDD phase detection through test evidence
-- **Files**: `testEvidence.ts`, `tests.ts`, `context.ts`
-- **Acceptance Criteria**:
-  - [ ] Create test evidence capture utility
-  - [ ] Capture test results with timestamps
-  - [ ] Store evidence in a structured format
-  - [ ] Integrate evidence capture with test execution
-  - [ ] Add evidence analysis for phase detection
+interface GreenPhaseValidator {
+  validateTestsPass(testResults: TestResults): ValidationResult;
+  validateImplementationComplete(changes: GitChanges): ValidationResult;
+  validateCoverageThreshold(coverage: CoverageReport): ValidationResult;
+}
 
-### **Task 5: Create Enhanced TDD Phase Detection**
-- **Classification**: Functional
-- **Goal**: Create robust phase detection system using multiple sources
-- **Files**: `tddPhaseDetection.ts`, `tddPhaseDetection.ts`, `runner.ts`
-- **Acceptance Criteria**:
-  - [ ] Implement multi-source phase detection
-  - [ ] Add commit message phase extraction
-  - [ ] Add test evidence analysis
-  - [ ] Add refactoring evidence detection
-  - [ ] Create fallback phase detection logic
-  - [ ] Add comprehensive logging for phase detection
+interface RefactorPhaseValidator {
+  validateQualityImprovement(before: CodeMetrics, after: CodeMetrics): ValidationResult;
+  validateBehaviorPreservation(testResults: TestResults): ValidationResult;
+  validateRefactoringOccurred(changes: GitChanges): ValidationResult;
+}
+```
 
-### **Task 6: Create TDD Green Phase Validation**
-- **Classification**: Functional
-- **Goal**: Enforce that Green phase actually makes tests pass
-- **Files**: `tddGreenPhase.ts`, `runner.ts`
-- **Acceptance Criteria**:
-  - [ ] Create Green phase validation check
-  - [ ] Ensure tests actually pass in Green phase
-  - [ ] Validate implementation completeness
-  - [ ] Check coverage thresholds for Green phase
-  - [ ] Add clear error messages for Green phase failures
+#### **3. Process Sequence Layer**
+```typescript
+interface ProcessSequenceValidator {
+  validateSequence(phases: TddPhase[]): ValidationResult;
+  detectSkippedPhases(phases: TddPhase[]): SkippedPhase[];
+  provideGuidance(violations: SequenceViolation[]): Guidance[];
+}
+```
 
-### **Task 7: Create TDD Refactor Phase Validation**
-- **Classification**: Functional
-- **Goal**: Enforce that Refactor phase improves code quality
-- **Files**: `tddRefactorPhase.ts`, `runner.ts`
-- **Acceptance Criteria**:
-  - [ ] Create Refactor phase validation check
-  - [ ] Validate code quality improvements
-  - [ ] Ensure behavior preservation
-  - [ ] Check that refactoring actually happened
-  - [ ] Add clear error messages for Refactor phase failures
-
-### **Task 8: Create TDD Process Sequence Validation**
-- **Classification**: Functional
-- **Goal**: Enforce proper TDD process sequence
-- **Files**: `tddProcessSequence.ts`, `runner.ts`
-- **Acceptance Criteria**:
-  - [ ] Create process sequence validation check
-  - [ ] Validate Red → Green → Refactor order
-  - [ ] Detect skipped phases
-  - [ ] Add clear error messages for sequence violations
-  - [ ] Provide guidance on proper TDD process
-
-### **Task 9: Update Documentation with TDD Phase Guidance**
-- **Classification**: Non-Functional
-- **Goal**: Provide comprehensive guidance on TDD phases
-- **Files**: `cursor-kickoff-prompt.md`, `prove-overview.md`, `00-100x-workflow.md`
-- **Acceptance Criteria**:
-  - [ ] Update cursor-kickoff-prompt.md with TDD phase guidance
-  - [ ] Add examples for each TDD phase
-  - [ ] Document CLI commands for phase management
-  - [ ] Add troubleshooting guide for TDD validation
-  - [ ] Update workflow documentation
-
-### **Task 10: Add TDD Phase Testing and Validation**
-- **Classification**: Functional
-- **Goal**: Ensure TDD phase system is thoroughly tested
-- **Files**: `tests/tdd/`, `tdd*.test.ts`
-- **Acceptance Criteria**:
-  - [ ] Create unit tests for phase detection
-  - [ ] Create integration tests for TDD validation
-  - [ ] Add end-to-end tests for complete TDD workflow
-  - [ ] Test error handling and edge cases
-  - [ ] Add performance tests for phase detection
-  - [ ] Validate all acceptance criteria from previous tasks
-
----
-
-## **🏗️ File Structure**
-
+### **File Structure**
 ```
 tools/prove/checks/
 ├── tddChangedHasTests.ts     # Enhanced existing check
@@ -341,37 +270,48 @@ tools/prove/checks/
     └── refactorAnalysis.ts   # New: Refactoring analysis
 ```
 
+### **Integration Points**
+```typescript
+// Enhanced Prove Context
+interface ProveContext {
+  // ... existing context
+  tdd: {
+    phase: 'red' | 'green' | 'refactor' | 'unknown';
+    evidence: TestEvidence[];
+    sequence: TddPhase[];
+    validation: PhaseValidationResults;
+  };
+}
+
+// New TDD checks integrated into runner
+const tddChecks = [
+  { id: 'tdd-phase-detection', fn: checkTddPhaseDetection },
+  { id: 'tdd-red-phase', fn: checkTddRedPhase },
+  { id: 'tdd-green-phase', fn: checkTddGreenPhase },
+  { id: 'tdd-refactor-phase', fn: checkTddRefactorPhase },
+  { id: 'tdd-process-sequence', fn: checkTddProcessSequence }
+];
+```
+
 ---
 
-## **⚙️ Configuration Integration**
+## **📋 Implementation Strategy**
 
-```typescript
-// Add to existing prove.config.ts
-export const defaultConfig = {
-  // ... existing config
-  tdd: {
-    enabled: true,
-    requirePhaseMarkers: true,
-    phases: {
-      red: {
-        requireTestFirst: true,
-        requireTestQuality: true,
-        minTestCoverage: 0.8
-      },
-      green: {
-        requireTestsPass: true,
-        requireImplementationValidation: true,
-        minCoverageThreshold: 85
-      },
-      refactor: {
-        requireQualityImprovement: true,
-        requireBehaviorPreservation: true,
-        qualityMetrics: ['complexity', 'duplication', 'maintainability']
-      }
-    }
-  }
-}
-```
+### **Phase 1: Foundation (Week 1)**
+1. **Update commit message convention** with TDD phase markers
+2. **Fix diff-coverage configuration** alignment
+3. **Add TDD phase capture CLI commands**
+4. **Implement test evidence capture**
+
+### **Phase 2: Core System (Week 2-3)**
+1. **Create enhanced TDD phase detection**
+2. **Implement Green phase validation**
+3. **Implement Refactor phase validation**
+4. **Create process sequence validation**
+
+### **Phase 3: Documentation & Testing (Week 4)**
+1. **Update documentation** with TDD phase guidance
+2. **Add comprehensive testing** for TDD system
 
 ---
 
@@ -406,15 +346,70 @@ export const defaultConfig = {
 
 ---
 
-## **📚 Supporting Documentation**
+## **📊 Success Metrics**
 
-This enhancement requires updates to several existing documentation files:
+### **Immediate (Week 1-2)**
+- [ ] All documentation updated with TDD phase guidance
+- [ ] Configuration aligned with documentation
+- [ ] CLI commands working and documented
+- [ ] Phase detection accuracy > 80%
 
-1. **`cursor-kickoff-prompt.md`** - Add TDD phase guidance and examples
-2. **`prove-overview.md`** - Update with TDD phase information
-3. **`00-100x-workflow.md`** - Include TDD phase workflow
-4. **`task_template.md`** - Add TDD phase considerations
-5. **`prove-report.json`** - Include TDD phase metrics
+### **Short-term (Week 3-4)**
+- [ ] Developer adoption of TDD phase markers > 60%
+- [ ] TDD validation working for all phases
+- [ ] Evidence capture system operational
+- [ ] Process sequence validation functional
+
+### **Long-term (Month 2-3)**
+- [ ] Developer adoption of TDD phase markers > 80%
+- [ ] TDD phase detection accuracy > 90%
+- [ ] Reduction in TDD violations > 70%
+- [ ] Developer satisfaction with TDD system > 85%
+
+---
+
+## **🔧 Configuration Reference**
+
+### **TDD Configuration Schema**
+```typescript
+interface TddConfig {
+  enabled: boolean;
+  requirePhaseMarkers: boolean;
+  phases: {
+    red: {
+      requireTestFirst: boolean;
+      requireTestQuality: boolean;
+      minTestCoverage: number;
+    };
+    green: {
+      requireTestsPass: boolean;
+      requireImplementationValidation: boolean;
+      minCoverageThreshold: number;
+    };
+    refactor: {
+      requireQualityImprovement: boolean;
+      requireBehaviorPreservation: boolean;
+      qualityMetrics: string[];
+    };
+  };
+  sequence: {
+    requireRedGreenRefactor: boolean;
+    maxCommitsToAnalyze: number;
+  };
+}
+```
+
+### **CLI Commands**
+```bash
+# TDD phase management
+npm run tdd:red      # Mark current work as Red phase
+npm run tdd:green    # Mark current work as Green phase
+npm run tdd:refactor # Mark current work as Refactor phase
+
+# Enhanced prove commands
+npm run prove:tdd    # Run prove with TDD phase detection
+npm run prove:phase=red  # Run prove expecting Red phase
+```
 
 ---
 

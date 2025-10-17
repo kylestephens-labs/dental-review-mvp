@@ -6,6 +6,7 @@ export interface CLIOptions {
   verbose: boolean;
   json: boolean;
   help: boolean;
+  tdd: boolean;
 }
 
 /**
@@ -19,6 +20,7 @@ export function parseArgs(args: string[]): CLIOptions {
     verbose: false,
     json: false,
     help: false,
+    tdd: false,
   };
 
   for (const arg of args) {
@@ -36,6 +38,9 @@ export function parseArgs(args: string[]): CLIOptions {
       case '--help':
       case '-h':
         options.help = true;
+        break;
+      case '--tdd':
+        options.tdd = true;
         break;
     }
   }

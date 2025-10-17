@@ -12,11 +12,15 @@ export default defineConfig({
         singleFork: true
       }
     },
-    maxThreads: 2,
+    maxThreads: 1,
     minThreads: 1,
     teardownTimeout: 10000,
     testTimeout: 10000,
     hookTimeout: 10000,
+    isolate: true,
+    sequence: {
+      concurrent: false
+    },
     exclude: [
       '**/node_modules/**',
       '**/dist/**',
