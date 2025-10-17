@@ -34,25 +34,26 @@ app.use((req, res) => {
 
 // Start server
 async function startServer() {
-  try {
-    // Test database connection
-    const dbStatus = await testConnections();
-    console.log('Database status:', dbStatus);
-    
-    if (dbStatus.status === 'error') {
-      console.error('Failed to connect to database:', dbStatus.error);
-      process.exit(1);
-    }
+  // Start server immediately - don't wait for database
+  app.listen(PORT, () => {
+    console.log(`Backend server running on port ${PORT}`);
+    console.log(`Health check: http://localhost:${PORT}/healthz`);
+    console.log(`Stripe webhook: http://localhost:${PORT}/webhooks/stripe`);
+  });
 
-    app.listen(PORT, () => {
-      console.log(`Backend server running on port ${PORT}`);
-      console.log(`Health check: http://localhost:${PORT}/healthz`);
-      console.log(`Stripe webhook: http://localhost:${PORT}/webhooks/stripe`);
-    });
-  } catch (error) {
-    console.error('Failed to start server:', error);
-    process.exit(1);
-  }
+  // Test database connection asynchronously (non-blocking)
+  testConnections().then(dbStatus => {
+    console.log('Database status:', dbStatus);
+    if (dbStatus.status === 'error') {
+      console.warn('⚠️  Database unavailable - some features will be limited');
+      console.warn('Database error:', dbStatus.error);
+    } else {
+      console.log('✅ Database connection successful');
+    }
+  }).catch(err => {
+    console.warn('⚠️  Database connection test failed:', err);
+    console.warn('Some features may not work properly');
+  });
 }
 
 startServer();
