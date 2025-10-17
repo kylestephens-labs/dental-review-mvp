@@ -27,6 +27,9 @@ import { checkDeliveryMode } from './checks/deliveryMode.js';
 import { checkSecurity } from './checks/security.js';
 import { checkContracts } from './checks/contracts.js';
 import { checkDbMigrations } from './checks/dbMigrations.js';
+import { checkTddGreenPhase } from './checks/tddGreenPhase.js';
+import { checkTddRefactorPhase } from './checks/tddRefactorPhase.js';
+import { checkTddProcessSequence } from './checks/tddProcessSequence.js';
 
 export interface CheckResult {
   id: string;
@@ -82,6 +85,24 @@ function getExecutionPlan(context: ProveContext, quickMode: boolean) {
     if (context.cfg.toggles.tdd !== false) {
       parallelChecks.push(
         { id: 'tdd-changed-has-tests', fn: checkTddChangedHasTests }
+      );
+    }
+    // Add TDD Green Phase validation if in Green phase
+    if (context.tddPhase === 'green') {
+      parallelChecks.push(
+        { id: 'tdd-green-phase', fn: checkTddGreenPhase }
+      );
+    }
+    // Add TDD Refactor Phase validation if in Refactor phase
+    if (context.tddPhase === 'refactor') {
+      parallelChecks.push(
+        { id: 'tdd-refactor-phase', fn: checkTddRefactorPhase }
+      );
+    }
+    // Add TDD Process Sequence validation for functional tasks
+    if (context.mode === 'functional') {
+      parallelChecks.push(
+        { id: 'tdd-process-sequence', fn: checkTddProcessSequence }
       );
     }
     // Move diff-coverage to coverage-dependent checks

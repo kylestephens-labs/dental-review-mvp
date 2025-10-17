@@ -18,7 +18,7 @@ docs/code_delivery/tasks_titles.md
 Codex, please code review Cursor’s Task 12 – “Add payment sync webhook.”
 Here’s Cursor’s summary:
 - Built …
-I care most about delivering the task goal and high quality acceptance criteria that passes tests. Flag anything risky or missing tests.
+I care most about delivering the task goal and high quality acceptance criteria that passes tests. Flag anything risky or missing tests and offer opporunities for cursor to refactor to make the code better.
 
 
 

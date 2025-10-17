@@ -15,6 +15,9 @@ import { checkTypecheck } from './typecheck.js';
 import { checkTests } from './tests.js';
 import { checkTddChangedHasTests } from './tddChangedHasTests.js';
 import { checkTddPhaseDetection } from './tddPhaseDetection.js';
+import { checkTddGreenPhase } from './tddGreenPhase.js';
+import { checkTddRefactorPhase } from './tddRefactorPhase.js';
+import { checkTddProcessSequence } from './tddProcessSequence.js';
 import { checkDiffCoverage } from './diffCoverage.js';
 import { checkCoverage } from './coverage.js';
 import { checkBuildWeb } from './buildWeb.js';
@@ -116,6 +119,27 @@ export const PROVE_CHECKS: Record<string, CheckDefinition> = {
     category: 'mode-specific',
     quickMode: true,
   },
+  'tdd-green-phase': {
+    id: 'tdd-green-phase',
+    name: 'TDD Green Phase Validation',
+    description: 'Validate that tests pass and implementation is complete in Green phase',
+    category: 'mode-specific',
+    quickMode: true,
+  },
+  'tdd-refactor-phase': {
+    id: 'tdd-refactor-phase',
+    name: 'TDD Refactor Phase Validation',
+    description: 'Validate that refactoring improves code quality while preserving behavior',
+    category: 'mode-specific',
+    quickMode: true,
+  },
+  'tdd-process-sequence': {
+    id: 'tdd-process-sequence',
+    name: 'TDD Process Sequence Validation',
+    description: 'Validate that TDD process follows proper Red → Green → Refactor order',
+    category: 'mode-specific',
+    quickMode: true,
+  },
   'diff-coverage': {
     id: 'diff-coverage',
     name: 'Diff Coverage',
@@ -193,6 +217,9 @@ export const CHECK_FUNCTIONS = {
   tests: checkTests,
   'tdd-changed-has-tests': checkTddChangedHasTests,
   'tdd-phase-detection': checkTddPhaseDetection,
+  'tdd-green-phase': checkTddGreenPhase,
+  'tdd-refactor-phase': checkTddRefactorPhase,
+  'tdd-process-sequence': checkTddProcessSequence,
   'diff-coverage': checkDiffCoverage,
   coverage: checkCoverage,
   'build-web': checkBuildWeb,

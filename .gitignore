@@ -78,3 +78,4 @@ prove-report.json
 .tdd-phase
 .tdd-phase.*
 .prove/
+coverage/
