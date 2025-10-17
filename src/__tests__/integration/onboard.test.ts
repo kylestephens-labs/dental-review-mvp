@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
-import OnboardPage from '../../pages/onboard/[token].tsx';
+import OnboardPage from '../../pages/onboard/[token]';
 import { fetchOnboardData } from '../../lib/api/onboard';
 
 // Mock the API client
