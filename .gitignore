@@ -77,3 +77,4 @@ prove-report.json
 # TDD Phase tracking files
 .tdd-phase
 .tdd-phase.*
+.prove/

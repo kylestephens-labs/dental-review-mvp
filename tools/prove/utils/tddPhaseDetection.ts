@@ -37,24 +37,30 @@ export function analyzeTestEvidence(evidence: TestEvidence[]): TddPhase {
 
 /**
  * Detect refactoring evidence from changed files
- * Identifies refactoring based on non-test file changes
+ * Only detects refactor when ALL changed files are non-test files
  */
 export function detectRefactoringEvidence(changedFiles: string[]): TddPhase {
   if (changedFiles.length === 0) {
     return 'unknown';
   }
   
-  // Check if files are non-test files (simple heuristic)
+  // Check if files are test files (simple heuristic)
   const isTestFile = (file: string): boolean => {
     return file.includes('.test.') || 
            file.includes('.spec.') || 
            file.endsWith('.test.ts') || 
-           file.endsWith('.spec.ts');
+           file.endsWith('.spec.ts') ||
+           file.includes('/test/') ||
+           file.includes('/tests/') ||
+           file.includes('__tests__') ||
+           file.includes('test.ts') ||
+           file.includes('spec.ts');
   };
   
-  const hasNonTestFiles = changedFiles.some(file => !isTestFile(file));
+  // Only detect refactor if ALL files are non-test files
+  const allNonTestFiles = changedFiles.every(file => !isTestFile(file));
   
-  if (hasNonTestFiles) {
+  if (allNonTestFiles) {
     return 'refactor';
   }
   

@@ -92,3 +92,18 @@ describe('TDD Phase Detection - Step 7', () => {
     expect(phase).toBe('red');
   });
 });
+
+describe('TDD Phase Detection - Step 8', () => {
+  it('should handle mixed test and non-test files correctly', () => {
+    // This test covers the refactor detection fix
+    const changedFiles = ['src/refactored.ts', 'src/test.ts'];
+    const phase = detectRefactoringEvidence(changedFiles);
+    expect(phase).toBe('unknown'); // Should be unknown, not refactor
+  });
+
+  it('should detect refactor only when ALL files are non-test files', () => {
+    const changedFiles = ['src/refactored.ts', 'src/improved.ts'];
+    const phase = detectRefactoringEvidence(changedFiles);
+    expect(phase).toBe('refactor');
+  });
+});

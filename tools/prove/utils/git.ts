@@ -13,6 +13,8 @@ export interface GitContext {
   hasUncommittedChanges: boolean;
   lastCommitHash: string;
   baseCommitHash: string;
+  commitHash: string;
+  commitMessage: string;
 }
 
 export interface ChangedFile {
@@ -216,6 +218,29 @@ export async function getCurrentCommitHash(): Promise<string> {
 }
 
 /**
+ * Get the current commit message
+ * @returns Promise<string> - Current commit message
+ */
+export async function getCommitMessage(): Promise<string> {
+  try {
+    const result = await exec('git', ['log', '-1', '--pretty=%B']);
+    
+    if (!result.success) {
+      throw new Error(`Failed to get commit message: ${result.stderr}`);
+    }
+
+    const message = result.stdout.trim();
+    logger.info(`Commit message: ${message.substring(0, 50)}...`);
+    return message;
+  } catch (error) {
+    logger.error('Failed to get commit message', { 
+      error: error instanceof Error ? error.message : String(error) 
+    });
+    return '';
+  }
+}
+
+/**
  * Get the base commit hash
  * @param baseRef - Base reference
  * @returns Promise<string> - Base commit hash
@@ -266,6 +291,9 @@ export async function getGitContext(baseRefFallback: string = 'origin/main'): Pr
       getBaseCommitHash(baseRef)
     ]);
 
+    // Get commit message
+    const commitMessage = await getCommitMessage();
+    
     const context: GitContext = {
       currentBranch,
       baseRef,
@@ -274,6 +302,8 @@ export async function getGitContext(baseRefFallback: string = 'origin/main'): Pr
       hasUncommittedChanges: hasUncommittedChangesFlag,
       lastCommitHash: currentCommitHash,
       baseCommitHash,
+      commitHash: currentCommitHash,
+      commitMessage,
     };
 
     logger.success('Git context built successfully', {

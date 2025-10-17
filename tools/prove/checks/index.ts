@@ -14,6 +14,7 @@ import { checkLint } from './lint.js';
 import { checkTypecheck } from './typecheck.js';
 import { checkTests } from './tests.js';
 import { checkTddChangedHasTests } from './tddChangedHasTests.js';
+import { checkTddPhaseDetection } from './tddPhaseDetection.js';
 import { checkDiffCoverage } from './diffCoverage.js';
 import { checkCoverage } from './coverage.js';
 import { checkBuildWeb } from './buildWeb.js';
@@ -108,6 +109,13 @@ export const PROVE_CHECKS: Record<string, CheckDefinition> = {
     category: 'mode-specific',
     quickMode: true,
   },
+  'tdd-phase-detection': {
+    id: 'tdd-phase-detection',
+    name: 'TDD Phase Detection',
+    description: 'Detect current TDD phase (red/green/refactor) using multiple evidence sources',
+    category: 'mode-specific',
+    quickMode: true,
+  },
   'diff-coverage': {
     id: 'diff-coverage',
     name: 'Diff Coverage',
@@ -184,6 +192,7 @@ export const CHECK_FUNCTIONS = {
   typecheck: checkTypecheck,
   tests: checkTests,
   'tdd-changed-has-tests': checkTddChangedHasTests,
+  'tdd-phase-detection': checkTddPhaseDetection,
   'diff-coverage': checkDiffCoverage,
   coverage: checkCoverage,
   'build-web': checkBuildWeb,

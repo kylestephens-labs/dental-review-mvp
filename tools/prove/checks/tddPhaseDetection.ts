@@ -11,7 +11,18 @@ export interface TddPhaseDetectionResult {
   confidence: 'high' | 'medium' | 'low';
 }
 
-export async function checkTddPhaseDetection(context: ProveContext): Promise<TddPhaseDetectionResult> {
+export interface CheckResult {
+  ok: boolean;
+  reason: string;
+  ms: number;
+  phase?: 'red' | 'green' | 'refactor' | 'unknown';
+  sources?: string[];
+  confidence?: 'high' | 'medium' | 'low';
+}
+
+export async function checkTddPhaseDetection(context: ProveContext): Promise<CheckResult> {
+  const startTime = Date.now();
+  
   logger.info('Starting TDD phase detection', {
     commitMessage: context.git.commitMessage,
     testEvidenceCount: context.testEvidence?.length || 0,
@@ -46,26 +57,36 @@ export async function checkTddPhaseDetection(context: ProveContext): Promise<Tdd
       if (confidence === 'low') confidence = 'medium';
     }
     
-    const result: TddPhaseDetectionResult = {
+    const duration = Date.now() - startTime;
+    
+    logger.success('TDD phase detected', {
+      phase,
+      sources,
+      confidence,
+      duration
+    });
+    
+    return {
+      ok: true,
+      reason: `TDD phase detected: ${phase} (${sources.join(', ')})`,
+      ms: duration,
       phase,
       sources,
       confidence
     };
     
-    logger.success('TDD phase detected', {
-      phase,
-      sources,
-      confidence
-    });
-    
-    return result;
-    
   } catch (error) {
+    const duration = Date.now() - startTime;
+    
     logger.error('TDD phase detection failed', {
-      error: error instanceof Error ? error.message : String(error)
+      error: error instanceof Error ? error.message : String(error),
+      duration
     });
     
     return {
+      ok: false,
+      reason: `TDD phase detection failed: ${error instanceof Error ? error.message : String(error)}`,
+      ms: duration,
       phase: 'unknown',
       sources: [],
       confidence: 'low'

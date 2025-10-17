@@ -6,6 +6,7 @@ import { type ProveContext } from '../context.js';
 import { exec } from '../utils/exec.js';
 import { logger } from '../logger.js';
 import { captureTestEvidence, storeTestEvidence, TestResults } from '../utils/testEvidence.js';
+import { detectTddPhase } from '../utils/tddPhaseDetection.js';
 
 /**
  * Parse test results from vitest output
@@ -75,17 +76,26 @@ export async function checkTests(context: ProveContext): Promise<TestCheckResult
     const testResults = parseTestResults(result.stdout, result.stderr);
     
     // Capture test evidence for TDD phase detection
-    let evidenceId: string | undefined;
-    try {
-      const evidence = await captureTestEvidence(
-        context, 
-        testResults, 
-        context.tddPhase || 'unknown'
-      );
-      
-      // Store evidence for later analysis
-      await storeTestEvidence(evidence, '.prove/evidence.json');
-      evidenceId = evidence.id;
+      let evidenceId: string | undefined;
+      try {
+        // Detect TDD phase if not explicitly set
+        const detectedPhase = context.tddPhase || await detectTddPhase(context);
+        
+        const evidence = await captureTestEvidence(
+          context, 
+          testResults, 
+          detectedPhase
+        );
+        
+        // Store evidence for later analysis
+        await storeTestEvidence(evidence, '.prove/evidence.json');
+        evidenceId = evidence.id;
+        
+        // Update context with new evidence for subsequent checks
+        if (!context.testEvidence) {
+          context.testEvidence = [];
+        }
+        context.testEvidence.push(evidence);
       
       logger.info('Test evidence captured', {
         evidenceId: evidence.id,

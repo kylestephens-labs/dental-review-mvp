@@ -8,7 +8,7 @@ import { logger } from '../logger.js';
  */
 export interface TestEvidence {
   id: string;
-  phase: 'red' | 'green' | 'refactor';
+  phase: 'red' | 'green' | 'refactor' | 'unknown';
   timestamp: string;
   testResults: {
     passed: number;
@@ -82,8 +82,8 @@ function validateTestResults(testResults: TestResults): void {
 /**
  * Validate TDD phase
  */
-function validatePhase(phase: string): asserts phase is 'red' | 'green' | 'refactor' {
-  if (!['red', 'green', 'refactor'].includes(phase)) {
+function validatePhase(phase: string): asserts phase is 'red' | 'green' | 'refactor' | 'unknown' {
+  if (!['red', 'green', 'refactor', 'unknown'].includes(phase)) {
     throw new Error(`Invalid phase: ${phase}`);
   }
 }
@@ -92,7 +92,7 @@ function validatePhase(phase: string): asserts phase is 'red' | 'green' | 'refac
  * Create test evidence from parameters
  */
 export function createTestEvidence(params: {
-  phase: 'red' | 'green' | 'refactor';
+  phase: 'red' | 'green' | 'refactor' | 'unknown';
   testResults: TestResults;
   changedFiles: string[];
   commitHash?: string;
