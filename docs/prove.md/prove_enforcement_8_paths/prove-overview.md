@@ -6,6 +6,7 @@ This document explains how to implement the end-to-end `prove` workflow so every
 - **Single source of truth** – One CLI (`npm run prove`) orchestrates all checks. Local runs, CI, and LLM agents call the same entry point.
 - **Objective signals** – Never trust narration from an assistant. Trust the verifier logs that the CLI emits.
 - **Mode-aware enforcement** – Functional tasks must follow Red → Green → Refactor with diff-aware coverage; non-functional tasks must attach problem analysis.
+- **Enhanced TDD enforcement** – Multi-phase TDD validation with phase detection, sequence validation, and quality improvements.
 - **Trunk discipline built-in** – The CLI refuses to run on non-main branches and fails if a dry-merge with `origin/main` would conflict.
 
 ## Repository Integration
@@ -111,6 +112,15 @@ await Promise.all(parallelChecks.map(runWithLimit));
 | --- | --- | --- | --- |
 | TDD Changed Files Have Tests | `tdd-changed-has-tests` | Ensure all changed files have corresponding test files (functional mode only) | ✅ |
 | Diff Coverage | `diff-coverage` | Ensure changed lines meet coverage threshold (functional mode only) | ✅ |
+
+#### Enhanced TDD Phase Checks
+| Check | ID | Description | Quick Mode |
+| --- | --- | --- | --- |
+| TDD Phase Detection | `tdd-phase-detection` | Automatically detect current TDD phase from commit messages and test evidence | ✅ |
+| TDD Red Phase | `tdd-red-phase` | Validate Red phase: tests written first, failing, and meeting quality standards | ✅ |
+| TDD Green Phase | `tdd-green-phase` | Validate Green phase: tests pass, implementation complete, coverage met | ✅ |
+| TDD Refactor Phase | `tdd-refactor-phase` | Validate Refactor phase: quality improvements made, behavior preserved | ✅ |
+| TDD Process Sequence | `tdd-process-sequence` | Validate complete Red → Green → Refactor sequence is followed | ✅ |
 
 #### Optional Checks (Toggle-Controlled)
 | Check | ID | Description | Quick Mode |
@@ -264,4 +274,94 @@ Add optional checks (`security`, `contracts`, `db-migrations`) behind config tog
 - **Main-branch hotfix** – Hotfixes still pass through `npm run prove`. Developers can run `npm run prove:quick` locally to unblock urgent fixes; CI re-runs the full gate before merge.
 - **New workspace/package** – Add adapter checks that shell into each workspace (e.g., `pnpm -F web lint`) so `prove` scales to monorepos without duplicating logic.
 
-By funnelling every workflow through `npm run prove`, you turn subjective “looks done” statements into objective signals. The gate is tool-agnostic: whether the change comes from Cursor, Windsurf, MCP, or manual edits, the same verifiers run, guaranteeing consistent quality.
+By funnelling every workflow through `npm run prove`, you turn subjective "looks done" statements into objective signals. The gate is tool-agnostic: whether the change comes from Cursor, Windsurf, MCP, or manual edits, the same verifiers run, guaranteeing consistent quality.
+
+## Enhanced TDD System
+
+### TDD Phase Markers
+The enhanced TDD system uses phase markers in commit messages to enable automatic phase detection and validation:
+
+```bash
+# Red Phase - Write failing tests first
+feat: add user authentication [T-2024-01-15-001] [MODE:F] [TDD:red]
+
+# Green Phase - Make tests pass with minimal implementation
+fix: implement login functionality [T-2024-01-15-002] [MODE:F] [TDD:green]
+
+# Refactor Phase - Improve code quality while preserving behavior
+refactor: improve code structure [T-2024-01-15-003] [MODE:F] [TDD:refactor]
+```
+
+### TDD Phase Commands
+```bash
+# Mark current work as specific TDD phase
+npm run tdd:red      # Mark as Red phase
+npm run tdd:green    # Mark as Green phase
+npm run tdd:refactor # Mark as Refactor phase
+
+# Run prove with TDD phase detection
+npm run prove:tdd    # Run prove with phase detection
+```
+
+### TDD Phase Validation
+
+#### Red Phase Requirements
+- ✅ Tests must be written before implementation
+- ✅ Tests must fail initially (Red phase)
+- ✅ Test quality meets requirements
+- ✅ Minimum test coverage threshold
+
+#### Green Phase Requirements
+- ✅ All tests must pass
+- ✅ Implementation must be complete
+- ✅ Coverage threshold met (85%)
+- ✅ No broken functionality
+
+#### Refactor Phase Requirements
+- ✅ Code quality improvements made
+- ✅ Behavior preserved (all tests still pass)
+- ✅ Refactoring actually occurred
+- ✅ Quality metrics improved
+
+### TDD Process Sequence
+The system validates the complete TDD cycle:
+1. **Red** → Write failing tests
+2. **Green** → Make tests pass
+3. **Refactor** → Improve code quality
+
+**Violations caught:**
+- Skipping phases (e.g., Red → Refactor)
+- Wrong phase order
+- Missing phase markers
+
+### TDD Troubleshooting
+
+#### Common Issues
+```bash
+# Issue: Phase not detected
+# Solution: Add explicit phase marker to commit message
+git commit -m "feat: add feature [T-2024-01-15-001] [MODE:F] [TDD:red]"
+
+# Issue: Tests not written first (Red phase failure)
+# Solution: Write failing tests before implementation
+npm run test -- --watch
+
+# Issue: Tests failing (Green phase failure)
+# Solution: Fix implementation to make tests pass
+npm run test
+
+# Issue: No quality improvement (Refactor phase failure)
+# Solution: Actually refactor code (extract methods, improve naming, etc.)
+```
+
+#### Debugging Commands
+```bash
+# Check current TDD phase
+npm run tdd:status
+
+# Run prove with detailed TDD logging
+npm run prove:tdd -- --verbose
+
+# Check TDD evidence
+cat .prove/tdd-evidence.json
+```

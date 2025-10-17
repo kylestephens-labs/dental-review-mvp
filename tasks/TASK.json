@@ -1,0 +1,21 @@
+{
+  "id": "T-2025-01-18-009",
+  "title": "Update Documentation with TDD Phase Guidance",
+  "mode": "non-functional",
+  "description": "Update all relevant documentation to include comprehensive guidance on TDD phases and the enhanced prove system",
+  "acceptanceCriteria": [
+    "Update cursor-kickoff-prompt.md with TDD phase guidance",
+    "Add examples for each TDD phase",
+    "Document CLI commands for phase management",
+    "Add troubleshooting guide for TDD validation",
+    "Update workflow documentation"
+  ],
+  "files": [
+    "docs/prove.md/prove_enforcement_8_paths/cursor-kickoff-prompt.md",
+    "docs/prove.md/prove_enforcement_8_paths/prove-overview.md",
+    ".rules/00-100x-workflow.md"
+  ],
+  "dependencies": ["T-2025-01-18-001", "T-2025-01-18-002", "T-2025-01-18-003", "T-2025-01-18-004", "T-2025-01-18-005", "T-2025-01-18-006", "T-2025-01-18-007", "T-2025-01-18-008"],
+  "created": "2025-01-18T00:00:00Z",
+  "updated": "2025-01-18T00:00:00Z"
+}

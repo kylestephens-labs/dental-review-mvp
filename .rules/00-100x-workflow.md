@@ -16,6 +16,13 @@ git merge origin/main --no-commit
 - **Functional** → TDD: RED (write failing test) → GREEN (minimal code to pass) → REFACTOR (improve safely)
 - **Non-Functional** → Problem Analysis: Analyze → Identify root cause → Fix directly → Validate
 
+### Enhanced TDD Workflow
+- **Red Phase**: Write failing tests first, mark with `[TDD:red]`
+- **Green Phase**: Make tests pass with minimal implementation, mark with `[TDD:green]`
+- **Refactor Phase**: Improve code quality while preserving behavior, mark with `[TDD:refactor]`
+- **Phase Commands**: Use `npm run tdd:red`, `npm run tdd:green`, `npm run tdd:refactor`
+- **Validation**: Run `npm run prove:tdd` for TDD-specific validation
+
 ## 4) Critical Commands
 ```bash
 # Conflict check (first)
@@ -29,6 +36,12 @@ npm run build
 
 # Check form validation
 npm run test:forms
+
+# TDD Phase Commands
+npm run tdd:red      # Mark current work as Red phase
+npm run tdd:green    # Mark current work as Green phase
+npm run tdd:refactor # Mark current work as Refactor phase
+npm run prove:tdd    # Run prove with TDD phase detection
 ```
 
 ## 5) Definition of Done (DoD)
@@ -51,6 +64,13 @@ For complete methodology, examples, and troubleshooting:
 - **Form Validation**: Write test for validation logic → Implement minimal validation → Refactor for clarity
 - **Supabase Integration**: Test database operations → Implement integration → Optimize error handling
 - **n8n Workflow**: Test workflow logic → Implement minimal workflow → Refactor for maintainability
+
+### Enhanced TDD Workflow
+- **Red Phase**: Write failing tests first, mark with `[TDD:red]`
+- **Green Phase**: Make tests pass with minimal implementation, mark with `[TDD:green]`
+- **Refactor Phase**: Improve code quality while preserving behavior, mark with `[TDD:refactor]`
+- **Phase Commands**: Use `npm run tdd:red`, `npm run tdd:green`, `npm run tdd:refactor`
+- **Validation**: Run `npm run prove:tdd` for TDD-specific validation
 
 ### Non-Functional Tasks (Problem Analysis)
 - **Build Configuration**: Analyze build issues → Identify root cause → Fix configuration
@@ -164,6 +184,8 @@ npm run build
 2. **Form validation errors**: Verify input schemas and validation logic
 3. **Supabase connection issues**: Check credentials and network
 4. **n8n workflow failures**: Verify webhook URLs and authentication
+5. **TDD phase detection failures**: Check commit message format and phase markers
+6. **TDD validation failures**: Ensure proper phase sequence and requirements
 
 ### Debug Steps
 1. **Check logs**: Review error messages and stack traces
@@ -171,6 +193,9 @@ npm run build
 3. **Verify environment**: Check environment variables and configuration
 4. **Test individual components**: Isolate the problem area
 5. **Check external services**: Verify Supabase and n8n status
+6. **TDD phase debugging**: Check commit message format and phase markers
+7. **TDD validation debugging**: Run `npm run prove:tdd -- --verbose`
+8. **TDD evidence checking**: Review `.prove/tdd-evidence.json`
 
 ## 14) Resources
 
@@ -179,3 +204,6 @@ npm run build
 - **Form Validation**: `src/lib/validators.ts`
 - **Supabase Integration**: `src/integrations/supabase/`
 - **n8n Workflows**: `supabase/functions/`
+- **TDD Documentation**: `docs/prove.md/prove_enforcement_8_paths/enhancements.md/tdd.md/`
+- **TDD Phase Commands**: `npm run tdd:red`, `npm run tdd:green`, `npm run tdd:refactor`
+- **TDD Validation**: `npm run prove:tdd`
