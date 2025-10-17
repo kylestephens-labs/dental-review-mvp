@@ -82,6 +82,25 @@ export type OnboardErrorResponse = z.infer<typeof onboardErrorResponseSchema>;
 export type OnboardResponse = z.infer<typeof onboardResponseSchema>;
 export type OnboardFormData = z.infer<typeof onboardFormDataSchema>;
 
+// Additional type exports for component props and API responses
+export type OnboardFormProps = {
+  initialData: OnboardPrefillResponse;
+  onSubmit: (data: OnboardFormData) => void;
+  onCancel: () => void;
+  isLoading?: boolean;
+  errors?: Record<string, string>;
+};
+
+export type TokenValidationState = 'loading' | 'valid' | 'invalid' | 'expired' | 'used' | 'error';
+
+export type TokenValidationResult = 
+  | { state: 'loading' }
+  | { state: 'valid'; data: OnboardPrefillResponse }
+  | { state: 'invalid'; error: OnboardErrorResponse }
+  | { state: 'expired'; error: OnboardErrorResponse }
+  | { state: 'used'; error: OnboardErrorResponse }
+  | { state: 'error'; error: OnboardErrorResponse };
+
 // Validation helper functions
 export function validateOnboardResponse(data: unknown): OnboardResponse {
   return onboardResponseSchema.parse(data);
@@ -105,6 +124,9 @@ export function maskPhoneNumber(phone: string): string {
   
   const cleaned = phone.replace(/\D/g, '');
   if (cleaned.length < 4) return phone;
+  
+  // For very short numbers (4 digits), don't mask them
+  if (cleaned.length === 4) return cleaned;
   
   const lastFour = cleaned.slice(-4);
   const masked = '*'.repeat(Math.max(0, cleaned.length - 4));
