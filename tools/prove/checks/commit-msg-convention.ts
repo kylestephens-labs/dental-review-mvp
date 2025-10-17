@@ -149,28 +149,57 @@ function parseCommitMessage(message: string): {
   details.description = basicMatch[2];
   let level = 1;
 
-  // Level 2: Check for task ID
-  const taskIdPattern = /\[T-(\d{4}-\d{2}-\d{2}-\d+)\]/;
-  const taskIdMatch = subject.match(taskIdPattern);
-  if (taskIdMatch) {
-    details.taskId = `T-${taskIdMatch[1]}`;
-    level = 2;
+  // Level 2: Check for task ID (flexible formats)
+  const taskIdPatterns = [
+    /\[T-(\d{4}-\d{2}-\d{2}-\d+)\]/g,  // T-2025-01-18-001
+    /\[TASK-(\d+)\]/g,                  // TASK-123
+    /\[#(\d+)\]/g,                      // #123
+    /\[(\d+)\]/g,                       // [123]
+    /\[T-(\d+)\]/g,                     // T-123
+    /\[(\w+-\d+)\]/g                    // FEAT-123, BUG-456
+  ];
+  
+  let taskIdMatch = null;
+  for (const pattern of taskIdPatterns) {
+    taskIdMatch = subject.match(pattern);
+    if (taskIdMatch) {
+      details.taskId = taskIdMatch[0]; // Keep original format
+      level = 2;
+      break;
+    }
   }
 
-  // Level 3: Check for mode
+  // Level 3: Check for mode (explicit or smart detection)
   const modePattern = /\[MODE:(F|NF)\]/;
   const modeMatch = subject.match(modePattern);
   if (modeMatch) {
     details.mode = modeMatch[1];
     level = 3;
+  } else {
+    // Smart mode detection based on commit type and content
+    const smartMode = detectSmartMode(details.type, details.description);
+    if (smartMode) {
+      details.mode = smartMode;
+      level = 3;
+    }
   }
 
-  // Level 4: Check for TDD phase
-  const tddPattern = /\[TDD:(red|green|refactor)\]/;
-  const tddMatch = subject.match(tddPattern);
-  if (tddMatch) {
-    details.tddPhase = tddMatch[1];
-    level = 4;
+  // Level 4: Check for TDD phase (optional, multiple formats)
+  const tddPatterns = [
+    /\[TDD:(red|green|refactor)\]/g,     // [TDD:red]
+    /\[(red|green|refactor)\]/g,         // [red] (short form)
+    /\[TDD-(red|green|refactor)\]/g,     // [TDD-red]
+    /\[(RED|GREEN|REFACTOR)\]/g          // [RED] (uppercase)
+  ];
+  
+  let tddMatch = null;
+  for (const pattern of tddPatterns) {
+    tddMatch = subject.match(pattern);
+    if (tddMatch) {
+      details.tddPhase = tddMatch[1].toLowerCase();
+      level = 4;
+      break;
+    }
   }
 
   // Determine if valid based on context
@@ -192,9 +221,10 @@ function determineValidity(level: number, details: any, subject: string): boolea
     return true;
   }
 
-  // Level 2+: Validate task ID format if present
+  // Level 2+: Validate task ID format if present (flexible validation)
   if (details.taskId) {
-    const taskIdPattern = /^T-\d{4}-\d{2}-\d{2}-\d+$/;
+    // Accept any task ID format that contains alphanumeric characters and common separators
+    const taskIdPattern = /^\[[\w\-#]+\]$/;
     if (!taskIdPattern.test(details.taskId)) {
       return false;
     }
@@ -210,17 +240,65 @@ function determineValidity(level: number, details: any, subject: string): boolea
     return false;
   }
 
-  // For functional tasks, require at least level 2 (task ID)
+  // For functional tasks, require at least level 2 (task ID) - but be more lenient
   // For non-functional tasks, level 1 is sufficient
   const isFunctionalTask = details.mode === 'F' || 
                           subject.toLowerCase().includes('feat') || 
                           subject.toLowerCase().includes('fix');
   
-  if (isFunctionalTask && level < 2) {
+  // Only require task ID for major features/fixes, not minor ones
+  const isMajorChange = subject.toLowerCase().includes('major') ||
+                       subject.toLowerCase().includes('breaking') ||
+                       subject.toLowerCase().includes('refactor') ||
+                       details.type === 'feat';
+  
+  if (isFunctionalTask && isMajorChange && level < 2) {
     return false;
   }
 
   return true;
+}
+
+/**
+ * Smart mode detection based on commit type and content
+ */
+function detectSmartMode(type: string, description: string): string | null {
+  // Functional indicators
+  const functionalKeywords = [
+    'add', 'create', 'implement', 'build', 'fix', 'resolve', 'update', 'modify',
+    'feature', 'function', 'api', 'endpoint', 'component', 'service', 'logic'
+  ];
+  
+  // Non-functional indicators  
+  const nonFunctionalKeywords = [
+    'docs', 'documentation', 'readme', 'comment', 'format', 'style', 'lint',
+    'refactor', 'cleanup', 'optimize', 'performance', 'config', 'setup',
+    'dependencies', 'package', 'version', 'chore', 'test', 'spec'
+  ];
+  
+  const lowerDescription = description.toLowerCase();
+  
+  // Check for explicit non-functional patterns
+  if (type === 'docs' || type === 'chore' || type === 'test') {
+    return 'NF';
+  }
+  
+  // Check for non-functional keywords
+  if (nonFunctionalKeywords.some(keyword => lowerDescription.includes(keyword))) {
+    return 'NF';
+  }
+  
+  // Check for functional keywords
+  if (functionalKeywords.some(keyword => lowerDescription.includes(keyword))) {
+    return 'F';
+  }
+  
+  // Default based on type
+  if (type === 'feat' || type === 'fix') {
+    return 'F';
+  }
+  
+  return null; // No smart detection possible
 }
 
 /**
@@ -239,8 +317,13 @@ function generateHelpfulErrorMessage(parsed: any, commitMessage: string): string
                         commitMessage.toLowerCase().includes('fix');
     
     if (isFunctional) {
-      return `Functional commits require task ID. Add [T-YYYY-MM-DD-###] to your message.\n` +
-             `Example: "feat: add user authentication [T-2025-01-18-001]"\n` +
+      return `Functional commits require task ID. Add any of these formats:\n` +
+             `• [T-2025-01-18-001] (full format)\n` +
+             `• [TASK-123] (simple task)\n` +
+             `• [#123] (GitHub style)\n` +
+             `• [123] (minimal)\n` +
+             `• [FEAT-123] (prefix style)\n` +
+             `Example: "feat: add user authentication [TASK-123]"\n` +
              `Got: "${commitMessage}"`;
     }
   }
