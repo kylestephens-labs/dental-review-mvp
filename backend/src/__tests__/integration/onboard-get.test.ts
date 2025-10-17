@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import request from 'supertest';
-import { app } from '../../app';
+import { app } from '../../index';
 import { pool } from '../../db';
 import { insertEvent } from '../../models/events';
 

@@ -4,7 +4,7 @@ import { POST as stripeWebhook } from './api/webhooks/stripe.js';
 import { GET as healthCheck, HEAD as healthCheckHead } from './api/healthz.js';
 import { GET as onboardGet } from './api/onboard/get.js';
 
-const app = express();
+export const app = express();
 const PORT = process.env.PORT || 3001;
 
 // Health check endpoint

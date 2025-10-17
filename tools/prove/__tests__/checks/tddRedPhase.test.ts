@@ -13,7 +13,16 @@ import {
 // Mock external dependencies
 vi.mock('../../checks/tests.js', () => ({ checkTests: vi.fn() }));
 vi.mock('../../checks/diffCoverage.js', () => ({ checkDiffCoverage: vi.fn() }));
-vi.mock('../../logger.js', () => ({ logger: createMockLogger() }));
+vi.mock('../../logger.js', () => ({
+  logger: {
+    debug: vi.fn(),
+    info: vi.fn(),
+    warn: vi.fn(),
+    error: vi.fn(),
+    success: vi.fn(),
+    header: vi.fn(),
+  }
+}));
 
 describe('TDD Red Phase Validation', () => {
   beforeEach(() => {

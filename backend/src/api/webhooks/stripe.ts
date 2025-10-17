@@ -88,6 +88,12 @@ async function logCheckoutEvents(
 }
 
 export async function POST(req: Request, res: Response) {
+  // Check if required environment variables are available
+  if (!process.env.STRIPE_SECRET_KEY || !process.env.STRIPE_WEBHOOK_SECRET) {
+    console.warn('Stripe webhook endpoint called but required environment variables are missing');
+    return res.status(503).json({ error: 'Service temporarily unavailable - Stripe not configured' });
+  }
+
   // Get raw body for signature verification
   const rawBody = req.body;
   const signature = req.headers['stripe-signature'] as string | undefined;

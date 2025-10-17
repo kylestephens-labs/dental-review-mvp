@@ -39,7 +39,7 @@ export class ErrorMessageBuilder {
     
     // Add file location with enhanced formatting
     if (filePath) {
-      message += this.formatFileLocation(filePath, lineNumber);
+      message += `📍 File: ${this.formatFileLocation(filePath, lineNumber)}\n\n`;
     }
     
     // Add severity indicator
@@ -132,7 +132,7 @@ export class ErrorMessageBuilder {
     let message = this.buildErrorHeader('Feature flag validation failed', context);
     
     if (filePath) {
-      message += this.formatFileLocation(filePath);
+      message += `📍 File: ${this.formatFileLocation(filePath)}\n\n`;
     }
     
     message += this.formatSeverityIndicator(context.severity);
@@ -391,19 +391,6 @@ export class ErrorMessageBuilder {
     return header;
   }
 
-  /**
-   * Format file location with enhanced styling
-   */
-  private static formatFileLocation(filePath: string, lineNumber?: number, columnNumber?: number): string {
-    let location = `📍 File: ${filePath}`;
-    if (lineNumber) {
-      location += `:${lineNumber}`;
-      if (columnNumber) {
-        location += `:${columnNumber}`;
-      }
-    }
-    return location + "\n\n";
-  }
 
   /**
    * Format severity indicator

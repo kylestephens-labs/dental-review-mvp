@@ -14,7 +14,28 @@ import {
 } from './shared/test-helpers.js';
 
 // Mock external dependencies
-vi.mock('../logger.js', () => ({ logger: createMockLogger() }));
+vi.mock('../logger.js', () => ({
+  logger: {
+    debug: vi.fn(),
+    info: vi.fn(),
+    warn: vi.fn(),
+    error: vi.fn(),
+    success: vi.fn(),
+    header: vi.fn(),
+  }
+}));
+
+vi.mock('../checks/tests.js', () => ({
+  checkTests: vi.fn()
+}));
+
+vi.mock('../checks/diffCoverage.js', () => ({
+  checkDiffCoverage: vi.fn()
+}));
+
+vi.mock('../runner.js', () => ({
+  runChecks: vi.fn()
+}));
 
 describe('TDD Phase Detection Integration', () => {
   const testDir = process.cwd();

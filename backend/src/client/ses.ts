@@ -8,24 +8,26 @@ export interface EmailSendResult {
 }
 
 class SESClientWrapper {
-  private client: SESClient;
-  private fromEmail: string;
+  private client: SESClient | null = null;
+  private fromEmail: string | null = null;
 
-  constructor() {
-    // For testing, allow fallback values
-    const region = process.env.AWS_REGION || 'us-east-1';
-    const accessKeyId = process.env.AWS_ACCESS_KEY_ID || 'test-key';
-    const secretAccessKey = process.env.AWS_SECRET_ACCESS_KEY || 'test-secret';
-    const fromEmail = process.env.SES_FROM_EMAIL || 'test@example.com';
+  private initializeClient() {
+    if (!this.client) {
+      // For testing, allow fallback values
+      const region = process.env.AWS_REGION || 'us-east-1';
+      const accessKeyId = process.env.AWS_ACCESS_KEY_ID || 'test-key';
+      const secretAccessKey = process.env.AWS_SECRET_ACCESS_KEY || 'test-secret';
+      const fromEmail = process.env.SES_FROM_EMAIL || 'test@example.com';
 
-    this.client = new SESClient({
-      region,
-      credentials: {
-        accessKeyId,
-        secretAccessKey,
-      },
-    });
-    this.fromEmail = fromEmail;
+      this.client = new SESClient({
+        region,
+        credentials: {
+          accessKeyId,
+          secretAccessKey,
+        },
+      });
+      this.fromEmail = fromEmail;
+    }
   }
 
   async sendMagicLinkEmail(
@@ -33,6 +35,18 @@ class SESClientWrapper {
     practiceName: string,
     magicLink: string
   ): Promise<EmailSendResult> {
+    // Check if required environment variables are available
+    if (!process.env.AWS_ACCESS_KEY_ID || !process.env.AWS_SECRET_ACCESS_KEY) {
+      console.warn('SES client called but AWS credentials are missing');
+      return {
+        success: false,
+        error: 'Email service not configured - AWS credentials missing',
+        retryable: false
+      };
+    }
+
+    this.initializeClient();
+    
     if (!to || !to.includes('@')) {
       return {
         success: false,
@@ -85,11 +99,11 @@ class SESClientWrapper {
           },
         },
       },
-      Source: this.fromEmail,
+      Source: this.fromEmail!,
     });
 
     try {
-      const response = await this.client.send(command);
+      const response = await this.client!.send(command);
       console.log(`Magic link email sent successfully. MessageId: ${response.MessageId}`);
       return {
         success: true,

@@ -1,8 +1,19 @@
 import Stripe from 'stripe';
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: '2023-10-16',
-});
+let stripe: Stripe | null = null;
+
+function getStripeClient(): Stripe {
+  if (!stripe) {
+    const secretKey = process.env.STRIPE_SECRET_KEY;
+    if (!secretKey) {
+      throw new Error('STRIPE_SECRET_KEY not configured');
+    }
+    stripe = new Stripe(secretKey, {
+      apiVersion: '2023-10-16',
+    });
+  }
+  return stripe;
+}
 
 export function verifyWebhookSignature(rawBody: string, signature: string): Stripe.Event {
   const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
@@ -12,12 +23,11 @@ export function verifyWebhookSignature(rawBody: string, signature: string): Stri
   }
 
   try {
-    return stripe.webhooks.constructEvent(rawBody, signature, webhookSecret);
+    const stripeClient = getStripeClient();
+    return stripeClient.webhooks.constructEvent(rawBody, signature, webhookSecret);
   } catch (error) {
     throw new Error(`Webhook signature verification failed: ${error}`);
   }
 }
 
-export function getStripeClient(): Stripe {
-  return stripe;
-}
+export { getStripeClient };

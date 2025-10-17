@@ -18,7 +18,14 @@ const execAsync = promisify(exec);
 
 // Mock logger
 vi.mock('../logger.js', () => ({
-  logger: createMockLogger()
+  logger: {
+    debug: vi.fn(),
+    info: vi.fn(),
+    warn: vi.fn(),
+    error: vi.fn(),
+    success: vi.fn(),
+    header: vi.fn(),
+  }
 }));
 
 // Mock all check functions
@@ -28,6 +35,10 @@ vi.mock('../checks/tests.js', () => ({
 
 vi.mock('../checks/diffCoverage.js', () => ({
   checkDiffCoverage: vi.fn()
+}));
+
+vi.mock('../runner.js', () => ({
+  runChecks: vi.fn()
 }));
 
 vi.mock('../checks/tddPhaseDetection.js', () => ({

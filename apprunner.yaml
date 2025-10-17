@@ -12,15 +12,58 @@ run:
     port: 3001
     env: PORT
   env:
+    # Basic configuration
     - name: NODE_ENV
       value: production
     - name: COMMIT_SHA
       value: "dev"
     - name: PORT
       value: "3001"
-  health-check:
-    path: /healthz
-    interval: 30
-    timeout: 5
-    healthy-threshold: 2
-    unhealthy-threshold: 5
+    - name: FRONTEND_URL
+      value: "https://cyznfjrxh7.us-east-2.awsapprunner.com"
+    - name: AWS_REGION
+      value: "us-east-2"
+    - name: SES_FROM_EMAIL
+      value: "noreply@yourdomain.com"
+    
+    # Database
+    - name: DATABASE_URL
+      value: "postgresql://username:password@your-db-host:5432/your-db-name"
+    
+    # Stripe
+    - name: STRIPE_SECRET_KEY
+      value: "sk_live_your_stripe_secret_key"
+    - name: STRIPE_PUBLISHABLE_KEY
+      value: "pk_live_your_stripe_publishable_key"
+    - name: STRIPE_WEBHOOK_SECRET
+      value: "whsec_your_stripe_webhook_secret"
+    
+    # Twilio
+    - name: TWILIO_ACCOUNT_SID
+      value: "your_twilio_account_sid"
+    - name: TWILIO_AUTH_TOKEN
+      value: "your_twilio_auth_token"
+    
+    # AWS
+    - name: AWS_ACCESS_KEY_ID
+      value: "your_aws_access_key_id"
+    - name: AWS_SECRET_ACCESS_KEY
+      value: "your_aws_secret_access_key"
+    
+    # Supabase
+    - name: SUPABASE_URL
+      value: "https://your-project.supabase.co"
+    - name: SUPABASE_SERVICE_ROLE_KEY
+      value: "your_supabase_service_role_key"
+    
+    # Security
+    - name: HMAC_SECRET
+      value: "your_32_character_hmac_secret_key_here"
+    
+    # Google
+    - name: GOOGLE_PLACES_API_KEY
+      value: "your_google_places_api_key"
+    - name: GOOGLE_CLIENTID
+      value: "your_google_client_id"
+    - name: GOOGLE_OATUH_SECRET
+      value: "your_google_oauth_secret"

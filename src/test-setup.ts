@@ -57,12 +57,21 @@ afterEach(() => {
 afterEach(() => {
   vi.clearAllMocks();
   vi.restoreAllMocks();
+  
+  // Clean up DOM after each test to prevent test isolation issues
+  document.body.innerHTML = '';
 });
 
-// Clean up DOM after each test to prevent test isolation issues
-afterEach(() => {
-  // Clear the DOM completely
-  document.body.innerHTML = '';
+// Global cleanup to ensure processes terminate
+afterAll(() => {
+  // Force cleanup of any remaining timers
+  timers.forEach(id => originalClearTimeout(id));
+  intervals.forEach(id => originalClearInterval(id));
+  timers.clear();
+  intervals.clear();
+  
+  // Clear all vitest timers
+  vi.clearAllTimers();
   
   // Clear any React roots that might be hanging around
   const roots = document.querySelectorAll('[data-reactroot]');
@@ -71,6 +80,13 @@ afterEach(() => {
   // Clear any test containers
   const testContainers = document.querySelectorAll('[data-testid]');
   testContainers.forEach(container => container.remove());
+  
+  // Force garbage collection if available
+  if (global.gc) {
+    global.gc();
+  }
+  
+  // Note: Removed process.exit as it was too aggressive
 });
 
 // Clear VITE_FEATURE_* environment variables in tests to prevent interference

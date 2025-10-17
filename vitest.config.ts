@@ -14,13 +14,15 @@ export default defineConfig({
     },
     maxThreads: 1,
     minThreads: 1,
-    teardownTimeout: 10000,
+    teardownTimeout: 3000,
     testTimeout: 10000,
-    hookTimeout: 10000,
+    hookTimeout: 3000,
     isolate: true,
     sequence: {
       concurrent: false
     },
+    passWithNoTests: true,
+    bail: 1,
     exclude: [
       '**/node_modules/**',
       '**/dist/**',

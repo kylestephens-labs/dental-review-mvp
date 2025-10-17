@@ -13,6 +13,12 @@ export async function GET(req: Request, res: Response) {
     return res.status(400).json({ error: 'Token is required', success: false });
   }
 
+  // Check if required environment variables are available
+  if (!process.env.HMAC_SECRET) {
+    console.warn('Onboard endpoint called but HMAC_SECRET is missing');
+    return res.status(503).json({ error: 'Service temporarily unavailable - authentication not configured', success: false });
+  }
+
   // Parse the token to get practice ID first
   const parsed = parseToken(token);
   if (!parsed) {
