@@ -1,24 +1,24 @@
 // TDD Red Phase: One failing test for End-to-End TDD Workflow
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { exec } from 'child_process';
 import { promisify } from 'util';
 import { writeFileSync, unlinkSync, existsSync, readFileSync } from 'fs';
 import { join } from 'path';
 import { buildContext } from '../context.js';
 import { runChecks } from '../runner.js';
+import { 
+  createMockLogger, 
+  setupTestEnvironment, 
+  teardownTestEnvironment,
+  measurePerformance,
+  expectPerformanceWithin
+} from './shared/test-helpers.js';
 
 const execAsync = promisify(exec);
 
 // Mock logger
 vi.mock('../logger.js', () => ({
-  logger: {
-    debug: vi.fn(),
-    info: vi.fn(),
-    warn: vi.fn(),
-    error: vi.fn(),
-    success: vi.fn(),
-    header: vi.fn()
-  }
+  logger: createMockLogger()
 }));
 
 // Mock all check functions
@@ -55,191 +55,148 @@ describe('End-to-End TDD Workflow', () => {
   const tddPhaseFile = join(testDir, '.tdd-phase');
 
   beforeEach(() => {
-    // Clean up any existing TDD phase file
-    if (existsSync(tddPhaseFile)) {
-      unlinkSync(tddPhaseFile);
-    }
-    
-    // Reset all mocks
-    vi.clearAllMocks();
+    setupTestEnvironment();
   });
 
   afterEach(() => {
-    // Clean up after each test
-    if (existsSync(tddPhaseFile)) {
-      unlinkSync(tddPhaseFile);
-    }
+    teardownTestEnvironment();
   });
 
   describe('Complete TDD Cycle: Red → Green → Refactor', () => {
+    const tddCycleTestCases = [
+      {
+        name: 'Red Phase - Write failing tests',
+        phase: 'red',
+        commitMessage: 'feat: add button component [T-2025-01-18-001] [MODE:F] [TDD:red]',
+        changedFiles: ['src/components/Button.tsx', 'src/components/Button.test.tsx'],
+        testResults: { passed: 0, failed: 2, total: 2 },
+        checkFunction: 'checkTddRedPhase'
+      },
+      {
+        name: 'Green Phase - Make tests pass',
+        phase: 'green',
+        commitMessage: 'fix: implement button functionality [T-2025-01-18-002] [MODE:F] [TDD:green]',
+        changedFiles: ['src/components/Button.tsx'],
+        testResults: { passed: 2, failed: 0, total: 2 },
+        checkFunction: 'checkTddGreenPhase'
+      },
+      {
+        name: 'Refactor Phase - Improve code quality',
+        phase: 'refactor',
+        commitMessage: 'refactor: improve button component structure [T-2025-01-18-003] [MODE:F] [TDD:refactor]',
+        changedFiles: ['src/components/Button.tsx'],
+        testResults: { passed: 2, failed: 0, total: 2 },
+        checkFunction: 'checkTddRefactorPhase'
+      }
+    ];
+
     it('should execute complete TDD cycle with proper phase transitions', async () => {
-      // Step 1: Red Phase - Write failing tests
-      const redContext = await buildContext();
-      const redPhaseContext = {
-        ...redContext,
-        tddPhase: 'red',
-        git: {
-          ...redContext.git,
-          changedFiles: ['src/components/Button.tsx', 'src/components/Button.test.tsx'],
-          commitMessage: 'feat: add button component [T-2025-01-18-001] [MODE:F] [TDD:red]'
-        }
-      };
+      for (const testCase of tddCycleTestCases) {
+        const context = await buildContext();
+        const phaseContext = {
+          ...context,
+          tddPhase: testCase.phase,
+          git: {
+            ...context.git,
+            changedFiles: testCase.changedFiles,
+            commitMessage: testCase.commitMessage
+          }
+        };
 
-      // Mock Red phase checks
-      const { checkTddRedPhase } = await import('../checks/tddRedPhase.js');
-      vi.mocked(checkTddRedPhase).mockResolvedValue({
-        ok: true,
-        id: 'tdd-red-phase',
-        details: { message: 'Red phase validation passed' }
-      });
+        // Mock phase-specific checks
+        const checkModule = await import(`../checks/tdd${testCase.phase.charAt(0).toUpperCase() + testCase.phase.slice(1)}Phase.js`);
+        vi.mocked(checkModule[testCase.checkFunction]).mockResolvedValue({
+          ok: true,
+          id: `tdd-${testCase.phase}-phase`,
+          details: { message: `${testCase.phase} phase validation passed` }
+        });
 
-      const { checkTests } = await import('../checks/tests.js');
-      vi.mocked(checkTests).mockResolvedValue({
-        ok: true,
-        details: { testResults: { passed: 0, failed: 2, total: 2 } }
-      });
+        const { checkTests } = await import('../checks/tests.js');
+        vi.mocked(checkTests).mockResolvedValue({
+          ok: true,
+          details: { testResults: testCase.testResults }
+        });
 
-      const redResult = await runChecks(redPhaseContext);
-      expect(redResult.ok).toBe(true);
-
-      // Step 2: Green Phase - Make tests pass
-      const greenContext = await buildContext();
-      const greenPhaseContext = {
-        ...greenContext,
-        tddPhase: 'green',
-        git: {
-          ...greenContext.git,
-          changedFiles: ['src/components/Button.tsx'],
-          commitMessage: 'fix: implement button functionality [T-2025-01-18-002] [MODE:F] [TDD:green]'
-        }
-      };
-
-      // Mock Green phase checks
-      const { checkTddGreenPhase } = await import('../checks/tddGreenPhase.js');
-      vi.mocked(checkTddGreenPhase).mockResolvedValue({
-        ok: true,
-        id: 'tdd-green-phase',
-        details: { message: 'Green phase validation passed' }
-      });
-
-      vi.mocked(checkTests).mockResolvedValue({
-        ok: true,
-        details: { testResults: { passed: 2, failed: 0, total: 2 } }
-      });
-
-      const greenResult = await runChecks(greenPhaseContext);
-      expect(greenResult.ok).toBe(true);
-
-      // Step 3: Refactor Phase - Improve code quality
-      const refactorContext = await buildContext();
-      const refactorPhaseContext = {
-        ...refactorContext,
-        tddPhase: 'refactor',
-        git: {
-          ...refactorContext.git,
-          changedFiles: ['src/components/Button.tsx'],
-          commitMessage: 'refactor: improve button component structure [T-2025-01-18-003] [MODE:F] [TDD:refactor]'
-        }
-      };
-
-      // Mock Refactor phase checks
-      const { checkTddRefactorPhase } = await import('../checks/tddRefactorPhase.js');
-      vi.mocked(checkTddRefactorPhase).mockResolvedValue({
-        ok: true,
-        id: 'tdd-refactor-phase',
-        details: { message: 'Refactor phase validation passed' }
-      });
-
-      vi.mocked(checkTests).mockResolvedValue({
-        ok: true,
-        details: { testResults: { passed: 2, failed: 0, total: 2 } }
-      });
-
-      const refactorResult = await runChecks(refactorPhaseContext);
-      expect(refactorResult.ok).toBe(true);
+        const result = await runChecks(phaseContext);
+        expect(result.ok).toBe(true);
+      }
     });
 
-    it('should fail when skipping Red phase to go directly to Green', async () => {
-      const greenContext = await buildContext();
-      const skipRedContext = {
-        ...greenContext,
-        tddPhase: 'green',
-        git: {
-          ...greenContext.git,
-          changedFiles: ['src/components/Button.tsx'],
-          commitMessage: 'fix: implement button functionality [T-2025-01-18-002] [MODE:F] [TDD:green]'
-        }
-      };
+    const sequenceViolationTestCases = [
+      {
+        name: 'should fail when skipping Red phase to go directly to Green',
+        phase: 'green',
+        commitMessage: 'fix: implement button functionality [T-2025-01-18-002] [MODE:F] [TDD:green]',
+        changedFiles: ['src/components/Button.tsx']
+      },
+      {
+        name: 'should fail when skipping Green phase to go directly to Refactor',
+        phase: 'refactor',
+        commitMessage: 'refactor: improve button component [T-2025-01-18-003] [MODE:F] [TDD:refactor]',
+        changedFiles: ['src/components/Button.tsx']
+      }
+    ];
 
-      // Mock process sequence check to fail
-      const { checkTddProcessSequence } = await import('../checks/tddProcessSequence.js');
-      vi.mocked(checkTddProcessSequence).mockResolvedValue({
-        ok: false,
-        id: 'tdd-process-sequence',
-        reason: 'TDD process sequence violations detected'
+    sequenceViolationTestCases.forEach(({ name, phase, commitMessage, changedFiles }) => {
+      it(name, async () => {
+        const context = await buildContext();
+        const skipContext = {
+          ...context,
+          tddPhase: phase,
+          git: {
+            ...context.git,
+            changedFiles,
+            commitMessage
+          }
+        };
+
+        // Mock process sequence check to fail
+        const { checkTddProcessSequence } = await import('../checks/tddProcessSequence.js');
+        vi.mocked(checkTddProcessSequence).mockResolvedValue({
+          ok: false,
+          id: 'tdd-process-sequence',
+          reason: 'TDD process sequence violations detected'
+        });
+
+        const result = await runChecks(skipContext);
+        expect(result.ok).toBe(false);
       });
-
-      const result = await runChecks(skipRedContext);
-      expect(result.ok).toBe(false);
-    });
-
-    it('should fail when skipping Green phase to go directly to Refactor', async () => {
-      const refactorContext = await buildContext();
-      const skipGreenContext = {
-        ...refactorContext,
-        tddPhase: 'refactor',
-        git: {
-          ...refactorContext.git,
-          changedFiles: ['src/components/Button.tsx'],
-          commitMessage: 'refactor: improve button component [T-2025-01-18-003] [MODE:F] [TDD:refactor]'
-        }
-      };
-
-      // Mock process sequence check to fail
-      const { checkTddProcessSequence } = await import('../checks/tddProcessSequence.js');
-      vi.mocked(checkTddProcessSequence).mockResolvedValue({
-        ok: false,
-        id: 'tdd-process-sequence',
-        reason: 'TDD process sequence violations detected'
-      });
-
-      const result = await runChecks(skipGreenContext);
-      expect(result.ok).toBe(false);
     });
   });
 
   describe('TDD Phase Commands Integration', () => {
-    it('should work with npm run tdd:red command', async () => {
-      const { stdout } = await execAsync('npm run tdd:red', { cwd: testDir });
-      
-      expect(existsSync(tddPhaseFile)).toBe(true);
-      expect(stdout).toContain('TDD Red phase marked');
-      
-      const phaseContent = JSON.parse(readFileSync(tddPhaseFile, 'utf8'));
-      expect(phaseContent.phase).toBe('red');
-      expect(phaseContent.timestamp).toBeDefined();
-    });
+    const commandTestCases = [
+      {
+        name: 'should work with npm run tdd:red command',
+        command: 'npm run tdd:red',
+        expectedPhase: 'red',
+        expectedMessage: 'TDD Red phase marked'
+      },
+      {
+        name: 'should work with npm run tdd:green command',
+        command: 'npm run tdd:green',
+        expectedPhase: 'green',
+        expectedMessage: 'TDD Green phase marked'
+      },
+      {
+        name: 'should work with npm run tdd:refactor command',
+        command: 'npm run tdd:refactor',
+        expectedPhase: 'refactor',
+        expectedMessage: 'TDD Refactor phase marked'
+      }
+    ];
 
-    it('should work with npm run tdd:green command', async () => {
-      const { stdout } = await execAsync('npm run tdd:green', { cwd: testDir });
-      
-      expect(existsSync(tddPhaseFile)).toBe(true);
-      expect(stdout).toContain('TDD Green phase marked');
-      
-      const phaseContent = JSON.parse(readFileSync(tddPhaseFile, 'utf8'));
-      expect(phaseContent.phase).toBe('green');
-      expect(phaseContent.timestamp).toBeDefined();
-    });
-
-    it('should work with npm run tdd:refactor command', async () => {
-      const { stdout } = await execAsync('npm run tdd:refactor', { cwd: testDir });
-      
-      expect(existsSync(tddPhaseFile)).toBe(true);
-      expect(stdout).toContain('TDD Refactor phase marked');
-      
-      const phaseContent = JSON.parse(readFileSync(tddPhaseFile, 'utf8'));
-      expect(phaseContent.phase).toBe('refactor');
-      expect(phaseContent.timestamp).toBeDefined();
+    commandTestCases.forEach(({ name, command, expectedPhase, expectedMessage }) => {
+      it(name, async () => {
+        const { stdout } = await execAsync(command, { cwd: testDir });
+        
+        expect(existsSync(tddPhaseFile)).toBe(true);
+        expect(stdout).toContain(expectedMessage);
+        
+        const phaseContent = JSON.parse(readFileSync(tddPhaseFile, 'utf8'));
+        expect(phaseContent.phase).toBe(expectedPhase);
+        expect(phaseContent.timestamp).toBeDefined();
+      });
     });
 
     it('should work with npm run prove:tdd command', async () => {
@@ -354,8 +311,6 @@ describe('End-to-End TDD Workflow', () => {
         }
       };
 
-      const startTime = Date.now();
-      
       // Mock all checks to pass quickly
       const { checkTddPhaseDetection } = await import('../checks/tddPhaseDetection.js');
       vi.mocked(checkTddPhaseDetection).mockResolvedValue({
@@ -377,11 +332,11 @@ describe('End-to-End TDD Workflow', () => {
         details: { testResults: { passed: 0, failed: 2, total: 2 } }
       });
 
-      const result = await runChecks(performanceContext);
-      const endTime = Date.now();
+      const duration = await measurePerformance(async () => {
+        return await runChecks(performanceContext);
+      });
       
-      expect(result.ok).toBe(true);
-      expect(endTime - startTime).toBeLessThan(1000); // Should complete in less than 1 second
+      expect(duration).toBeLessThan(1000);
     });
   });
 

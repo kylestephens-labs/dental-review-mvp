@@ -1,29 +1,27 @@
-// TDD Red Phase: One failing test for TDD Phase Detection Integration
+// TDD Phase Detection Integration: Comprehensive test suite for phase detection
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { writeFileSync, unlinkSync, existsSync } from 'fs';
 import { join } from 'path';
 import { buildContext } from '../context.js';
 import { detectTddPhase } from '../utils/tddPhaseDetection.js';
 import { writeTddPhase, readTddPhase } from '../utils/tdd-phase.js';
-import type { ProveContext } from '../context.js';
+import { 
+  createMockLogger, 
+  setupTestEnvironment, 
+  teardownTestEnvironment,
+  measurePerformance,
+  expectPerformanceWithin
+} from './shared/test-helpers.js';
 
-// Mock logger
-vi.mock('../logger.js', () => ({
-  logger: {
-    debug: vi.fn(),
-    info: vi.fn(),
-    warn: vi.fn(),
-    error: vi.fn(),
-    success: vi.fn(),
-    header: vi.fn()
-  }
-}));
+// Mock external dependencies
+vi.mock('../logger.js', () => ({ logger: createMockLogger() }));
 
 describe('TDD Phase Detection Integration', () => {
   const testDir = process.cwd();
   const tddPhaseFile = join(testDir, '.tdd-phase');
 
   beforeEach(() => {
+    setupTestEnvironment();
     // Clean up any existing TDD phase file
     if (existsSync(tddPhaseFile)) {
       unlinkSync(tddPhaseFile);
@@ -31,6 +29,7 @@ describe('TDD Phase Detection Integration', () => {
   });
 
   afterEach(() => {
+    teardownTestEnvironment();
     // Clean up after each test
     if (existsSync(tddPhaseFile)) {
       unlinkSync(tddPhaseFile);
@@ -38,83 +37,71 @@ describe('TDD Phase Detection Integration', () => {
   });
 
   describe('Phase Detection from Commit Messages', () => {
-    it('should detect red phase from commit message with TDD marker', async () => {
-      const context = await buildContext();
-      const redContext = {
-        ...context,
-        git: {
-          ...context.git,
-          commitMessage: 'feat: add user authentication [T-2025-01-18-001] [MODE:F] [TDD:red]'
-        }
-      };
+    const testCases = [
+      {
+        name: 'should detect red phase from commit message with TDD marker',
+        commitMessage: 'feat: add user authentication [T-2025-01-18-001] [MODE:F] [TDD:red]',
+        expectedPhase: 'red'
+      },
+      {
+        name: 'should detect green phase from commit message with TDD marker',
+        commitMessage: 'fix: implement login functionality [T-2025-01-18-002] [MODE:F] [TDD:green]',
+        expectedPhase: 'green'
+      },
+      {
+        name: 'should detect refactor phase from commit message with TDD marker',
+        commitMessage: 'refactor: improve code structure [T-2025-01-18-003] [MODE:F] [TDD:refactor]',
+        expectedPhase: 'refactor'
+      },
+      {
+        name: 'should return unknown for commit message without TDD marker',
+        commitMessage: 'feat: add feature [T-2025-01-18-001] [MODE:F]',
+        expectedPhase: 'unknown'
+      }
+    ];
 
-      const phase = await detectTddPhase(redContext);
-      expect(phase).toBe('red');
-    });
+    testCases.forEach(({ name, commitMessage, expectedPhase }) => {
+      it(name, async () => {
+        const context = await buildContext();
+        const testContext = {
+          ...context,
+          git: {
+            ...context.git,
+            commitMessage
+          }
+        };
 
-    it('should detect green phase from commit message with TDD marker', async () => {
-      const context = await buildContext();
-      const greenContext = {
-        ...context,
-        git: {
-          ...context.git,
-          commitMessage: 'fix: implement login functionality [T-2025-01-18-002] [MODE:F] [TDD:green]'
-        }
-      };
-
-      const phase = await detectTddPhase(greenContext);
-      expect(phase).toBe('green');
-    });
-
-    it('should detect refactor phase from commit message with TDD marker', async () => {
-      const context = await buildContext();
-      const refactorContext = {
-        ...context,
-        git: {
-          ...context.git,
-          commitMessage: 'refactor: improve code structure [T-2025-01-18-003] [MODE:F] [TDD:refactor]'
-        }
-      };
-
-      const phase = await detectTddPhase(refactorContext);
-      expect(phase).toBe('refactor');
-    });
-
-    it('should return unknown for commit message without TDD marker', async () => {
-      const context = await buildContext();
-      const unknownContext = {
-        ...context,
-        git: {
-          ...context.git,
-          commitMessage: 'feat: add feature [T-2025-01-18-001] [MODE:F]'
-        }
-      };
-
-      const phase = await detectTddPhase(unknownContext);
-      expect(phase).toBe('unknown');
+        const phase = await detectTddPhase(testContext);
+        expect(phase).toBe(expectedPhase);
+      });
     });
   });
 
   describe('Phase Detection from .tdd-phase File', () => {
-    it('should detect red phase from .tdd-phase file', async () => {
-      writeTddPhase('red', testDir);
-      
-      const context = await buildContext();
-      expect(context.tddPhase).toBe('red');
-    });
+    const fileTestCases = [
+      {
+        name: 'should detect red phase from .tdd-phase file',
+        phase: 'red',
+        expectedPhase: 'red'
+      },
+      {
+        name: 'should detect green phase from .tdd-phase file',
+        phase: 'green',
+        expectedPhase: 'green'
+      },
+      {
+        name: 'should detect refactor phase from .tdd-phase file',
+        phase: 'refactor',
+        expectedPhase: 'refactor'
+      }
+    ];
 
-    it('should detect green phase from .tdd-phase file', async () => {
-      writeTddPhase('green', testDir);
-      
-      const context = await buildContext();
-      expect(context.tddPhase).toBe('green');
-    });
-
-    it('should detect refactor phase from .tdd-phase file', async () => {
-      writeTddPhase('refactor', testDir);
-      
-      const context = await buildContext();
-      expect(context.tddPhase).toBe('refactor');
+    fileTestCases.forEach(({ name, phase, expectedPhase }) => {
+      it(name, async () => {
+        writeTddPhase(phase, testDir);
+        const context = await buildContext();
+        expect(context.tddPhase).toBe(expectedPhase);
+      });
     });
 
     it('should return undefined when no .tdd-phase file exists', async () => {
@@ -124,7 +111,6 @@ describe('TDD Phase Detection Integration', () => {
 
     it('should handle invalid .tdd-phase file gracefully', async () => {
       writeFileSync(tddPhaseFile, 'invalid json');
-      
       const context = await buildContext();
       expect(context.tddPhase).toBeUndefined();
     });
@@ -132,9 +118,7 @@ describe('TDD Phase Detection Integration', () => {
 
   describe('Phase Detection Priority', () => {
     it('should prioritize commit message over .tdd-phase file', async () => {
-      // Create .tdd-phase file with red phase
       writeTddPhase('red', testDir);
-      
       const context = await buildContext();
       const mixedContext = {
         ...context,
@@ -145,13 +129,11 @@ describe('TDD Phase Detection Integration', () => {
       };
 
       const phase = await detectTddPhase(mixedContext);
-      expect(phase).toBe('green'); // Should prioritize commit message
+      expect(phase).toBe('green');
     });
 
     it('should fall back to .tdd-phase file when commit message has no TDD marker', async () => {
-      // Create .tdd-phase file with red phase
       writeTddPhase('red', testDir);
-      
       const context = await buildContext();
       const fallbackContext = {
         ...context,
@@ -162,65 +144,48 @@ describe('TDD Phase Detection Integration', () => {
       };
 
       const phase = await detectTddPhase(fallbackContext);
-      expect(phase).toBe('red'); // Should fall back to .tdd-phase file
+      expect(phase).toBe('red');
     });
   });
 
   describe('Phase Detection Edge Cases', () => {
-    it('should handle empty commit message', async () => {
-      const context = await buildContext();
-      const emptyContext = {
-        ...context,
-        git: {
-          ...context.git,
-          commitMessage: ''
-        }
-      };
+    const edgeCaseTestCases = [
+      {
+        name: 'should handle empty commit message',
+        commitMessage: '',
+        expectedPhase: 'unknown'
+      },
+      {
+        name: 'should handle malformed TDD marker in commit message',
+        commitMessage: 'feat: add feature [T-2025-01-18-001] [MODE:F] [TDD:invalid]',
+        expectedPhase: 'unknown'
+      },
+      {
+        name: 'should handle case-insensitive TDD markers',
+        commitMessage: 'feat: add feature [T-2025-01-18-001] [MODE:F] [TDD:RED]',
+        expectedPhase: 'red'
+      },
+      {
+        name: 'should handle TDD marker with extra spaces',
+        commitMessage: 'feat: add feature [T-2025-01-18-001] [MODE:F] [TDD: red ]',
+        expectedPhase: 'red'
+      }
+    ];
 
-      const phase = await detectTddPhase(emptyContext);
-      expect(phase).toBe('unknown');
-    });
+    edgeCaseTestCases.forEach(({ name, commitMessage, expectedPhase }) => {
+      it(name, async () => {
+        const context = await buildContext();
+        const testContext = {
+          ...context,
+          git: {
+            ...context.git,
+            commitMessage
+          }
+        };
 
-    it('should handle malformed TDD marker in commit message', async () => {
-      const context = await buildContext();
-      const malformedContext = {
-        ...context,
-        git: {
-          ...context.git,
-          commitMessage: 'feat: add feature [T-2025-01-18-001] [MODE:F] [TDD:invalid]'
-        }
-      };
-
-      const phase = await detectTddPhase(malformedContext);
-      expect(phase).toBe('unknown');
-    });
-
-    it('should handle case-insensitive TDD markers', async () => {
-      const context = await buildContext();
-      const caseInsensitiveContext = {
-        ...context,
-        git: {
-          ...context.git,
-          commitMessage: 'feat: add feature [T-2025-01-18-001] [MODE:F] [TDD:RED]'
-        }
-      };
-
-      const phase = await detectTddPhase(caseInsensitiveContext);
-      expect(phase).toBe('red');
-    });
-
-    it('should handle TDD marker with extra spaces', async () => {
-      const context = await buildContext();
-      const spacedContext = {
-        ...context,
-        git: {
-          ...context.git,
-          commitMessage: 'feat: add feature [T-2025-01-18-001] [MODE:F] [TDD: red ]'
-        }
-      };
-
-      const phase = await detectTddPhase(spacedContext);
-      expect(phase).toBe('red');
+        const phase = await detectTddPhase(testContext);
+        expect(phase).toBe(expectedPhase);
+      });
     });
   });
 
@@ -237,12 +202,11 @@ describe('TDD Phase Detection Integration', () => {
         }
       };
 
-      const startTime = Date.now();
-      const phase = await detectTddPhase(largeMessageContext);
-      const endTime = Date.now();
+      const duration = await measurePerformance(async () => {
+        return await detectTddPhase(largeMessageContext);
+      });
       
-      expect(phase).toBe('red');
-      expect(endTime - startTime).toBeLessThan(100); // Should complete in less than 100ms
+      expect(duration).toBeLessThan(100);
     });
 
     it('should handle multiple TDD markers in commit message', async () => {
@@ -256,11 +220,22 @@ describe('TDD Phase Detection Integration', () => {
       };
 
       const phase = await detectTddPhase(multipleMarkersContext);
-      expect(phase).toBe('red'); // Should use the first valid marker
+      expect(phase).toBe('red');
     });
   });
 
   describe('Phase Detection with Test Evidence', () => {
+    const testEvidence = [
+      {
+        id: 'evidence-1',
+        phase: 'red',
+        timestamp: Date.now(),
+        testResults: { passed: 0, failed: 2, total: 2 },
+        changedFiles: ['src/test.ts'],
+        commitHash: 'abc123'
+      }
+    ];
+
     it('should detect phase from test evidence when no other indicators', async () => {
       const context = await buildContext();
       const evidenceContext = {
@@ -269,16 +244,7 @@ describe('TDD Phase Detection Integration', () => {
           ...context.git,
           commitMessage: 'feat: add feature [T-2025-01-18-001] [MODE:F]'
         },
-        testEvidence: [
-          {
-            id: 'evidence-1',
-            phase: 'red',
-            timestamp: Date.now(),
-            testResults: { passed: 0, failed: 2, total: 2 },
-            changedFiles: ['src/test.ts'],
-            commitHash: 'abc123'
-          }
-        ]
+        testEvidence
       };
 
       const phase = await detectTddPhase(evidenceContext);
@@ -293,51 +259,42 @@ describe('TDD Phase Detection Integration', () => {
           ...context.git,
           commitMessage: 'feat: add feature [T-2025-01-18-001] [MODE:F] [TDD:green]'
         },
-        testEvidence: [
-          {
-            id: 'evidence-1',
-            phase: 'red',
-            timestamp: Date.now(),
-            testResults: { passed: 0, failed: 2, total: 2 },
-            changedFiles: ['src/test.ts'],
-            commitHash: 'abc123'
-          }
-        ]
+        testEvidence
       };
 
       const phase = await detectTddPhase(priorityContext);
-      expect(phase).toBe('green'); // Should prioritize commit message
+      expect(phase).toBe('green');
     });
   });
 
   describe('Phase Detection Error Handling', () => {
-    it('should handle context with missing git information', async () => {
-      const context = await buildContext();
-      const incompleteContext = {
-        ...context,
-        git: {
-          ...context.git,
-          commitMessage: undefined
-        }
-      };
+    const errorTestCases = [
+      {
+        name: 'should handle context with missing git information',
+        contextModifier: (context: any) => ({
+          ...context,
+          git: { ...context.git, commitMessage: undefined }
+        }),
+        expectedPhase: 'unknown'
+      },
+      {
+        name: 'should handle context with missing test evidence',
+        contextModifier: (context: any) => ({
+          ...context,
+          git: { ...context.git, commitMessage: 'feat: add feature [T-2025-01-18-001] [MODE:F]' },
+          testEvidence: undefined
+        }),
+        expectedPhase: 'unknown'
+      }
+    ];
 
-      const phase = await detectTddPhase(incompleteContext);
-      expect(phase).toBe('unknown');
-    });
-
-    it('should handle context with missing test evidence', async () => {
-      const context = await buildContext();
-      const noEvidenceContext = {
-        ...context,
-        git: {
-          ...context.git,
-          commitMessage: 'feat: add feature [T-2025-01-18-001] [MODE:F]'
-        },
-        testEvidence: undefined
-      };
-
-      const phase = await detectTddPhase(noEvidenceContext);
-      expect(phase).toBe('unknown');
+    errorTestCases.forEach(({ name, contextModifier, expectedPhase }) => {
+      it(name, async () => {
+        const context = await buildContext();
+        const testContext = contextModifier(context);
+        const phase = await detectTddPhase(testContext);
+        expect(phase).toBe(expectedPhase);
+      });
     });
   });
 });

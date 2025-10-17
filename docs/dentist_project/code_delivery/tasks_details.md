@@ -590,3 +590,115 @@ Business Context
 - Apply the appropriate approach (TDD/Problem Analysis)
 - Work systematically through the task
 - Ask focused questions about specific requirements
+
+
+####
+Task 10: POST /onboard save settings
+	•	Task Classification: Functional
+	•	Status: Ready
+
+Overview of the task
+
+Implement a secure endpoint that validates onboarding form data with Zod and persists the practice’s settings. On success, emit events(type='onboarding_completed') exactly once per onboarding token. The endpoint must be idempotent, reject invalid/unsafe values, and never mutate immutable fields.
+
+Goal of the task
+
+Allow a practice owner to finish the 2-minute onboarding by saving quiet hours, daily cap, review link, locale, and branding—safely and reliably—so the system can begin sending review requests.
+
+BDD Scenario
+
+Feature: Save onboarding settings
+  As a dental practice owner
+  I want to save my onboarding settings
+  So that review requests can be sent with the right preferences and branding
+
+  Background:
+    Given I have a valid, unused onboarding token tied to my practice
+    And the server exposes POST /onboard that accepts a JSON body validated by a schema
+    And the schema allows: review_link, quiet_hours_start, quiet_hours_end, daily_cap, default_locale, brand_assets_json
+
+  Scenario: Happy path — settings saved and onboarding completed
+    Given I submit POST /onboard with a valid token and a valid payload
+    When the server validates the payload against the schema
+    Then my settings are persisted to the database
+    And I receive a 200 OK with the saved settings echo (server-authoritative)
+    And an "onboarding_completed" event is written once for this token
+    And the token is marked used so it cannot be reused
+
+  Scenario: Idempotent re-submit — no duplicate event
+    Given I already completed onboarding for this token
+    When I submit POST /onboard again with the same or different valid payload
+    Then the server updates settings if values changed
+    But no duplicate "onboarding_completed" event is written
+    And the response is 200 OK
+
+  Scenario: Validation failure — bad input rejected
+    Given I submit POST /onboard with quiet_hours_start=25 and daily_cap=-1
+    When the server validates the payload
+    Then I receive a 422 Unprocessable Entity with field-level errors
+    And no changes are written to the database
+    And no events are emitted
+
+  Scenario: Security — invalid or expired token
+    Given I submit POST /onboard with an invalid or expired token
+    When the server verifies the token signature and TTL
+    Then I receive a 401 Unauthorized (invalid) or 410 Gone (expired)
+    And no practice data is disclosed
+    And the response contains a safe recovery hint
+
+  Scenario: Guardrails — quiet hours window normalization
+    Given my payload sets quiet_hours_start=22 and quiet_hours_end=7
+    When the server normalizes the overnight window
+    Then the saved settings reflect a valid overnight range
+    And the response includes the normalized values
+
+  Scenario Outline: Review link validation outcomes
+    Given I submit POST /onboard with review_link "<value>"
+    When the server validates it as a Google "write review" link or resolves Place ID
+    Then the response status is "<status>" and settings are "<saved>"
+
+    Examples:
+      | value                                        | status | saved  |
+      | https://g.page/r/abcdef/review               | 200    | saved  |
+      | https://google.com/maps/place?id=123         | 200    | saved  |
+      | https://example.com/not-google               | 422    | not_saved |
+
+Acceptance Criteria
+	•	Schema validation (Zod): Payload must include only whitelisted fields:
+review_link (string), quiet_hours_start (0–23), quiet_hours_end (0–23), daily_cap (1–2000), default_locale ('en'|'es'), brand_assets_json (object, ≤ 20KB).
+	•	Token verification: HMAC-signed, practice-scoped, 7-day TTL, unused; rejects otherwise (401 invalid, 410 expired, 409 used).
+	•	Persistence: Writes to settings are atomic and limited to allowed columns; immutable fields (practices.name, email, phone) are never changed here.
+	•	Idempotency: Multiple valid submits update settings but emit at most one events(type='onboarding_completed') per token/practice.
+	•	Event logging: On first successful save, insert events(practice_id, type='onboarding_completed', occurred_at, payload_json); do not duplicate on retries.
+	•	Review link checks: Valid Google/GBP review link or resolvable Place ID; normalize and store; reject non-Google domains with 422 and field error.
+	•	Quiet hours normalization: Support overnight windows (e.g., 22→7) and store as provided; enforcement occurs in Flow A (outside this task).
+	•	Response contract: 200 returns server-authoritative settings (post-normalization) and a boolean completed:true. Failures return 4xx with field-level errors.
+	•	Security & PII: Do not echo phone/email; do not log tokens or raw PII; rate-limit endpoint (e.g., 5/min/token/IP).
+	•	Tests: Unit (schema), integration (DB writes, idempotency), and e2e (happy path, invalid token, invalid fields).
+
+Files & Resources
+	•	Files Affected:
+	•	backend/src/api/onboard/save.ts — POST handler (validate → authorize → persist → emit event)
+	•	backend/src/utils/magicLink.ts — verify HMAC, TTL, single-use; add consume-on-success helper
+	•	backend/src/models/settings.ts — upsert/update allowed columns only
+	•	backend/src/models/events.ts — idempotent onboarding_completed writer (e.g., unique (practice_id, type) where payload token_id)
+	•	common/types/onboard.ts — shared DTO types
+	•	backend/src/validation/onboard.ts — Zod schema & error mapping
+	•	Tests: backend/__tests__/onboard.save.schema.test.ts, backend/__tests__/onboard.save.integration.test.ts, e2e/onboard.save.spec.ts
+	•	Dependencies:
+	•	Task 6 (Stripe webhook creates practice/settings)
+	•	Task 7 (Magic-link issuance + token semantics)
+	•	Task 9 (GET prefill contract & token plumbed into the form)
+	•	External Resources:
+	•	Google Places/GBP utils in common/utils/gbp.ts for link/Place ID validation (offline format checks; API resolve optional)
+
+Business Context
+	•	Value: Unblocks the “2-minute setup” promise, enables Flow A to start sending requests aligned with quiet hours and brand, and feeds the KPI “onboarding completion ≤ 2 min.”
+	•	Risk: Weak validation could cause noncompliant sends (TCPA window violations) or broken links, harming deliverability and trust. Token mistakes could leak data.
+	•	Success:
+	•	95%+ of valid submissions succeed on first attempt.
+	•	Exactly one onboarding_completed event per token/practice across retries.
+	•	All 4xx errors are precise and field-scoped; no 5xx in normal validation paths.
+	•	Contract honored by e2e tests and observability shows no duplicate events.
+
+⸻
