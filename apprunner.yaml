@@ -1,5 +1,5 @@
 version: 1.0
-runtime: nodejs16
+runtime: nodejs22
 build:
   commands:
     build:
@@ -9,7 +9,7 @@ build:
       - npm run build
       - echo "Backend build completed successfully"
 run:
-  runtime-version: 16
+  runtime-version: 22
   command: npm start
   network:
     port: 3001
